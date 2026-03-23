@@ -1,5 +1,9 @@
 @AGENTS.md
 
+## 開發前必讀
+
+**請先閱讀 `docs/START_HERE.md`，了解專案架構與開發規則。**
+
 ## 網站架構規則
 
 > **給 AI 的硬性規則：**
@@ -16,4 +20,4 @@
 - 新增地圖課程 → 在 `src/lessons/` 建立 LessonConfig 檔案
 - 新增課程頁面 → 在 `src/app/` 建立對應路由
 
-詳細開發指南請參閱 `SITEGUIDE.md`。
+詳細開發指南請參閱 `docs/` 資料夾。
