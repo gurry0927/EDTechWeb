@@ -1,12 +1,19 @@
 @AGENTS.md
 
-## 台灣互動地圖模組規則
+## 網站架構規則
 
-**核心模組 `src/components/taiwan-map/` 為凍結區域，禁止修改其中任何檔案。**
+> **給 AI 的硬性規則：**
+> 不得在未與使用者討論的情況下大幅修改網站框架結構。
+> 新增內容請透過設定檔擴充，不要改動框架本身。
 
-新增課程的正確做法：
-1. 在 `src/lessons/` 建立新的 `LessonConfig` 檔案
-2. 在 `src/lessons/index.ts` 匯出
-3. 在 `src/app/taiwan-map/page.tsx` 的 `LESSONS` 陣列加入
+**凍結區域（禁止修改）：**
+- `src/components/taiwan-map/` — 台灣互動地圖核心模組
+- `src/config/types.ts` — 科目/課程型別定義
+- `src/app/layout.tsx` — 根佈局
 
-詳細開發指南請參閱 `src/components/taiwan-map/DEVGUIDE.md`。
+**擴充方式：**
+- 新增科目或課程 → 修改 `src/config/subjects.ts`
+- 新增地圖課程 → 在 `src/lessons/` 建立 LessonConfig 檔案
+- 新增課程頁面 → 在 `src/app/` 建立對應路由
+
+詳細開發指南請參閱 `SITEGUIDE.md`。
