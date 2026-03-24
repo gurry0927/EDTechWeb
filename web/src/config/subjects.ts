@@ -35,7 +35,15 @@ export const subjects: SubjectConfig[] = [
     description: '認識民主制度、法律與公民素養',
     icon: '⚖️',
     color: '#8B5CF6',
-    courses: [],
+    courses: [
+      {
+        id: 'local-gov',
+        title: '地方政府制度',
+        description: '認識直轄市、縣、省轄市的政府組織與層級關係',
+        path: '/civics-local-gov',
+        tags: ['互動', '地圖', '地方制度'],
+      },
+    ],
   },
   {
     id: 'science',
@@ -48,7 +56,7 @@ export const subjects: SubjectConfig[] = [
 ];
 
 /** 與 app/ 下靜態路由衝突的保留名稱 */
-const RESERVED_IDS = ['taiwan-map', 'api', 'admin'];
+const RESERVED_IDS = ['taiwan-map', 'civics-local-gov', 'api', 'admin'];
 
 if (process.env.NODE_ENV === 'development') {
   for (const s of subjects) {

@@ -5,7 +5,7 @@ import { DEFAULT_INSET_HOVER_SCALE, PATH_TRANSITION, labelWidth } from './defaul
 import type { InsetRenderData } from './types';
 
 export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderData) {
-  const { theme, hoveredId, hoverEffect, handleEnter, handleLeave, getRegionConfig } = useTaiwanMap();
+  const { theme, hoveredId, hoverEffect, handleEnter, handleLeave, handleClick, getRegionConfig } = useTaiwanMap();
 
   // Box is hovered if hoveredId matches any of its regionIds
   const isHovered = hoveredId !== null && config.regionIds.includes(hoveredId);
@@ -18,6 +18,7 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
     <g
       onMouseEnter={isInteractive ? () => handleEnter(hoverId) : undefined}
       onMouseLeave={isInteractive ? handleLeave : undefined}
+      onClick={isInteractive ? () => handleClick(hoverId) : undefined}
       style={{ cursor: isInteractive ? 'pointer' : 'default' }}
     >
       {/* Box background */}
@@ -82,7 +83,7 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
               stroke={stroke}
               strokeWidth={isHovered ? 1.5 : 0.8}
               style={{
-                filter: isHovered ? 'url(#glow)' : 'none',
+                filter: isHovered ? `url(#${hoverEffect.filterId})` : 'none',
                 transition: PATH_TRANSITION,
               }}
             />

@@ -1,7 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import type { RegionId, MapTheme, RegionConfig, ResolvedHoverEffect, MapCallbacks, ProcessedRegion } from './types';
+
+const EMPTY_CALLBACKS: MapCallbacks = {};
 
 interface TaiwanMapContextValue {
   theme: MapTheme;
@@ -29,8 +31,9 @@ export function TaiwanMapProvider({
   theme,
   regions,
   hoverEffect,
-  callbacks = {},
+  callbacks = EMPTY_CALLBACKS,
   colorIndex,
+  subToSource,
   children,
 }: {
   theme: MapTheme;
@@ -38,6 +41,8 @@ export function TaiwanMapProvider({
   hoverEffect: ResolvedHoverEffect;
   callbacks?: MapCallbacks;
   colorIndex: Record<string, number>;
+  /** SubRegionSplit 產生的 sub-region → sourceCounty 映射 */
+  subToSource?: Map<RegionId, RegionId>;
   children: React.ReactNode;
 }) {
   const [hoveredId, setHoveredId] = useState<RegionId | null>(null);
@@ -55,10 +60,12 @@ export function TaiwanMapProvider({
       leaveTimerRef.current = null;
     }
     const region = regions.get(id);
-    if (region && region.config.interaction !== 'interactive') return;
+    if (!region || region.config.interaction !== 'interactive') return;
     setHoveredId(id);
-    callbacks.onRegionHover?.(id, region?.config.data);
-  }, [regions, callbacks]);
+    // Sub-region → 回報 sourceCounty ID 給外部 callback
+    const callbackId = subToSource?.get(id) ?? id;
+    callbacks.onRegionHover?.(callbackId, region.config.data);
+  }, [regions, callbacks, subToSource]);
 
   const handleLeave = useCallback(() => {
     leaveTimerRef.current = setTimeout(() => {
@@ -70,9 +77,10 @@ export function TaiwanMapProvider({
 
   const handleClick = useCallback((id: RegionId) => {
     const region = regions.get(id);
-    if (region && region.config.interaction !== 'interactive') return;
-    callbacks.onRegionClick?.(id, region?.config.data);
-  }, [regions, callbacks]);
+    if (!region || region.config.interaction !== 'interactive') return;
+    const callbackId = subToSource?.get(id) ?? id;
+    callbacks.onRegionClick?.(callbackId, region.config.data);
+  }, [regions, callbacks, subToSource]);
 
   const getRegionConfig = useCallback((id: RegionId): RegionConfig => {
     const region = regions.get(id);
@@ -80,19 +88,22 @@ export function TaiwanMapProvider({
     return { id, label: id, interaction: 'static' };
   }, [regions]);
 
+  const value = useMemo<TaiwanMapContextValue>(() => ({
+    theme,
+    regions,
+    hoveredId,
+    hoverEffect,
+    callbacks,
+    handleEnter,
+    handleLeave,
+    handleClick,
+    getRegionConfig,
+    colorIndex,
+  }), [theme, regions, hoveredId, hoverEffect, callbacks,
+       handleEnter, handleLeave, handleClick, getRegionConfig, colorIndex]);
+
   return (
-    <TaiwanMapContext.Provider value={{
-      theme,
-      regions,
-      hoveredId,
-      hoverEffect,
-      callbacks,
-      handleEnter,
-      handleLeave,
-      handleClick,
-      getRegionConfig,
-      colorIndex,
-    }}>
+    <TaiwanMapContext.Provider value={value}>
       {children}
     </TaiwanMapContext.Provider>
   );

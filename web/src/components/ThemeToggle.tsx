@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 /** 不顯示主題切換的路徑前綴（沉浸式課程頁面） */
-const IMMERSIVE_PATHS = ['/taiwan-map'];
+const IMMERSIVE_PATHS = ['/taiwan-map', '/civics-local-gov'];
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);

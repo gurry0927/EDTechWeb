@@ -37,9 +37,10 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
   const defaultInteraction = config.defaultInteraction ?? 'interactive';
 
   /* ─── Process GeoJSON features ─── */
-  const { allFeatures, insetRegionIds } = useMemo(() => {
+  const { allFeatures, insetRegionIds, subToSource } = useMemo(() => {
     const rawFeatures = (taiwanGeoRaw as { features: CountyFeature[] }).features;
     const result = new Map<RegionId, CountyFeature>();
+    const reverseMap = new Map<RegionId, RegionId>();
 
     const insetIds = new Set<RegionId>();
     for (const inset of insetConfigs) {
@@ -54,6 +55,7 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
         const subFeatures = splitFeatureByClassifier(feature, split.classify);
         for (const [subId, subFeature] of subFeatures) {
           result.set(subId, filterSignificantPolys(subFeature, 3));
+          reverseMap.set(subId, name);
         }
         continue;
       }
@@ -65,7 +67,7 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
       }
     }
 
-    return { allFeatures: result, insetRegionIds: insetIds };
+    return { allFeatures: result, insetRegionIds: insetIds, subToSource: reverseMap };
   }, [insetConfigs, splits]);
 
   /* ─── Build region map + separate main/inset ─── */
@@ -77,11 +79,16 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
 
     for (const [id, feature] of allFeatures) {
       const isInset = insetRegionIds.has(id);
-      const partial = config.regions[id];
+      const sourceId = subToSource.get(id);
+      // Sub-region 自動繼承 sourceCounty 的設定（除非有自己的顯式設定）
+      const partial = config.regions[id] ?? (sourceId ? config.regions[sourceId] : undefined);
+      const labelFallback = sourceId
+        ? (config.displayNames?.[sourceId] ?? config.regions[sourceId]?.label ?? sourceId)
+        : id;
       const regionCfg: RegionConfig = {
         ...partial,
         id,
-        label: config.displayNames?.[id] ?? partial?.label ?? id,
+        label: config.displayNames?.[id] ?? partial?.label ?? labelFallback,
         interaction: partial?.interaction ?? defaultInteraction,
       };
 
@@ -102,7 +109,7 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
     }
 
     return { regionMap: rMap, mainRegions: main, colorIndex: cIdx };
-  }, [allFeatures, insetRegionIds, config.regions, config.displayNames, defaultInteraction]);
+  }, [allFeatures, insetRegionIds, subToSource, config.regions, config.displayNames, defaultInteraction]);
 
   /* ─── Main projection ─── */
   const mainProjection = useMemo(() => {
@@ -160,6 +167,7 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
       hoverEffect={hoverEffect}
       callbacks={config.callbacks}
       colorIndex={colorIndex}
+      subToSource={subToSource}
     >
       <MapSvg
         mainRegions={mainRegions}
