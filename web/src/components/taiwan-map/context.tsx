@@ -94,7 +94,9 @@ export function TaiwanMapProvider({
   }, [regions]);
 
   const scaleFont = useCallback((targetPx: number): number => {
-    const renderScale = Math.max(containerWidth, 1) / SVG_W;
+    // Clamp render scale: below ~550px container, let text shrink with SVG
+    // so text never overflows fixed SVG layout boxes on mobile.
+    const renderScale = Math.max(containerWidth / SVG_W, 0.55);
     return targetPx / renderScale;
   }, [containerWidth]);
 
