@@ -5,7 +5,7 @@ import { SVG_W, SVG_H } from './defaults';
 import type { LegendConfig } from './types';
 
 export function MapLegend({ legend }: { legend: LegendConfig }) {
-  const { theme } = useTaiwanMap();
+  const { theme, scaleFont } = useTaiwanMap();
   const { title, items, position = 'bottom-right' } = legend;
 
   const itemH = 24;
@@ -33,8 +33,8 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
         stroke={theme.insetBorder} strokeWidth={0.5}
       />
       <text
-        x={x + padding} y={y + padding + 14}
-        fill={theme.titleColor} fontSize={15} fontWeight={600}
+        x={x + padding} y={y + padding + scaleFont(13)}
+        fill={theme.titleColor} fontSize={scaleFont(13)} fontWeight={600}
         fontFamily={theme.fontFamily}
       >
         {title}
@@ -49,8 +49,8 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
           />
           <text
             x={x + padding + 24}
-            y={y + padding + 28 + i * itemH + 13}
-            fill={theme.labelColor} fontSize={14}
+            y={y + padding + 28 + i * itemH + scaleFont(13)}
+            fill={theme.labelColor} fontSize={scaleFont(13)}
             fontFamily={theme.fontFamily}
           >
             {item.label}

@@ -5,7 +5,7 @@ import { DEFAULT_INSET_HOVER_SCALE, PATH_TRANSITION, labelWidth } from './defaul
 import type { InsetRenderData } from './types';
 
 export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderData) {
-  const { theme, hoveredId, hoverEffect, handleEnter, handleLeave, handleClick, getRegionConfig } = useTaiwanMap();
+  const { theme, hoveredId, hoverEffect, handleEnter, handleLeave, handleClick, getRegionConfig, scaleFont } = useTaiwanMap();
 
   // Box is hovered if hoveredId matches any of its regionIds
   const isHovered = hoveredId !== null && config.regionIds.includes(hoveredId);
@@ -33,9 +33,9 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
 
       {/* Box label */}
       <text
-        x={box.x + 10} y={box.y + 20}
+        x={box.x + 10} y={box.y + scaleFont(14) + 6}
         fill={theme.secondaryAccent}
-        fontSize={15} fontFamily={theme.fontFamily}
+        fontSize={scaleFont(14)} fontFamily={theme.fontFamily}
         fontWeight={600}
         style={{ pointerEvents: 'none' }}
       >
@@ -51,8 +51,8 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
             strokeDasharray={sub.strokeDasharray} rx={3}
           />
           <text
-            x={sub.x + 10} y={sub.y + 16}
-            fill={theme.secondaryAccent} fontSize={12}
+            x={sub.x + 10} y={sub.y + scaleFont(12) + 4}
+            fill={theme.secondaryAccent} fontSize={scaleFont(12)}
             fontFamily={theme.fontFamily}
           >
             {sub.label}
@@ -104,9 +104,9 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
               stroke={theme.accentColor} strokeWidth={0.5}
             />
             <text
-              x={cx} y={cy + 2} textAnchor="middle"
+              x={cx} y={cy + scaleFont(14) / 2} textAnchor="middle"
               fill={theme.labelColor}
-              fontSize={15} fontWeight={600}
+              fontSize={scaleFont(14)} fontWeight={600}
               fontFamily={theme.fontFamily}
             >
               {displayLabel}

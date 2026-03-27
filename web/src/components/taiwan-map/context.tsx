@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import type { RegionId, MapTheme, RegionConfig, ResolvedHoverEffect, MapCallbacks, ProcessedRegion } from './types';
+import { SVG_W } from './defaults';
 
 const EMPTY_CALLBACKS: MapCallbacks = {};
 
@@ -17,6 +18,8 @@ interface TaiwanMapContextValue {
   getRegionConfig: (id: RegionId) => RegionConfig;
   /** Stable color index per region (avoids shift on hover reorder) */
   colorIndex: Record<string, number>;
+  /** Convert target pixel size to SVG units, compensating for render scale */
+  scaleFont: (targetPx: number) => number;
 }
 
 const TaiwanMapContext = createContext<TaiwanMapContextValue | null>(null);
@@ -34,6 +37,7 @@ export function TaiwanMapProvider({
   callbacks = EMPTY_CALLBACKS,
   colorIndex,
   subToSource,
+  containerWidth = SVG_W,
   children,
 }: {
   theme: MapTheme;
@@ -43,6 +47,7 @@ export function TaiwanMapProvider({
   colorIndex: Record<string, number>;
   /** SubRegionSplit 產生的 sub-region → sourceCounty 映射 */
   subToSource?: Map<RegionId, RegionId>;
+  containerWidth?: number;
   children: React.ReactNode;
 }) {
   const [hoveredId, setHoveredId] = useState<RegionId | null>(null);
@@ -88,6 +93,11 @@ export function TaiwanMapProvider({
     return { id, label: id, interaction: 'static' };
   }, [regions]);
 
+  const scaleFont = useCallback((targetPx: number): number => {
+    const renderScale = Math.max(containerWidth, 1) / SVG_W;
+    return targetPx / renderScale;
+  }, [containerWidth]);
+
   const value = useMemo<TaiwanMapContextValue>(() => ({
     theme,
     regions,
@@ -99,8 +109,9 @@ export function TaiwanMapProvider({
     handleClick,
     getRegionConfig,
     colorIndex,
+    scaleFont,
   }), [theme, regions, hoveredId, hoverEffect, callbacks,
-       handleEnter, handleLeave, handleClick, getRegionConfig, colorIndex]);
+       handleEnter, handleLeave, handleClick, getRegionConfig, colorIndex, scaleFont]);
 
   return (
     <TaiwanMapContext.Provider value={value}>

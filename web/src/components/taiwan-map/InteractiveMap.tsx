@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { geoMercator, geoPath, geoCentroid } from 'd3-geo';
 import type { GeoPermissibleObjects } from 'd3-geo';
 import taiwanGeoRaw from '@/data/taiwan.geo.json';
@@ -25,6 +25,20 @@ import type {
 } from './types';
 
 export function InteractiveMap({ config }: { config: LessonConfig }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(1000);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width;
+      if (w) setContainerWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const theme = useMemo(() => resolveTheme(config.theme), [config.theme]);
 
   const hoverEffect: ResolvedHoverEffect = useMemo(() => ({
@@ -161,22 +175,25 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
   }, [insetConfigs, allFeatures, config.displayNames]);
 
   return (
-    <TaiwanMapProvider
-      theme={theme}
-      regions={regionMap}
-      hoverEffect={hoverEffect}
-      callbacks={config.callbacks}
-      colorIndex={colorIndex}
-      subToSource={subToSource}
-    >
-      <MapSvg
-        mainRegions={mainRegions}
-        mainProjection={mainProjection}
-        mainCentroids={mainCentroids}
-        insets={insets}
-        title={config.title}
-        legend={config.legend}
-      />
-    </TaiwanMapProvider>
+    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      <TaiwanMapProvider
+        theme={theme}
+        regions={regionMap}
+        hoverEffect={hoverEffect}
+        callbacks={config.callbacks}
+        colorIndex={colorIndex}
+        subToSource={subToSource}
+        containerWidth={containerWidth}
+      >
+        <MapSvg
+          mainRegions={mainRegions}
+          mainProjection={mainProjection}
+          mainCentroids={mainCentroids}
+          insets={insets}
+          title={config.title}
+          legend={config.legend}
+        />
+      </TaiwanMapProvider>
+    </div>
   );
 }
