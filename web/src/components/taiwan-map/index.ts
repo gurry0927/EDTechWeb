@@ -1,4 +1,9 @@
-export { InteractiveMap } from './InteractiveMap';
+import dynamic from 'next/dynamic';
+
+export const InteractiveMap = dynamic(
+  () => import('./InteractiveMap').then(m => ({ default: m.InteractiveMap })),
+  { ssr: false },
+);
 export type {
   LessonConfig,
   RegionConfig,
