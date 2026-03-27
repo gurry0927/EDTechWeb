@@ -19,15 +19,15 @@ export function MapBackground({ title }: { title: MapTitle }) {
       {/* Title */}
       <text
         x={titleX} y={titleY} textAnchor="middle" fill={theme.titleColor}
-        fontSize={scaleFont(22)} fontWeight={700} fontFamily={theme.fontFamily}
+        fontSize={scaleFont(30)} fontWeight={700} fontFamily={theme.fontFamily}
         style={{ filter: 'url(#titleGlow)' }}
       >
         {title.primary}
       </text>
       {title.secondary && (
         <text
-          x={titleX} y={titleY + scaleFont(11) + 6} textAnchor="middle" fill={theme.secondaryAccent}
-          fontSize={scaleFont(11)} fontFamily="monospace" letterSpacing={3}
+          x={titleX} y={titleY + scaleFont(15) + 6} textAnchor="middle" fill={theme.secondaryAccent}
+          fontSize={scaleFont(15)} fontFamily="monospace" letterSpacing={3}
         >
           {title.secondary}
         </text>

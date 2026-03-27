@@ -17,7 +17,7 @@ export function MapLabels({
   const w = labelWidth(label);
   const [cx, cy] = centroids[hoveredId];
 
-  const fs = scaleFont(14);
+  const fs = scaleFont(20);
   return (
     <g style={{ pointerEvents: 'none' }}>
       <rect
