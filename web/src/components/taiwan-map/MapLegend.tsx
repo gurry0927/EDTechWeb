@@ -9,9 +9,9 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
   const { title, items, position = 'bottom-right' } = legend;
 
   const itemH = 30;
-  const padding = 16;
-  const w = 210;
-  const h = padding * 2 + 34 + items.length * itemH;
+  const padding = 14;
+  const w = 200;
+  const h = padding * 2 + 30 + items.length * itemH;
 
   let x: number, y: number;
   switch (position) {
@@ -32,9 +32,10 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
         fill={theme.labelBackground} fillOpacity={0.9}
         stroke={theme.insetBorder} strokeWidth={0.5}
       />
+      {/* Title — natural SVG units so it stays within the box */}
       <text
-        x={x + padding} y={y + padding + scaleFont(20)}
-        fill={theme.titleColor} fontSize={scaleFont(20)} fontWeight={600}
+        x={x + padding} y={y + padding + 22}
+        fill={theme.titleColor} fontSize={22} fontWeight={600}
         fontFamily={theme.fontFamily}
       >
         {title}
@@ -43,14 +44,14 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
         <g key={i}>
           <rect
             x={x + padding}
-            y={y + padding + 34 + i * itemH}
-            width={18} height={18} rx={3}
+            y={y + padding + 30 + i * itemH + 6}
+            width={16} height={16} rx={3}
             fill={item.color}
           />
           <text
-            x={x + padding + 28}
-            y={y + padding + 34 + i * itemH + scaleFont(19)}
-            fill={theme.labelColor} fontSize={scaleFont(19)}
+            x={x + padding + 24}
+            y={y + padding + 30 + i * itemH + 20}
+            fill={theme.labelColor} fontSize={20}
             fontFamily={theme.fontFamily}
           >
             {item.label}

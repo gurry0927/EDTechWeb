@@ -31,11 +31,11 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
         style={{ transition: 'stroke 0.3s ease' }}
       />
 
-      {/* Box label */}
+      {/* Box label — natural SVG units (no compensation): scales with box, never overflows */}
       <text
-        x={box.x + 10} y={box.y + scaleFont(20) + 14}
+        x={box.x + 10} y={box.y + 25}
         fill={theme.secondaryAccent}
-        fontSize={scaleFont(20)} fontFamily={theme.fontFamily}
+        fontSize={20} fontFamily={theme.fontFamily}
         fontWeight={600}
         style={{ pointerEvents: 'none' }}
       >
@@ -51,8 +51,8 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
             strokeDasharray={sub.strokeDasharray} rx={3}
           />
           <text
-            x={sub.x + 10} y={sub.y + scaleFont(16) + 10}
-            fill={theme.secondaryAccent} fontSize={scaleFont(16)}
+            x={sub.x + 10} y={sub.y + 20}
+            fill={theme.secondaryAccent} fontSize={16}
             fontFamily={theme.fontFamily}
           >
             {sub.label}
