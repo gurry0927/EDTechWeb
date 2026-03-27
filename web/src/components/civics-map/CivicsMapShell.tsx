@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import { InteractiveMap } from '@/components/taiwan-map';
 import type { LessonConfig } from '@/components/taiwan-map';
 import { civicsLocalGovLesson } from '@/lessons/civics-local-gov';
 import { GovSidePanel, GovMobileBar } from './GovSidePanel';
+import type { CardExpandState } from './GovSidePanel';
 import { NotesOverlay } from './NotesOverlay';
 import type { LocalGovData } from './types';
 import { isLocalGovData } from './types';
@@ -20,22 +21,38 @@ export function CivicsMapShell() {
   const [mobileBarExpanded, setMobileBarExpanded] = useState(false);
   const [mode, setMode] = useState<Mode>('overview');
   const [showNotes, setShowNotes] = useState(false);
+  const [adminExpanded, setAdminExpanded] = useState(false);
+  const [indigenousExpanded, setIndigenousExpanded] = useState(false);
+  const modeSwitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [modeSwitching, setModeSwitching] = useState(false);
+
+  const cardState: CardExpandState = {
+    adminExpanded,
+    onAdminToggle: () => setAdminExpanded(v => !v),
+    indigenousExpanded,
+    onIndigenousToggle: () => setIndigenousExpanded(v => !v),
+  };
 
   const handleInteraction = useCallback(
     (regionId: string | null, data?: Record<string, unknown>) => {
+      if (modeSwitching) return; // ignore hover events during mode transition
       setHoveredRegion(regionId);
       setHoveredData(regionId && isLocalGovData(data) ? data : null);
       // 點到地圖時自動收合行動版抽屜
       if (regionId) setMobileBarExpanded(false);
     },
-    [],
+    [modeSwitching],
   );
 
   const handleModeSwitch = useCallback((next: Mode) => {
     setMode(next);
-    // 切換模式時清除 hover 狀態，避免殘留
     setHoveredRegion(null);
     setHoveredData(null);
+    // Block hover callbacks for the duration of the color transition (350ms)
+    // so stale region data can't re-appear mid-animation.
+    setModeSwitching(true);
+    if (modeSwitchTimer.current) clearTimeout(modeSwitchTimer.current);
+    modeSwitchTimer.current = setTimeout(() => setModeSwitching(false), 350);
   }, []);
 
   const config: LessonConfig = useMemo(() => {
@@ -60,7 +77,7 @@ export function CivicsMapShell() {
   }, [handleInteraction, mode]);
 
   return (
-    <div className="w-full h-full flex min-h-0 relative">
+    <div className="w-full h-full flex min-h-0 relative" style={mobileBarExpanded ? { overflow: 'hidden' } : undefined}>
       {/* 模式切換按鈕 */}
       <div
         className="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex rounded-lg overflow-hidden"
@@ -116,12 +133,13 @@ export function CivicsMapShell() {
       </div>
 
       {/* 右側：資訊卡片（lg 以上顯示） */}
-      <GovSidePanel hoveredRegion={hoveredRegion} hoveredData={hoveredData} />
+      <GovSidePanel hoveredRegion={hoveredRegion} hoveredData={hoveredData} cardState={cardState} />
 
       {/* 行動版底部列（lg 以下顯示） */}
       <GovMobileBar
         hoveredRegion={hoveredRegion}
         hoveredData={hoveredData}
+        cardState={cardState}
         expanded={mobileBarExpanded}
         onToggle={() => setMobileBarExpanded(v => !v)}
       />

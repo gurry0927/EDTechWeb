@@ -4,9 +4,31 @@ import { useState } from 'react';
 import type { LocalGovData } from './types';
 import { GOV_TYPE_COLORS, INDIGENOUS_DISTRICTS } from './types';
 
+/** 原住民區口訣（含 ruby 注音），供 GovSidePanel 與 NotesOverlay 共用 */
+export function IndigenousMnemonic() {
+  return (
+    <div className="text-rose-400 font-semibold">
+      <ruby>吾<rp>(</rp><rt className="text-white/30 text-[9px]">烏來</rt><rp>)</rp></ruby>來
+      <ruby>復興<rp>(</rp><rt className="text-white/30 text-[9px]">復興</rt><rp>)</rp></ruby>
+      <ruby>和平<rp>(</rp><rt className="text-white/30 text-[9px]">和平</rt><rp>)</rp></ruby>，在
+      <ruby>桃源<rp>(</rp><rt className="text-white/30 text-[9px]">桃源</rt><rp>)</rp></ruby>
+      <ruby>茂林<rp>(</rp><rt className="text-white/30 text-[9px]">茂林</rt><rp>)</rp></ruby>的
+      <ruby>那馬下<rp>(</rp><rt className="text-white/30 text-[9px]">那瑪夏</rt><rp>)</rp></ruby>
+    </div>
+  );
+}
+
+export interface CardExpandState {
+  adminExpanded: boolean;
+  onAdminToggle: () => void;
+  indigenousExpanded: boolean;
+  onIndigenousToggle: () => void;
+}
+
 interface GovSidePanelProps {
   hoveredRegion: string | null;
   hoveredData: LocalGovData | null;
+  cardState: CardExpandState;
 }
 
 // ─── 共用：必背行政區摘要 ───
@@ -51,20 +73,27 @@ function AdminAreaSummary() {
 }
 
 // ─── Card 外殼 ───
+// Supports both uncontrolled (defaultExpanded) and controlled (expanded + onToggle) modes.
 function Card({
   title,
   icon,
   children,
   expandable,
   defaultExpanded = true,
+  expanded: controlledExpanded,
+  onToggle,
 }: {
   title: string;
   icon: string;
   children: React.ReactNode;
   expandable?: boolean;
   defaultExpanded?: boolean;
+  expanded?: boolean;
+  onToggle?: () => void;
 }) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
+  const expanded = controlledExpanded ?? internalExpanded;
+  const toggle = onToggle ?? (() => setInternalExpanded(v => !v));
   return (
     <div
       className="rounded-xl overflow-hidden"
@@ -74,7 +103,7 @@ function Card({
       }}
     >
       <button
-        onClick={expandable ? () => setExpanded(!expanded) : undefined}
+        onClick={expandable ? toggle : undefined}
         className={`w-full flex items-center gap-2 px-4 py-3 text-left ${
           expandable
             ? 'cursor-pointer hover:bg-white/[0.04] transition-colors'
@@ -311,7 +340,8 @@ function HoverInfo({
 }
 
 // ─── 主面板（lg 以上顯示） ───
-export function GovSidePanel({ hoveredRegion, hoveredData }: GovSidePanelProps) {
+export function GovSidePanel({ hoveredRegion, hoveredData, cardState }: GovSidePanelProps) {
+  const { adminExpanded, onAdminToggle, indigenousExpanded, onIndigenousToggle } = cardState;
   return (
     <div className="w-[340px] xl:w-[380px] shrink-0 space-y-3 p-4 pb-16 overflow-y-auto max-lg:hidden">
       {/* Card 1：縣市資訊（hover 連動） */}
@@ -319,13 +349,13 @@ export function GovSidePanel({ hoveredRegion, hoveredData }: GovSidePanelProps) 
         <HoverInfo regionName={hoveredRegion} govData={hoveredData} />
       </Card>
 
-      {/* Card 3：必背行政區（預設收合，節省空間） */}
-      <Card title="必背行政區" icon="📌" expandable defaultExpanded={false}>
+      {/* Card 3：必背行政區 */}
+      <Card title="必背行政區" icon="📌" expandable expanded={adminExpanded} onToggle={onAdminToggle}>
         <AdminAreaSummary />
       </Card>
 
-      {/* Card 4：山地原住民區（預設收合，節省空間） */}
-      <Card title="山地原住民區" icon="🏔" expandable defaultExpanded={false}>
+      {/* Card 4：山地原住民區 */}
+      <Card title="山地原住民區" icon="🏔" expandable expanded={indigenousExpanded} onToggle={onIndigenousToggle}>
         <div className="space-y-3">
           <div className="text-sm text-white/50">
             直轄市內具地方自治權之原住民區，有民選區長＋區民代表會
@@ -350,14 +380,7 @@ export function GovSidePanel({ hoveredRegion, hoveredData }: GovSidePanelProps) 
             style={{ background: 'rgba(255,255,255,0.04)' }}
           >
             <div className="text-white/50 text-xs mb-1">口訣</div>
-            <div className="text-rose-400 font-semibold">
-              <ruby>吾<rp>(</rp><rt className="text-white/30 text-[9px]">烏來</rt><rp>)</rp></ruby>來
-              <ruby>復興<rp>(</rp><rt className="text-white/30 text-[9px]">復興</rt><rp>)</rp></ruby>
-              <ruby>和平<rp>(</rp><rt className="text-white/30 text-[9px]">和平</rt><rp>)</rp></ruby>，在
-              <ruby>桃源<rp>(</rp><rt className="text-white/30 text-[9px]">桃源</rt><rp>)</rp></ruby>
-              <ruby>茂林<rp>(</rp><rt className="text-white/30 text-[9px]">茂林</rt><rp>)</rp></ruby>的
-              <ruby>那馬下<rp>(</rp><rt className="text-white/30 text-[9px]">那瑪夏</rt><rp>)</rp></ruby>
-            </div>
+            <IndigenousMnemonic />
           </div>
         </div>
       </Card>
@@ -371,7 +394,8 @@ interface GovMobileBarProps extends GovSidePanelProps {
   onToggle: () => void;
 }
 
-export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }: GovMobileBarProps) {
+export function GovMobileBar({ hoveredRegion, hoveredData, cardState, expanded, onToggle }: GovMobileBarProps) {
+  const { adminExpanded, onAdminToggle, indigenousExpanded, onIndigenousToggle } = cardState;
   return (
     <div
       className="lg:hidden absolute bottom-0 left-0 right-0 z-20 transition-all duration-300"
@@ -427,10 +451,10 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
           {hoveredRegion && hoveredData && (
             <HoverInfo regionName={hoveredRegion} govData={hoveredData} />
           )}
-          <Card title="必背行政區" icon="📌" expandable defaultExpanded={false}>
+          <Card title="必背行政區" icon="📌" expandable expanded={adminExpanded} onToggle={onAdminToggle}>
             <AdminAreaSummary />
           </Card>
-          <Card title="山地原住民區" icon="🏔" expandable defaultExpanded={false}>
+          <Card title="山地原住民區" icon="🏔" expandable expanded={indigenousExpanded} onToggle={onIndigenousToggle}>
             <div className="space-y-3">
               <div className="text-sm text-white/50">
                 直轄市內具地方自治權之原住民區，有民選區長＋區民代表會
@@ -447,9 +471,7 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
               <div className="rounded-lg py-2 text-center"
                 style={{ background: 'rgba(255,255,255,0.04)' }}>
                 <div className="text-white/40 text-xs mb-1">口訣</div>
-                <div className="text-rose-400 font-semibold text-sm">
-                  吾來復興和平，在桃源茂林的那馬下
-                </div>
+                <IndigenousMnemonic />
               </div>
             </div>
           </Card>

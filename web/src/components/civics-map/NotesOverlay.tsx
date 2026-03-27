@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { GOV_TYPE_COLORS } from './types';
+import { IndigenousMnemonic } from './GovSidePanel';
 
 const pink = GOV_TYPE_COLORS['直轄市'];
 const green = GOV_TYPE_COLORS['縣'];
@@ -29,12 +31,19 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function NotesOverlay({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Focus the overlay on mount so Escape key handler actually fires
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
+
   return (
     <div
+      ref={ref}
       className="absolute inset-0 z-30 flex flex-col overflow-hidden"
       style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(10px)' }}
       onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
       tabIndex={-1}
     >
       {/* ── Header（僅標題，不放關閉按鈕）── */}
@@ -228,14 +237,7 @@ export function NotesOverlay({ onClose }: { onClose: () => void }) {
             style={{ background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.22)' }}
           >
             <div className="text-white/40 text-xs mb-2">口訣</div>
-            <div className="text-rose-400 font-semibold text-sm leading-relaxed">
-              <ruby>吾<rp>(</rp><rt className="text-white/30 text-[9px]">烏來</rt><rp>)</rp></ruby>來
-              <ruby>復興<rp>(</rp><rt className="text-white/30 text-[9px]">復興</rt><rp>)</rp></ruby>
-              <ruby>和平<rp>(</rp><rt className="text-white/30 text-[9px]">和平</rt><rp>)</rp></ruby>，在
-              <ruby>桃源<rp>(</rp><rt className="text-white/30 text-[9px]">桃源</rt><rp>)</rp></ruby>
-              <ruby>茂林<rp>(</rp><rt className="text-white/30 text-[9px]">茂林</rt><rp>)</rp></ruby>的
-              <ruby>那馬下<rp>(</rp><rt className="text-white/30 text-[9px]">那瑪夏</rt><rp>)</rp></ruby>
-            </div>
+            <IndigenousMnemonic />
           </div>
         </div>
 

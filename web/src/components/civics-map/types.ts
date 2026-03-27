@@ -12,18 +12,18 @@ export interface LocalGovData {
   note?: string;
 }
 
-/** Runtime type guard for data from MapCallbacks — validates all required fields */
+/** Runtime type guard for data from MapCallbacks — validates all required fields and types */
 export function isLocalGovData(d: unknown): d is LocalGovData {
+  if (d == null || typeof d !== 'object') return false;
+  const o = d as Record<string, unknown>;
   return (
-    d != null &&
-    typeof d === 'object' &&
-    'type' in d &&
-    'executive' in d &&
-    'legislative' in d &&
-    'head' in d &&
-    'subdivisionType' in d &&
-    'subdivisionGov' in d &&
-    'subdivisionLeg' in d
+    typeof o.type === 'string' &&
+    typeof o.executive === 'string' &&
+    typeof o.legislative === 'string' &&
+    typeof o.head === 'string' &&
+    typeof o.subdivisionType === 'string' &&
+    typeof o.subdivisionGov === 'string' &&
+    'subdivisionLeg' in o  // null is valid, so only check presence
   );
 }
 
