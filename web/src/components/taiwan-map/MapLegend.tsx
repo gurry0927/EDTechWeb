@@ -33,8 +33,8 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
         stroke={theme.insetBorder} strokeWidth={0.5}
       />
       <text
-        x={x + padding} y={y + padding + scaleFont(17)}
-        fill={theme.titleColor} fontSize={scaleFont(17)} fontWeight={600}
+        x={x + padding} y={y + padding + scaleFont(20)}
+        fill={theme.titleColor} fontSize={scaleFont(20)} fontWeight={600}
         fontFamily={theme.fontFamily}
       >
         {title}
@@ -49,8 +49,8 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
           />
           <text
             x={x + padding + 28}
-            y={y + padding + 34 + i * itemH + scaleFont(16)}
-            fill={theme.labelColor} fontSize={scaleFont(16)}
+            y={y + padding + 34 + i * itemH + scaleFont(19)}
+            fill={theme.labelColor} fontSize={scaleFont(19)}
             fontFamily={theme.fontFamily}
           >
             {item.label}

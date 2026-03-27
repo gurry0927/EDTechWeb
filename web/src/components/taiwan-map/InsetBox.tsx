@@ -33,9 +33,9 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
 
       {/* Box label */}
       <text
-        x={box.x + 10} y={box.y + scaleFont(19) + 6}
+        x={box.x + 10} y={box.y + scaleFont(20) + 6}
         fill={theme.secondaryAccent}
-        fontSize={scaleFont(19)} fontFamily={theme.fontFamily}
+        fontSize={scaleFont(20)} fontFamily={theme.fontFamily}
         fontWeight={600}
         style={{ pointerEvents: 'none' }}
       >
