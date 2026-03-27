@@ -31,9 +31,13 @@ export function InteractiveMap({ config }: { config: LessonConfig }) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    // 立即量測初始寬度
+    const initial = el.getBoundingClientRect().width;
+    if (initial > 0) setContainerWidth(initial);
+    // 持續監聽 resize
     const ro = new ResizeObserver(entries => {
       const w = entries[0]?.contentRect.width;
-      if (w) setContainerWidth(w);
+      if (w > 0) setContainerWidth(w);
     });
     ro.observe(el);
     return () => ro.disconnect();
