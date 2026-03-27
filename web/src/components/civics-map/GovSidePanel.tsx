@@ -425,7 +425,7 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
       <div
         className="transition-all duration-300 overflow-y-auto"
         style={{
-          maxHeight: expanded ? '35vh' : 0,
+          maxHeight: expanded ? '60vh' : 0,
           opacity: expanded ? 1 : 0,
         }}
       >
@@ -435,6 +435,36 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
           )}
           <Card title="必背行政區" icon="📌" expandable defaultExpanded={false}>
             <AdminAreaSummary />
+          </Card>
+          <Card title="山地原住民區" icon="🏔" expandable defaultExpanded={false}>
+            <div className="space-y-3">
+              <div className="text-sm text-white/50">
+                直轄市內具地方自治權之原住民區，有民選區長＋區民代表會
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { name: '烏來', city: '新北' },
+                  { name: '復興', city: '桃園' },
+                  { name: '和平', city: '台中' },
+                  { name: '桃源', city: '高雄' },
+                  { name: '茂林', city: '高雄' },
+                  { name: '那瑪夏', city: '高雄' },
+                ].map(({ name, city }) => (
+                  <div key={name} className="text-center py-2 rounded-lg"
+                    style={{ background: 'rgba(251,113,133,0.10)', border: '1px solid rgba(251,113,133,0.20)' }}>
+                    <div className="text-rose-400 text-sm font-semibold">{name}</div>
+                    <div className="text-white/40 text-xs">{city}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-lg py-2 text-center"
+                style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <div className="text-white/40 text-xs mb-1">口訣</div>
+                <div className="text-rose-400 font-semibold text-sm">
+                  吾來復興和平，在桃源茂林的那馬下
+                </div>
+              </div>
+            </div>
           </Card>
         </div>
       </div>
