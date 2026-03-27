@@ -10,32 +10,41 @@ interface GovSidePanelProps {
 }
 
 // ─── 共用：必背行政區摘要 ───
-function AdminAreaSummary({ compact }: { compact?: boolean }) {
-  const gap = compact ? 'space-y-2' : 'space-y-3';
+function AdminAreaSummary() {
+  const pink = GOV_TYPE_COLORS['直轄市'];
+  const orange = GOV_TYPE_COLORS['省轄市'];
   return (
-    <div className={`${gap} text-sm`}>
-      <div className={compact ? '' : 'flex gap-2 items-start'}>
-        <span className="shrink-0 font-semibold" style={{ color: GOV_TYPE_COLORS['直轄市'] }}>
-          6 直轄市
-        </span>
-        {compact ? ' ' : null}
-        <span className="text-white/70">台北、新北、桃園、台中、台南、高雄</span>
+    <div className="space-y-4">
+      {/* 6 直轄市 */}
+      <div>
+        <div className="text-xs font-semibold mb-1.5" style={{ color: pink }}>6 直轄市</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {['台北', '新北', '桃園', '台中', '台南', '高雄'].map(name => (
+            <div key={name} className="text-center py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: `${pink}18`, border: `1px solid ${pink}35`, color: pink }}>
+              {name}
+            </div>
+          ))}
+        </div>
       </div>
-      <div className={compact ? '' : 'flex gap-2 items-start'}>
-        <span className="shrink-0 font-semibold" style={{ color: GOV_TYPE_COLORS['省轄市'] }}>
-          3 省轄市
-        </span>
-        {compact ? ' ' : null}
-        <span className="text-white/70">基隆、新竹、嘉義</span>
-      </div>
-      <div className={compact ? '' : 'flex gap-2 items-start'}>
-        <span className="shrink-0 font-semibold" style={{ color: GOV_TYPE_COLORS['縣'] }}>
-          13 縣
-        </span>
-        {compact ? ' ' : null}
-        <span className="text-white/60 text-xs leading-relaxed">
-          新竹縣、苗栗、彰化、南投、雲林、嘉義縣、屏東、宜蘭、花蓮、台東、澎湖、金門、連江
-        </span>
+
+      {/* 3 省轄市 */}
+      <div>
+        <div className="text-xs font-semibold mb-1.5" style={{ color: orange }}>3 省轄市</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {['基隆', '新竹', '嘉義'].map(name => (
+            <div key={name} className="text-center py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: `${orange}18`, border: `1px solid ${orange}35`, color: orange }}>
+              {name}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 rounded-lg py-1.5 text-center text-xs"
+          style={{ background: `${orange}10`, border: `1px solid ${orange}25` }}>
+          <span className="text-white/40">口訣　</span>
+          <span className="font-semibold" style={{ color: orange }}>買滷味要加雞心</span>
+          <span className="text-white/35">　嘉基新</span>
+        </div>
       </div>
     </div>
   );
@@ -86,7 +95,7 @@ function Card({
       <div
         className="transition-all duration-300 overflow-hidden"
         style={{
-          maxHeight: !expandable || expanded ? 800 : 0,
+          maxHeight: !expandable || expanded ? 1200 : 0,
           opacity: !expandable || expanded ? 1 : 0,
         }}
       >
@@ -228,8 +237,8 @@ function HoverInfo({
     return (
       <div className="flex flex-col items-center justify-center py-8 gap-3">
         <div className="text-3xl opacity-40">🖱</div>
-        <div className="text-sm text-white/50">移動滑鼠到地圖上的縣市</div>
-        <div className="text-xs text-white/35">查看該地區的政府制度</div>
+        <div className="text-base text-white/50">移動滑鼠到地圖上的縣市</div>
+        <div className="text-sm text-white/35">查看該地區的政府制度</div>
       </div>
     );
   }
@@ -237,52 +246,49 @@ function HoverInfo({
   const typeColor = GOV_TYPE_COLORS[govData.type];
 
   return (
-    <div className="space-y-3 py-1">
+    <div className="space-y-4 py-1">
       {/* 縣市名 + 類型 */}
       <div className="flex items-center gap-2">
-        <span className="text-xl font-bold text-white">{regionName}</span>
+        <span className="text-2xl font-bold text-white">{regionName}</span>
         <span
-          className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
-          style={{
-            background: `${typeColor}25`,
-            color: typeColor,
-            border: `1px solid ${typeColor}50`,
-          }}
+          className="text-sm font-semibold px-2.5 py-0.5 rounded-full"
+          style={{ background: `${typeColor}25`, color: typeColor, border: `1px solid ${typeColor}50` }}
         >
           {govData.type}
         </span>
       </div>
 
       {/* 首長 */}
-      <div className="text-sm text-white/60">
-        首長：<span className="text-white/90">{govData.head}</span>
+      <div className="text-base text-white/60">
+        首長：<span className="text-white/90 font-medium">{govData.head}</span>
       </div>
 
-      {/* 行政 ⟷ 立法 */}
-      <div className="space-y-1.5">
+      {/* 行政 ⟷ 立法（水平並排）*/}
+      <div className="rounded-lg p-3 space-y-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-cyan-400" />
-          <span className="text-sm text-white/70">
-            行政：<span className="text-white/95 font-medium">{govData.executive}</span>
-          </span>
+          <div className="flex items-center gap-2 flex-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shrink-0" />
+            <span className="text-sm text-white/60">行政</span>
+            <span className="text-base text-white/95 font-semibold">{govData.executive}</span>
+          </div>
+          <span className="text-white/30 text-lg shrink-0">⟷</span>
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            <span className="text-base text-white/95 font-semibold">{govData.legislative}</span>
+            <span className="text-sm text-white/60">立法</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+          </div>
         </div>
-        <div className="text-center text-white/35 text-xs">⟷ 平行監督</div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-sm text-white/70">
-            立法：<span className="text-white/95 font-medium">{govData.legislative}</span>
-          </span>
-        </div>
+        <div className="text-center text-white/35 text-xs tracking-widest">平行監督</div>
       </div>
 
       {/* 下轄 */}
-      <div className="text-sm text-white/60 space-y-1 pt-1 border-t border-white/10">
-        <div>
+      <div className="text-sm text-white/60 space-y-1.5 pt-1 border-t border-white/10">
+        <div className="text-base">
           下轄：<span className="text-white/80">{govData.subdivisionType}</span>
-          <span className="text-white/25 mx-1">→</span>
+          <span className="text-white/25 mx-1.5">→</span>
           <span className="text-white/80">{govData.subdivisionGov}</span>
         </div>
-        <div>
+        <div className="text-sm">
           {govData.subdivisionLeg ? (
             <span className="text-emerald-400">✓ 立法：{govData.subdivisionLeg}</span>
           ) : (
@@ -294,12 +300,8 @@ function HoverInfo({
       {/* 山地原住民區 */}
       {govData.hasIndigenousDistrict && (
         <div
-          className="text-xs px-3 py-2 rounded-lg"
-          style={{
-            background: 'rgba(251,113,133,0.12)',
-            border: '1px solid rgba(251,113,133,0.25)',
-            color: 'rgba(251,113,133,0.9)',
-          }}
+          className="text-sm px-3 py-2.5 rounded-lg"
+          style={{ background: 'rgba(251,113,133,0.12)', border: '1px solid rgba(251,113,133,0.25)', color: 'rgba(251,113,133,0.9)' }}
         >
           ⚠ {govData.note}
         </div>
@@ -311,13 +313,8 @@ function HoverInfo({
 // ─── 主面板（lg 以上顯示） ───
 export function GovSidePanel({ hoveredRegion, hoveredData }: GovSidePanelProps) {
   return (
-    <div className="w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3 p-4 overflow-y-auto max-lg:hidden">
-      {/* Card 1：筆記樹枝圖（預設收合） */}
-      <Card title="地方制度筆記" icon="📋" expandable defaultExpanded={false}>
-        <TreeDiagram />
-      </Card>
-
-      {/* Card 2：縣市資訊（hover 連動） */}
+    <div className="w-[340px] xl:w-[380px] shrink-0 space-y-3 p-4 pb-16 overflow-y-auto max-lg:hidden">
+      {/* Card 1：縣市資訊（hover 連動） */}
       <Card title="縣市資訊" icon="🏛">
         <HoverInfo regionName={hoveredRegion} govData={hoveredData} />
       </Card>
@@ -330,7 +327,7 @@ export function GovSidePanel({ hoveredRegion, hoveredData }: GovSidePanelProps) 
       {/* Card 4：山地原住民區（預設收合，節省空間） */}
       <Card title="山地原住民區" icon="🏔" expandable defaultExpanded={false}>
         <div className="space-y-3">
-          <div className="text-xs text-white/50">
+          <div className="text-sm text-white/50">
             直轄市內具地方自治權之原住民區，有民選區長＋區民代表會
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -366,7 +363,7 @@ export function GovSidePanel({ hoveredRegion, hoveredData }: GovSidePanelProps) 
               <ruby>和平<rp>(</rp><rt className="text-white/30 text-[9px]">和平</rt><rp>)</rp></ruby>，在
               <ruby>桃源<rp>(</rp><rt className="text-white/30 text-[9px]">桃源</rt><rp>)</rp></ruby>
               <ruby>茂林<rp>(</rp><rt className="text-white/30 text-[9px]">茂林</rt><rp>)</rp></ruby>的
-              <ruby>那瑪夏<rp>(</rp><rt className="text-white/30 text-[9px]">那瑪夏</rt><rp>)</rp></ruby>
+              <ruby>那馬下<rp>(</rp><rt className="text-white/30 text-[9px]">那瑪夏</rt><rp>)</rp></ruby>
             </div>
           </div>
         </div>
@@ -437,7 +434,7 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
             <HoverInfo regionName={hoveredRegion} govData={hoveredData} />
           )}
           <Card title="必背行政區" icon="📌" expandable defaultExpanded={false}>
-            <AdminAreaSummary compact />
+            <AdminAreaSummary />
           </Card>
         </div>
       </div>

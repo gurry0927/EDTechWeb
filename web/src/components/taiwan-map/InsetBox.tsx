@@ -33,10 +33,10 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
 
       {/* Box label */}
       <text
-        x={box.x + 10} y={box.y + 18}
+        x={box.x + 10} y={box.y + 20}
         fill={theme.secondaryAccent}
-        fontSize={12} fontFamily={theme.fontFamily}
-        fontWeight={500}
+        fontSize={15} fontFamily={theme.fontFamily}
+        fontWeight={600}
         style={{ pointerEvents: 'none' }}
       >
         {label}
@@ -51,8 +51,8 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
             strokeDasharray={sub.strokeDasharray} rx={3}
           />
           <text
-            x={sub.x + 10} y={sub.y + 15}
-            fill={theme.secondaryAccent} fontSize={9}
+            x={sub.x + 10} y={sub.y + 16}
+            fill={theme.secondaryAccent} fontSize={12}
             fontFamily={theme.fontFamily}
           >
             {sub.label}
@@ -106,7 +106,7 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
             <text
               x={cx} y={cy + 2} textAnchor="middle"
               fill={theme.labelColor}
-              fontSize={12} fontWeight={600}
+              fontSize={15} fontWeight={600}
               fontFamily={theme.fontFamily}
             >
               {displayLabel}

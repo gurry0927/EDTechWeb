@@ -8,10 +8,10 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
   const { theme } = useTaiwanMap();
   const { title, items, position = 'bottom-right' } = legend;
 
-  const itemH = 20;
-  const padding = 12;
-  const w = 150;
-  const h = padding * 2 + 24 + items.length * itemH;
+  const itemH = 24;
+  const padding = 14;
+  const w = 175;
+  const h = padding * 2 + 28 + items.length * itemH;
 
   let x: number, y: number;
   switch (position) {
@@ -33,8 +33,8 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
         stroke={theme.insetBorder} strokeWidth={0.5}
       />
       <text
-        x={x + padding} y={y + padding + 12}
-        fill={theme.titleColor} fontSize={13} fontWeight={600}
+        x={x + padding} y={y + padding + 14}
+        fill={theme.titleColor} fontSize={15} fontWeight={600}
         fontFamily={theme.fontFamily}
       >
         {title}
@@ -43,14 +43,14 @@ export function MapLegend({ legend }: { legend: LegendConfig }) {
         <g key={i}>
           <rect
             x={x + padding}
-            y={y + padding + 24 + i * itemH}
-            width={14} height={14} rx={2}
+            y={y + padding + 28 + i * itemH}
+            width={16} height={16} rx={3}
             fill={item.color}
           />
           <text
-            x={x + padding + 20}
-            y={y + padding + 24 + i * itemH + 11}
-            fill={theme.labelColor} fontSize={11}
+            x={x + padding + 24}
+            y={y + padding + 28 + i * itemH + 13}
+            fill={theme.labelColor} fontSize={14}
             fontFamily={theme.fontFamily}
           >
             {item.label}
