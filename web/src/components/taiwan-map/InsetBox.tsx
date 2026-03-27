@@ -1,7 +1,7 @@
 'use client';
 
 import { useTaiwanMap } from './context';
-import { DEFAULT_INSET_HOVER_SCALE, PATH_TRANSITION, labelWidth } from './defaults';
+import { DEFAULT_INSET_HOVER_SCALE, PATH_TRANSITION } from './defaults';
 import type { InsetRenderData } from './types';
 
 export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderData) {
@@ -91,22 +91,25 @@ export function InsetBox({ config, paths, hoverId, displayLabel }: InsetRenderDa
         })}
       </g>
 
-      {/* Hover label (below box) */}
+      {/* Hover label (below box) — floating, so scaleFont is correct here.
+          Width must track the compensated font size, not a fixed estimate. */}
       {isHovered && (() => {
-        const w = labelWidth(displayLabel);
+        const fs = scaleFont(18);
+        const w = displayLabel.length * fs * 0.9 + 24;
         const cx = box.x + box.width / 2;
         const cy = box.y + box.height + 15;
+        const h = fs + 12;
         return (
           <g style={{ pointerEvents: 'none' }}>
             <rect
-              x={cx - w / 2} y={cy - 12} width={w} height={24} rx={4}
+              x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx={4}
               fill={theme.labelBackground} fillOpacity={0.9}
               stroke={theme.accentColor} strokeWidth={0.5}
             />
             <text
-              x={cx} y={cy + scaleFont(18) / 2} textAnchor="middle"
+              x={cx} y={cy + fs / 2 - 2} textAnchor="middle"
               fill={theme.labelColor}
-              fontSize={scaleFont(18)} fontWeight={600}
+              fontSize={fs} fontWeight={600}
               fontFamily={theme.fontFamily}
             >
               {displayLabel}

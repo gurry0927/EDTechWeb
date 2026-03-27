@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { LocalGovData } from './types';
-import { GOV_TYPE_COLORS } from './types';
+import { GOV_TYPE_COLORS, INDIGENOUS_DISTRICTS } from './types';
 
 interface GovSidePanelProps {
   hoveredRegion: string | null;
@@ -331,14 +331,7 @@ export function GovSidePanel({ hoveredRegion, hoveredData }: GovSidePanelProps) 
             直轄市內具地方自治權之原住民區，有民選區長＋區民代表會
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {[
-              { name: '烏來', city: '新北' },
-              { name: '復興', city: '桃園' },
-              { name: '和平', city: '台中' },
-              { name: '桃源', city: '高雄' },
-              { name: '茂林', city: '高雄' },
-              { name: '那瑪夏', city: '高雄' },
-            ].map(({ name, city }) => (
+            {INDIGENOUS_DISTRICTS.map(({ name, city }) => (
               <div
                 key={name}
                 className="text-center py-2 rounded-lg"
@@ -443,14 +436,7 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
                 直轄市內具地方自治權之原住民區，有民選區長＋區民代表會
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {[
-                  { name: '烏來', city: '新北' },
-                  { name: '復興', city: '桃園' },
-                  { name: '和平', city: '台中' },
-                  { name: '桃源', city: '高雄' },
-                  { name: '茂林', city: '高雄' },
-                  { name: '那瑪夏', city: '高雄' },
-                ].map(({ name, city }) => (
+                {INDIGENOUS_DISTRICTS.map(({ name, city }) => (
                   <div key={name} className="text-center py-2 rounded-lg"
                     style={{ background: 'rgba(251,113,133,0.10)', border: '1px solid rgba(251,113,133,0.20)' }}>
                     <div className="text-rose-400 text-sm font-semibold">{name}</div>

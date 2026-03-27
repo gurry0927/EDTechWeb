@@ -12,9 +12,19 @@ export interface LocalGovData {
   note?: string;
 }
 
-/** Runtime type guard for data from MapCallbacks */
+/** Runtime type guard for data from MapCallbacks — validates all required fields */
 export function isLocalGovData(d: unknown): d is LocalGovData {
-  return d != null && typeof d === 'object' && 'type' in d && 'executive' in d;
+  return (
+    d != null &&
+    typeof d === 'object' &&
+    'type' in d &&
+    'executive' in d &&
+    'legislative' in d &&
+    'head' in d &&
+    'subdivisionType' in d &&
+    'subdivisionGov' in d &&
+    'subdivisionLeg' in d
+  );
 }
 
 type GovExtra = Pick<LocalGovData, 'hasIndigenousDistrict' | 'note'>;
@@ -62,6 +72,16 @@ export function county(extra?: GovExtra): Record<string, unknown> {
 export function provincialCity(extra?: GovExtra): Record<string, unknown> {
   return { ...PROVINCIAL_CITY, ...extra };
 }
+
+/** 直轄市內的山地原住民區（共 6 個） */
+export const INDIGENOUS_DISTRICTS: { name: string; city: string }[] = [
+  { name: '烏來', city: '新北' },
+  { name: '復興', city: '桃園' },
+  { name: '和平', city: '台中' },
+  { name: '桃源', city: '高雄' },
+  { name: '茂林', city: '高雄' },
+  { name: '那瑪夏', city: '高雄' },
+];
 
 /** 類型對應的顯示顏色（螢光色系） */
 export const GOV_TYPE_COLORS: Record<GovType, string> = {

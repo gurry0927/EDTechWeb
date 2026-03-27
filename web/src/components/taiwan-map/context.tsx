@@ -93,9 +93,24 @@ export function TaiwanMapProvider({
     return { id, label: id, interaction: 'static' };
   }, [regions]);
 
+  /**
+   * Convert a target pixel size to SVG user-unit font-size,
+   * compensating for the SVG's viewBox scaling.
+   *
+   * WHEN TO USE:
+   *   ✅ Floating / overlay labels (MapLabels hover pill, InsetBox hover tooltip)
+   *      — no bounding-box constraint, text should always be ~targetPx on screen.
+   *
+   * WHEN NOT TO USE:
+   *   ❌ Labels inside fixed SVG containers (InsetBox header, MapLegend items)
+   *      — use a natural SVG font-size integer instead (e.g. fontSize={20}).
+   *      Compensated font-size in SVG units grows large on small screens and
+   *      will overflow the fixed container dimensions.
+   *
+   * The 0.55 floor prevents over-compensation on very narrow screens while
+   * keeping text proportional to its surrounding SVG layout.
+   */
   const scaleFont = useCallback((targetPx: number): number => {
-    // Clamp render scale: below ~550px container, let text shrink with SVG
-    // so text never overflows fixed SVG layout boxes on mobile.
     const renderScale = Math.max(containerWidth / SVG_W, 0.55);
     return targetPx / renderScale;
   }, [containerWidth]);

@@ -33,6 +33,9 @@ export function NotesOverlay({ onClose }: { onClose: () => void }) {
     <div
       className="absolute inset-0 z-30 flex flex-col overflow-hidden"
       style={{ background: 'rgba(5,5,16,0.97)', backdropFilter: 'blur(10px)' }}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={-1}
     >
       {/* ── Header（僅標題，不放關閉按鈕）── */}
       <div
