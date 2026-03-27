@@ -392,6 +392,7 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer"
+        style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
       >
         {hoveredRegion && hoveredData ? (
           <>
@@ -421,15 +422,15 @@ export function GovMobileBar({ hoveredRegion, hoveredData, expanded, onToggle }:
         </span>
       </button>
 
-      {/* 展開面板（限高 35vh，避免蓋太多地圖） */}
+      {/* 展開面板 */}
       <div
         className="transition-all duration-300 overflow-y-auto"
         style={{
-          maxHeight: expanded ? '60vh' : 0,
+          maxHeight: expanded ? '60dvh' : 0,
           opacity: expanded ? 1 : 0,
         }}
       >
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-4 space-y-3" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
           {hoveredRegion && hoveredData && (
             <HoverInfo regionName={hoveredRegion} govData={hoveredData} />
           )}

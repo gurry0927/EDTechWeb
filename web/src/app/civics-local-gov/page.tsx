@@ -9,7 +9,7 @@ export default function CivicsLocalGovPage() {
   const [showUI, setShowUI] = useState(true);
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-[#050510] flex flex-col">
+    <main className="relative w-screen h-[100dvh] overflow-hidden bg-[#050510] flex flex-col">
       {/* Top bar */}
       {showUI && (
         <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between">
