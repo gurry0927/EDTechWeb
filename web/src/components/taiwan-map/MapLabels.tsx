@@ -1,7 +1,6 @@
 'use client';
 
 import { useTaiwanMap } from './context';
-import { labelWidth } from './defaults';
 
 export function MapLabels({
   centroids,
@@ -14,10 +13,11 @@ export function MapLabels({
   if (!hoveredId || !centroids[hoveredId]) return null;
 
   const label = getRegionConfig(hoveredId).label;
-  const w = labelWidth(label);
   const [cx, cy] = centroids[hoveredId];
 
   const fs = scaleFont(20);
+  // Width tracks actual rendered font size: CJK chars ≈ 0.9em each
+  const w = label.length * fs * 0.9 + 24;
   return (
     <g style={{ pointerEvents: 'none' }}>
       <rect

@@ -82,7 +82,8 @@ export function CivicsMapShell() {
       </div>
 
       {/* 左側：地圖 + 筆記按鈕 + 筆記展開層 */}
-      <div className="flex-1 min-w-0 relative">
+      {/* pt-14 pushes the SVG below the absolute-positioned toggle buttons */}
+      <div className="flex-1 min-w-0 relative pt-14">
         <InteractiveMap config={config} />
 
         {/* 筆記按鈕（右上角，點擊切換開關） */}
