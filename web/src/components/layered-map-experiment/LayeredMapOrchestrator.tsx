@@ -22,6 +22,19 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
     initialLayers.filter(l => l.visibleByDefault !== false).map(l => l.id)
   );
 
+  // 初始化控制變數的值 (從 layer configs 中榨取出來的 defaultValue)
+  const [controlValues, setControlValues] = useState<Record<string, number>>(() => {
+    const initVals: Record<string, number> = {};
+    initialLayers.forEach(layer => {
+      if (layer.controls) {
+        layer.controls.forEach(c => {
+          initVals[c.variableName] = c.defaultValue;
+        });
+      }
+    });
+    return initVals;
+  });
+
   // 用來裝從 API/JSON 下載回來的 Geo 原始資料
   const [geoDataCache, setGeoDataCache] = useState<Record<string, any>>({});
 
@@ -31,6 +44,10 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
         ? prev.filter(id => id !== layerId) 
         : [...prev, layerId]
     );
+  };
+
+  const handleControlChange = (variableName: string, value: number) => {
+    setControlValues(prev => ({ ...prev, [variableName]: value }));
   };
 
   // ── TODO: AI FILL HERE (Data Fetching) ──
@@ -120,6 +137,8 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
       layers={initialLayers} 
       activeLayers={activeLayers} 
       onToggleLayer={handleToggleLayer}
+      controlValues={controlValues}
+      onControlChange={handleControlChange}
     >
       {/* ── TODO: AI FILL HERE (SVG Render) ── */}
       <div className="relative w-full h-full flex items-center justify-center overflow-hidden p-6 bg-slate-900/50 rounded-2xl border border-slate-700/50 shadow-inner">
@@ -139,6 +158,10 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
               <stop offset="50%" stopColor="rgba(56, 189, 248, 0.2)" />
               <stop offset="100%" stopColor="rgba(56, 189, 248, 0)" />
             </radialGradient>
+            <linearGradient id="lakeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(14, 165, 233, 0.5)" />
+              <stop offset="100%" stopColor="rgba(2, 132, 199, 0.8)" />
+            </linearGradient>
           </defs>
 
           {/* 渲染圖層：按照 Manifest 順序疊加 */}
@@ -153,6 +176,10 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
                 {data.features.map((feature: any, idx: number) => {
                   // 行政區域渲染
                   if (layer.renderType === 'polygon') {
+                    // TODO: AI FILL HERE - [台北湖海平面動態邏輯]
+                    // 如果 layer.id === 'lake_mask'，你需要抓取 controlValues['seaLevel']。
+                    // 用這個 seaLevel 的值去改變多邊形的透明度 opacity，甚至可以改變 scale 來呈現淹水範圍的擴大。
+                    // 提示：你可以直接回傳帶有特定 className 的 path，例如 `fill-[url(#lakeGradient)]`。
                     return (
                       <path
                         key={idx}
@@ -162,6 +189,21 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
                       />
                     );
                   }
+
+                  // 點圖層渲染 (例如考古遺址)
+                  if (layer.renderType === 'points' && feature.geometry.type === 'Point') {
+                    const coords = projection(feature.geometry.coordinates);
+                    if (!coords) return null;
+                    const [x, y] = coords;
+                    return (
+                      <g key={idx}>
+                         {/* 圓山遺址的標記點 */}
+                         <circle cx={x} cy={y} r={6} className="fill-rose-500 shadow-md stroke-slate-100" strokeWidth={2}></circle>
+                         <text x={x+10} y={y+4} className="fill-rose-300 text-[10px] font-bold tracking-widest pointer-events-none drop-shadow-md">{feature.properties.name}</text>
+                      </g>
+                    );
+                  }
+
 
                   // 斷層線渲染
                   if (layer.renderType === 'lines') {

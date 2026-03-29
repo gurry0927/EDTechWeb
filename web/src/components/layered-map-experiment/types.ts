@@ -16,6 +16,25 @@ export interface DefaultGeoFeatureProperties {
 }
 
 /**
+ * 圖層的動態控制項 (例如：滑桿)
+ * 允許從右側面板動態改變圖層內的某個變數 (例如：海平面高度、時間年份)
+ */
+export interface LayerControl {
+  /** 變數的名稱 (對應到 Orchestrator 的 state key) */
+  variableName: string;
+  /** 給使用者看的顯示名稱 */
+  label: string;
+  /** 控制類型，先支援滑桿 */
+  type: 'slider';
+  min: number;
+  max: number;
+  step?: number;
+  defaultValue: number;
+  /** 數值的單位，例如 'm', '年' */
+  unit?: string;
+}
+
+/**
  * 單一圖層的描述清單 (Manifest)
  * 定義一個圖層的元資料、從哪裡取得資料、預設如何顯示
  */
@@ -42,6 +61,9 @@ export interface LayerManifest {
   
   /** 資料來源 URI (如果是內建資料，可以寫 'local:taiwan', 如果是外部檔案寫 'json/xxx.json') */
   dataSourceUri: string;
+
+  /** 此圖層是否攜帶動態控制變數？(例如：海平面模擬滑桿) */
+  controls?: LayerControl[];
 }
 
 /**
@@ -52,4 +74,6 @@ export interface MapContextState {
   activeLayers: string[];
   hoveredFeature: { layerId: string; featureId: string; properties: any } | null;
   selectedFeatures: string[];
+  /** 目前所有圖層變數的數值狀態，key 為 variableName */
+  controlValues: Record<string, number>;
 }
