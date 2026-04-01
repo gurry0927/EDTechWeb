@@ -1,382 +1,389 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { DetectiveQuestion, Clue } from './types';
 
-type Stage = 0 | 1 | 2 | 3 | 4;
-
-interface Props {
-  question: DetectiveQuestion;
-  onBack: () => void;
-}
-
-const STAGE_INTROS = [
-  '先把題目讀完，不急著選答案。注意題目在問什麼、給了什麼條件。',
-  '現在你是偵探。掃描題目和圖片，把你覺得「有問題」的地方點出來。小心，只有 3 次失誤機會。',
-  '手上有線索了。現在一步一步推 — 每個問題都不需要你知道答案，只需要你想一想。',
-  '推理完畢。看看這題到底在考哪個概念，跟課本哪個單元有關。',
-  '結案。回顧整個推理過程，看看你遺漏了什麼。',
-];
-const HIT_MESSAGES = ['好眼力！', '關鍵線索！', '就是這個！', '偵探直覺很準！', '重要發現！'];
-const MISS_MESSAGES = ['不是這個，再看看', '這個不太關鍵', '再想想別的'];
+// ── Constants ──
 const MAX_MISSES = 3;
+const HIT_MSGS = ['好眼力！', '關鍵線索！', '就是這個！', '偵探直覺很準！'];
+const MISS_MSGS = ['這個不太關鍵，再看看別的。', '不是這個，再想想。', '這裡沒什麼線索。'];
+function pick(arr: string[]) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function pickRandom(arr: string[]) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+// ── Types ──
+type Phase = 'clue' | 'question' | 'concept' | 'solution';
+type Bubble = { from: 'detective' | 'student' | 'system'; text: string; key: string; };
 
-interface Segment { text: string; clueIndex: number | null; }
+interface Props { question: DetectiveQuestion; onBack: () => void; }
 
-function buildSegments(stem: string, clues: Clue[]): Segment[] {
-  const valid = clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.startIndex >= 0).sort((a, b) => a.startIndex - b.startIndex);
-  if (valid.length === 0) return stem.split(/(?<=[。，；：、？！）」])/).filter(Boolean).map(text => ({ text, clueIndex: null }));
-  const segs: Segment[] = [];
-  let cursor = 0;
+// ── Segment building ──
+interface Seg { text: string; clueIndex: number | null; }
+
+function buildSegs(src: string, clues: { startIndex: number; length: number; idx: number }[]): Seg[] {
+  const valid = clues.filter(c => c.startIndex >= 0).sort((a, b) => a.startIndex - b.startIndex);
+  if (!valid.length) return src.split(/(?<=[。，；：、？！）」])/).filter(Boolean).map(t => ({ text: t, clueIndex: null }));
+  const segs: Seg[] = [];
+  let cur = 0;
   valid.forEach(c => {
-    if (c.startIndex > cursor) stem.slice(cursor, c.startIndex).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(text => segs.push({ text, clueIndex: null }));
-    segs.push({ text: stem.slice(c.startIndex, c.startIndex + c.length), clueIndex: c.idx });
-    cursor = c.startIndex + c.length;
+    if (c.startIndex > cur) src.slice(cur, c.startIndex).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
+    segs.push({ text: src.slice(c.startIndex, c.startIndex + c.length), clueIndex: c.idx });
+    cur = c.startIndex + c.length;
   });
-  if (cursor < stem.length) stem.slice(cursor).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(text => segs.push({ text, clueIndex: null }));
+  if (cur < src.length) src.slice(cur).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
   return segs;
 }
 
+// ── Component ──
 export function DetectivePlayer({ question, onBack }: Props) {
-  const [stage, setStage] = useState<Stage>(0);
+  const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
-  const [expandedClue, setExpandedClue] = useState<number | null>(null);
   const [missCount, setMissCount] = useState(0);
-  const [toast, setToast] = useState<{ text: string; type: 'hit' | 'miss' } | null>(null);
+  const [expandedClue, setExpandedClue] = useState<number | null>(null);
+  const [revealedQuestions, setRevealedQuestions] = useState(0); // how many socratic Qs shown
   const [revealedHints, setRevealedHints] = useState<Set<number>>(new Set());
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [stemOpen, setStemOpen] = useState(true);
 
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const clueLocked = missCount >= MAX_MISSES;
-
-  const figureClues = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.startIndex === -1), [question.clues]);
-  const stemSegments = useMemo(() => buildSegments(question.stem, question.clues), [question.stem, question.clues]);
-  const figureSegments = useMemo(() => {
-    if (!question.figure || figureClues.length === 0) return null;
-    const fig = question.figure;
-    const matches: { start: number; end: number; clueIdx: number }[] = [];
-    figureClues.forEach(fc => { const pos = fig.indexOf(fc.text); if (pos >= 0) matches.push({ start: pos, end: pos + fc.text.length, clueIdx: fc.idx }); });
-    matches.sort((a, b) => a.start - b.start);
-    if (matches.length === 0) return null;
-    const segs: Segment[] = [];
-    let cursor = 0;
-    matches.forEach(m => {
-      if (m.start > cursor) fig.slice(cursor, m.start).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(text => segs.push({ text, clueIndex: null }));
-      segs.push({ text: fig.slice(m.start, m.end), clueIndex: m.clueIdx });
-      cursor = m.end;
-    });
-    if (cursor < fig.length) fig.slice(cursor).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(text => segs.push({ text, clueIndex: null }));
-    return segs;
-  }, [question.figure, figureClues]);
   const totalClues = question.clues.length;
 
+  // Build segments
+  const cluesWithIdx = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })), [question.clues]);
+  const stemSegs = useMemo(() => buildSegs(question.stem, cluesWithIdx.filter(c => c.startIndex >= 0)), [question.stem, cluesWithIdx]);
+  const figureClues = useMemo(() => cluesWithIdx.filter(c => c.startIndex === -1), [cluesWithIdx]);
+  const figureSegs = useMemo(() => {
+    if (!question.figure || !figureClues.length) return null;
+    const matches = figureClues.map(fc => ({ start: question.figure!.indexOf(fc.text), end: question.figure!.indexOf(fc.text) + fc.text.length, clueIdx: fc.idx })).filter(m => m.start >= 0).sort((a, b) => a.start - b.start);
+    if (!matches.length) return null;
+    const segs: Seg[] = [];
+    let cur = 0;
+    matches.forEach(m => {
+      if (m.start > cur) question.figure!.slice(cur, m.start).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
+      segs.push({ text: question.figure!.slice(m.start, m.end), clueIndex: m.clueIdx });
+      cur = m.end;
+    });
+    if (cur < question.figure!.length) question.figure!.slice(cur).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
+    return segs;
+  }, [question.figure, figureClues]);
+
+  // Auto-scroll chat
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [phase, foundClues.size, revealedQuestions, revealedHints.size, showAnswer]);
+
+  // ── Handlers ──
+  const [toast, setToast] = useState<string | null>(null);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 1200); return () => clearTimeout(t); }, [toast]);
 
-  const showToast = useCallback((text: string, type: 'hit' | 'miss') => setToast({ text, type }), []);
+  const onClueHit = useCallback((idx: number) => {
+    if (clueLocked || foundClues.has(idx)) return;
+    setFoundClues(prev => new Set(prev).add(idx));
+    setExpandedClue(idx);
+    setToast(pick(HIT_MSGS));
+  }, [clueLocked, foundClues]);
 
-  const handleSegmentTap = useCallback((seg: Segment) => {
+  const onClueMiss = useCallback(() => {
     if (clueLocked) return;
-    if (seg.clueIndex !== null) {
-      if (foundClues.has(seg.clueIndex)) return;
-      setFoundClues(prev => new Set(prev).add(seg.clueIndex!));
-      setExpandedClue(seg.clueIndex);
-      showToast(pickRandom(HIT_MESSAGES), 'hit');
-    } else {
-      setMissCount(prev => prev + 1);
-      showToast(pickRandom(MISS_MESSAGES), 'miss');
-    }
-  }, [clueLocked, foundClues, showToast]);
+    setMissCount(prev => prev + 1);
+    setToast(pick(MISS_MSGS));
+  }, [clueLocked]);
 
-  const handleFigureClueTap = useCallback((clueIdx: number) => {
-    if (clueLocked || foundClues.has(clueIdx)) return;
-    setFoundClues(prev => new Set(prev).add(clueIdx));
-    setExpandedClue(clueIdx);
-    showToast(pickRandom(HIT_MESSAGES), 'hit');
-  }, [clueLocked, foundClues, showToast]);
+  const onSegTap = useCallback((seg: Seg) => {
+    if (seg.clueIndex !== null) onClueHit(seg.clueIndex);
+    else onClueMiss();
+  }, [onClueHit, onClueMiss]);
 
-  const toggleHint = useCallback((i: number) => {
-    setRevealedHints(prev => { const next = new Set(prev); next.has(i) ? next.delete(i) : next.add(i); return next; });
+  const advanceToQuestions = useCallback(() => {
+    setPhase('question');
+    setRevealedQuestions(1);
   }, []);
 
-  const stageLabels = ['閱讀', '線索', '推理', '概念', '解析'];
-  const stageIcons = ['📖', '🔍', '💭', '🎯', '✅'];
+  const nextQuestion = useCallback(() => {
+    if (revealedQuestions < question.questions.length) {
+      setRevealedQuestions(prev => prev + 1);
+    } else {
+      setPhase('concept');
+    }
+  }, [revealedQuestions, question.questions.length]);
 
-  const clsFound = 'bg-amber-100 dark:bg-amber-500/20 border-b border-amber-400 dark:border-amber-400/40';
-  const clsFoundPassive = 'bg-amber-50 dark:bg-amber-500/15 border-b border-amber-300 dark:border-amber-400/30 rounded-sm px-px';
+  const advanceToSolution = useCallback(() => {
+    setPhase('solution');
+    setShowAnswer(true);
+  }, []);
 
-  // Render interactive text segments (for both stem and figure)
-  const renderInteractiveText = (segments: Segment[], isFigure: boolean) => (
-    segments.map((seg, i) => {
-      const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
-      return (
-        <span
-          key={i}
-          onClick={() => seg.clueIndex !== null
-            ? (isFigure ? handleFigureClueTap(seg.clueIndex) : handleSegmentTap(seg))
-            : handleSegmentTap(seg)
-          }
-          className={`cursor-pointer transition-all duration-300 rounded-sm px-px ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}
-        >
-          {seg.text}
-        </span>
-      );
-    })
+  // ── Render helpers ──
+  const Detective = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex gap-2.5 items-start max-w-[85%]">
+      <span className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-900/40 flex items-center justify-center text-sm shrink-0 border border-cyan-200 dark:border-cyan-800/40">🕵️</span>
+      <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-white/80 leading-relaxed">
+        {children}
+      </div>
+    </div>
   );
 
-  const renderPassiveText = (segments: Segment[]) => (
-    segments.map((seg, i) => {
-      const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
-      return <span key={i} className={isFound ? clsFoundPassive : ''}>{seg.text}</span>;
-    })
+  const Student = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex gap-2.5 items-start max-w-[85%] ml-auto flex-row-reverse">
+      <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-sm shrink-0 border border-amber-200 dark:border-amber-800/30">🧑‍🎓</span>
+      <div className="rounded-2xl rounded-tr-sm px-4 py-2.5 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800/30 text-sm text-slate-700 dark:text-white/80 leading-relaxed">
+        {children}
+      </div>
+    </div>
   );
+
+  const ActionBtn = ({ onClick, children, variant = 'primary' }: { onClick: () => void; children: React.ReactNode; variant?: 'primary' | 'secondary' }) => (
+    <div className="flex justify-center my-2">
+      <button onClick={onClick} className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+        variant === 'primary'
+          ? 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm'
+          : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15'
+      }`}>
+        {children}
+      </button>
+    </div>
+  );
+
+  const clsFound = 'bg-amber-100 dark:bg-amber-500/20 border-b border-amber-400 dark:border-amber-400/40 rounded-sm';
+  const clsFoundPassive = 'bg-amber-50 dark:bg-amber-500/10 border-b border-amber-300 dark:border-amber-400/30 rounded-sm';
+
+  const renderInteractiveSegs = (segs: Seg[], isFigure: boolean) => segs.map((seg, i) => {
+    const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
+    return (
+      <span key={i}
+        onClick={() => seg.clueIndex !== null ? (isFigure ? onClueHit(seg.clueIndex) : onSegTap(seg)) : onSegTap(seg)}
+        className={`cursor-pointer transition-all duration-200 px-px ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}
+      >{seg.text}</span>
+    );
+  });
+
+  const renderPassiveSegs = (segs: Seg[]) => segs.map((seg, i) => {
+    const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
+    return <span key={i} className={isFound ? clsFoundPassive : ''}>{seg.text}</span>;
+  });
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-[#050510] text-slate-800 dark:text-white flex flex-col transition-colors duration-300">
       {/* ── Header ── */}
       <header className="shrink-0 border-b border-slate-200 dark:border-white/10 px-4 py-3 flex items-center gap-3">
         <button onClick={onBack} className="text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/80 transition-colors text-sm flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           返回
         </button>
         <div className="flex-1 text-center">
           <span className="text-xs text-slate-400 dark:text-white/40">{question.source}</span>
         </div>
         <div className="flex items-center gap-1">
-          {[1, 2, 3].map(d => (
-            <span key={d} className={`w-2 h-2 rounded-full ${d <= question.difficulty ? 'bg-amber-400' : 'bg-slate-200 dark:bg-white/15'}`} />
-          ))}
+          {[1, 2, 3].map(d => <span key={d} className={`w-2 h-2 rounded-full ${d <= question.difficulty ? 'bg-amber-400' : 'bg-slate-200 dark:bg-white/15'}`} />)}
         </div>
       </header>
 
-      {/* ── Stage progress ── */}
-      <div className="shrink-0 px-4 py-2.5 border-b border-slate-100 dark:border-white/5">
-        <div className="flex items-center gap-0 max-w-md mx-auto">
-          {stageLabels.map((label, i) => (
-            <div key={i} className="flex items-center flex-1">
-              <button onClick={() => setStage(i as Stage)} className={`flex flex-col items-center gap-1 w-full transition-all ${i === stage ? 'scale-105' : ''}`}>
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${
-                  i < stage ? 'bg-cyan-100 dark:bg-cyan-500/30 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40'
-                  : i === stage ? 'bg-cyan-600 text-white border-2 border-cyan-500 dark:border-cyan-400 shadow-lg shadow-cyan-500/20'
-                  : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/25 border border-slate-200 dark:border-white/10'
-                }`}>
-                  {i < stage ? '✓' : stageIcons[i]}
-                </span>
-                <span className={`text-[10px] ${i <= stage ? 'text-slate-600 dark:text-white/60' : 'text-slate-300 dark:text-white/20'}`}>{label}</span>
-              </button>
-              {i < stageLabels.length - 1 && (
-                <div className={`h-px flex-1 mx-1 mt-[-14px] ${i < stage ? 'bg-cyan-400 dark:bg-cyan-500/40' : 'bg-slate-200 dark:bg-white/8'}`} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Narrative ── */}
-      <div className="px-5 pt-4 pb-2 max-w-2xl mx-auto w-full">
-        <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-cyan-50 dark:bg-cyan-900/10 border border-cyan-200 dark:border-cyan-800/30">
-          <span className="text-sm shrink-0 mt-0.5">🕵️</span>
-          <p className="text-sm text-cyan-800 dark:text-cyan-200/70 leading-relaxed">{STAGE_INTROS[stage]}</p>
-        </div>
-      </div>
-
-      {/* ── Toast ── */}
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce">
-          <div className={`px-4 py-2 rounded-full text-sm font-medium shadow-lg ${
-            toast.type === 'hit' ? 'bg-amber-500/90 text-black' : 'bg-slate-200 dark:bg-white/15 text-slate-600 dark:text-white/70'
-          }`}>{toast.text}</div>
-        </div>
-      )}
-
-      {/* ── Main ── */}
-      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-5 max-w-2xl mx-auto w-full">
-        {/* 題目 */}
-        <section className="space-y-4">
-          <div className="space-y-3 p-4 rounded-xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08]">
-            {stage === 1 && !clueLocked ? (
-              <p className="text-base leading-relaxed text-slate-800 dark:text-white/90">
-                {renderInteractiveText(stemSegments, false)}
-              </p>
-            ) : (
-              <p className="text-base leading-relaxed text-slate-800 dark:text-white/90">
-                {stage > 1 ? renderPassiveText(stemSegments) : question.stem}
-              </p>
-            )}
-
+      {/* ── Sticky stem card ── */}
+      <div className="shrink-0 sticky top-0 z-10 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#050510]/95 backdrop-blur-sm">
+        <button onClick={() => setStemOpen(!stemOpen)} className="w-full px-4 py-2.5 flex items-center gap-2 text-left">
+          <span className="text-xs font-medium text-slate-400 dark:text-white/40">📄 題目</span>
+          <svg className={`w-3.5 h-3.5 text-slate-400 dark:text-white/30 ml-auto transition-transform ${stemOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {stemOpen && (
+          <div className="px-4 pb-3 space-y-2">
+            <p className="text-sm leading-relaxed text-slate-700 dark:text-white/85">
+              {phase === 'clue' && !clueLocked ? renderInteractiveSegs(stemSegs, false) : renderPassiveSegs(stemSegs)}
+            </p>
             {(question.figureImage || question.figure) && (
-              <div className="mt-3 rounded-lg overflow-hidden border border-slate-200 dark:border-white/[0.08]">
-                {question.figureImage && <img src={question.figureImage} alt="題目附圖" className="w-full" />}
+              <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-white/[0.08] text-xs">
+                {question.figureImage && <img src={question.figureImage} alt="附圖" className="w-full" />}
                 {question.figure && (
-                  <div className="px-4 py-3 flex items-start gap-3 bg-slate-50 dark:bg-white/[0.02]">
-                    <span className="text-slate-300 dark:text-white/25 text-lg shrink-0 mt-0.5">🖼</span>
-                    {stage === 1 && !clueLocked && figureSegments ? (
-                      <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
-                        {renderInteractiveText(figureSegments, true)}
-                      </p>
-                    ) : (
-                      <p className="text-sm leading-relaxed text-slate-500 dark:text-white/45">
-                        {stage > 1 && figureSegments ? renderPassiveText(figureSegments) : question.figure}
-                      </p>
-                    )}
+                  <div className="px-3 py-2 bg-slate-50 dark:bg-white/[0.02] flex items-start gap-2">
+                    <span className="text-slate-300 dark:text-white/20 shrink-0">🖼</span>
+                    <p className="text-slate-500 dark:text-white/45 leading-relaxed">
+                      {phase === 'clue' && !clueLocked && figureSegs ? renderInteractiveSegs(figureSegs, true) : (figureSegs ? renderPassiveSegs(figureSegs) : question.figure)}
+                    </p>
                   </div>
                 )}
               </div>
             )}
+            {/* Clue progress in stem card */}
+            {phase === 'clue' && (
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-[10px] text-slate-400 dark:text-white/30">線索 {foundClues.size}/{totalClues}</span>
+                <span className="flex gap-0.5 ml-auto">
+                  {Array.from({ length: MAX_MISSES }).map((_, i) => (
+                    <span key={i} className={`w-2 h-2 rounded-full ${i < missCount ? 'bg-red-400' : 'bg-slate-200 dark:bg-white/15'}`} />
+                  ))}
+                </span>
+              </div>
+            )}
           </div>
+        )}
+      </div>
 
-          {/* Options — only stage 0 and 4 */}
-          {question.options && (stage === 0 || stage === 4) && (
-            <div className="space-y-2">
-              {question.options.map((opt, i) => {
-                const letter = String.fromCharCode(65 + i);
-                const isSelected = selectedOption === letter;
-                const isCorrect = showAnswer && letter === question.answer;
-                const isWrong = showAnswer && isSelected && letter !== question.answer;
-                return (
-                  <button key={i} onClick={() => !showAnswer && setSelectedOption(letter)}
-                    className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${
-                      isCorrect ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                      : isWrong ? 'border-red-400 bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300'
-                      : isSelected ? 'border-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300'
-                      : 'border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/5'
-                    }`}
-                  >
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                      isCorrect ? 'bg-emerald-200 dark:bg-emerald-500/30' : isWrong ? 'bg-red-200 dark:bg-red-500/30' : isSelected ? 'bg-cyan-200 dark:bg-cyan-500/20' : 'bg-slate-100 dark:bg-white/8'
-                    }`}>{letter}</span>
-                    <span className="text-sm">{opt}</span>
-                  </button>
-                );
-              })}
+      {/* ── Toast ── */}
+      {toast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50">
+          <div className="px-4 py-2 rounded-full text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-800 dark:text-black border border-amber-300 dark:border-transparent animate-bounce">
+            {toast}
+          </div>
+        </div>
+      )}
+
+      {/* ── Chat area ── */}
+      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-w-2xl mx-auto w-full">
+        {/* ── Phase: Clue ── */}
+        <Detective>看看這道題，有些關鍵字藏在題幹和附圖裡。<br/>點選你覺得可疑的地方，只有 {MAX_MISSES} 次失誤機會。</Detective>
+
+        {/* Found clues appear as conversation */}
+        {question.clues.map((clue, i) => {
+          if (!foundClues.has(i)) return null;
+          return (
+            <div key={`clue-${i}`} className="space-y-3">
+              <Student>我覺得「{clue.text}」很可疑。</Student>
+              <Detective>
+                <span className="font-medium text-amber-700 dark:text-amber-300">「{clue.text}」</span>
+                <span className="mx-1">—</span>
+                {clue.why}
+              </Detective>
             </div>
-          )}
-        </section>
+          );
+        })}
 
-        {/* ── Stage 1: 線索 ── */}
-        {stage >= 1 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-2">🔍 調查筆記</h3>
-              <div className="flex items-center gap-3">
-                {stage === 1 && (
-                  <span className="flex items-center gap-1">
-                    {Array.from({ length: MAX_MISSES }).map((_, i) => (
-                      <span key={i} className={`inline-block w-2.5 h-2.5 rounded-full transition-all ${i < missCount ? 'bg-red-400' : 'bg-slate-200 dark:bg-white/15'}`} />
-                    ))}
-                  </span>
-                )}
-                <span className="text-xs text-slate-400 dark:text-white/40">{foundClues.size}/{totalClues}</span>
-              </div>
-            </div>
+        {/* Locked message */}
+        {phase === 'clue' && clueLocked && foundClues.size < totalClues && (
+          <Detective>調查次數用完了。沒關係，帶著目前的線索繼續推理吧。</Detective>
+        )}
 
-            {stage === 1 && clueLocked && foundClues.size < totalClues && (
-              <div className="rounded-lg px-4 py-3 text-sm text-red-700 dark:text-white/50 bg-red-50 dark:bg-red-500/[0.08] border border-red-200 dark:border-red-500/15">
-                調查次數用完了。帶著目前找到的線索繼續推理吧。
-              </div>
-            )}
+        {/* Advance to questions */}
+        {phase === 'clue' && (foundClues.size > 0 || clueLocked) && (
+          <ActionBtn onClick={advanceToQuestions}>
+            {foundClues.size >= totalClues ? '線索收集完畢，開始推理 →' : '帶著現有線索繼續 →'}
+          </ActionBtn>
+        )}
 
-            {foundClues.size > 0 && (
-              <div className="space-y-2">
-                {question.clues.map((clue, i) => {
-                  if (!foundClues.has(i)) return null;
-                  const isExpanded = expandedClue === i;
-                  return (
-                    <div key={i} className="rounded-lg border border-amber-300 dark:border-amber-500/20 overflow-hidden bg-amber-50 dark:bg-amber-500/[0.04]">
-                      <button onClick={() => setExpandedClue(isExpanded ? null : i)}
-                        className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-amber-100/50 dark:hover:bg-white/3 transition-colors">
-                        <span className="w-6 h-6 rounded-full bg-amber-200 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">✓</span>
-                        <span className="text-sm text-amber-800 dark:text-amber-200 font-medium">「{clue.text}」</span>
-                        <svg className={`w-4 h-4 text-slate-400 dark:text-white/30 ml-auto transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
+        {/* ── Phase: Questions ── */}
+        {phase === 'question' && (
+          <>
+            <Detective>好，根據你找到的線索，我有幾個問題想問你。</Detective>
+            {question.questions.slice(0, revealedQuestions).map((q, i) => (
+              <div key={`q-${i}`} className="space-y-3">
+                <Detective>{q.prompt}</Detective>
+                {revealedHints.has(i) ? (
+                  <>
+                    <Student>我不太確定...</Student>
+                    <Detective>{q.hint}</Detective>
+                  </>
+                ) : (
+                  <div className="flex justify-end gap-2 my-1">
+                    <button onClick={() => setRevealedHints(prev => new Set(prev).add(i))}
+                      className="px-3 py-1.5 rounded-full text-xs bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-white/50 hover:bg-slate-300 dark:hover:bg-white/15 transition-all">
+                      卡住了，給我提示
+                    </button>
+                    {i === revealedQuestions - 1 && (
+                      <button onClick={nextQuestion}
+                        className="px-3 py-1.5 rounded-full text-xs bg-cyan-600 text-white hover:bg-cyan-500 transition-all">
+                        {revealedQuestions < question.questions.length ? '我想到了，下一題 →' : '推理完畢 →'}
                       </button>
-                      {isExpanded && (
-                        <div className="px-4 pb-3 text-sm text-slate-600 dark:text-white/55 leading-relaxed border-t border-amber-200 dark:border-amber-500/10 pt-2 ml-9">{clue.why}</div>
-                      )}
-                    </div>
-                  );
-                })}
+                    )}
+                  </div>
+                )}
+                {revealedHints.has(i) && i === revealedQuestions - 1 && (
+                  <ActionBtn onClick={nextQuestion} variant="primary">
+                    {revealedQuestions < question.questions.length ? '下一個問題 →' : '推理完畢 →'}
+                  </ActionBtn>
+                )}
               </div>
-            )}
-
-            {stage === 1 && foundClues.size === 0 && !clueLocked && (
-              <p className="text-xs text-slate-400 dark:text-white/30 px-1">點選題目中你覺得可疑的部分，小心 — 只有 {MAX_MISSES} 次失誤機會。</p>
-            )}
-
-            {stage >= 4 && foundClues.size < totalClues && (
-              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/5">
-                <p className="text-xs text-slate-400 dark:text-white/30">你漏掉的線索：</p>
-                {question.clues.map((clue, i) => {
-                  if (foundClues.has(i)) return null;
-                  return (
-                    <div key={i} className="rounded-lg border border-slate-200 dark:border-white/8 px-4 py-3 bg-slate-50 dark:bg-white/[0.02]">
-                      <p className="text-sm text-slate-500 dark:text-white/45">「{clue.text}」</p>
-                      <p className="text-xs text-slate-400 dark:text-white/30 mt-1 leading-relaxed">{clue.why}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+            ))}
+          </>
         )}
 
-        {/* ── Stage 2: 推理 ── */}
-        {stage >= 2 && (
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-cyan-700 dark:text-cyan-400 flex items-center gap-2">💭 推理提問</h3>
-            <div className="space-y-3">
-              {question.questions.map((q, i) => (
-                <div key={i} className="rounded-lg p-4 space-y-2 bg-cyan-50 dark:bg-cyan-900/[0.08] border border-cyan-200 dark:border-cyan-800/20">
-                  <p className="text-sm text-cyan-800 dark:text-cyan-200 font-medium">{q.prompt}</p>
-                  <button onClick={() => toggleHint(i)} className="text-xs text-cyan-600 dark:text-cyan-500/60 hover:text-cyan-700 dark:hover:text-cyan-400 transition-colors flex items-center gap-1">
-                    {revealedHints.has(i) ? '收合' : '卡住了？看提示'}
-                    <svg className={`w-3 h-3 transition-transform ${revealedHints.has(i) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {revealedHints.has(i) && (
-                    <p className="text-sm text-slate-600 dark:text-white/50 leading-relaxed pl-3 border-l-2 border-cyan-300 dark:border-cyan-500/25">{q.hint}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Stage 3: 概念 ── */}
-        {stage >= 3 && (
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">🎯 概念定位</h3>
-            <div className="rounded-lg p-4 space-y-3 bg-emerald-50 dark:bg-emerald-900/[0.08] border border-emerald-200 dark:border-emerald-800/20">
-              <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-emerald-200 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 font-medium">
+        {/* ── Phase: Concept ── */}
+        {phase === 'concept' && (
+          <>
+            <Detective>
+              推理得不錯。這題考的是：
+              <span className="inline-block mt-2 px-2.5 py-0.5 text-xs rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 font-medium">
                 {question.concept.unit}
               </span>
-              <p className="text-sm text-slate-700 dark:text-white/65 leading-relaxed">{question.concept.brief}</p>
-              {question.concept.keyFormula && (
-                <div className="px-3 py-2 rounded bg-slate-100 dark:bg-white/5 text-slate-800 dark:text-white/80 text-sm font-mono">{question.concept.keyFormula}</div>
-              )}
-              {question.concept.fieldNote && (
-                <div className="mt-2 px-3 py-2 rounded-lg text-xs text-slate-500 dark:text-white/40 leading-relaxed bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.05]">
-                  <span className="text-slate-400 dark:text-white/25 font-medium">田野筆記：</span>{question.concept.fieldNote}
-                </div>
-              )}
-            </div>
-          </section>
+            </Detective>
+            <Detective>{question.concept.brief}</Detective>
+            {question.concept.fieldNote && (
+              <Detective>
+                <span className="text-slate-400 dark:text-white/35 text-xs">📍 田野筆記：</span><br/>
+                <span className="text-xs text-slate-500 dark:text-white/45">{question.concept.fieldNote}</span>
+              </Detective>
+            )}
+            <ActionBtn onClick={advanceToSolution}>看答案和完整解析 →</ActionBtn>
+          </>
         )}
 
-        {/* ── Stage 4: 解析 ── */}
-        {stage >= 4 && (
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-violet-700 dark:text-violet-400 flex items-center gap-2">✅ 破案</h3>
+        {/* ── Phase: Solution ── */}
+        {phase === 'solution' && (
+          <>
+            {/* Options */}
+            {question.options && (
+              <div className="space-y-2 my-2">
+                {question.options.map((opt, i) => {
+                  const letter = String.fromCharCode(65 + i);
+                  const isCorrect = letter === question.answer;
+                  const isSelected = selectedOption === letter;
+                  const isWrong = isSelected && !isCorrect;
+                  return (
+                    <button key={i} onClick={() => !showAnswer && setSelectedOption(letter)}
+                      className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${
+                        isCorrect && showAnswer ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                        : isWrong && showAnswer ? 'border-red-400 bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300'
+                        : 'border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5'
+                      }`}>
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        isCorrect && showAnswer ? 'bg-emerald-200 dark:bg-emerald-500/30' : isWrong && showAnswer ? 'bg-red-200 dark:bg-red-500/30' : 'bg-slate-100 dark:bg-white/8'
+                      }`}>{letter}</span>
+                      <span className="text-sm">{opt}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <Detective>
+              答案是 <span className="font-bold text-emerald-700 dark:text-emerald-300">({question.answer})</span>。來看完整推理：
+            </Detective>
+
+            {/* Steps */}
+            <Detective>
+              <ol className="space-y-1.5 mt-1">
+                {question.solution.steps.map((step, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-violet-600 dark:text-violet-400 font-bold text-xs mt-0.5">{i + 1}.</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </Detective>
+
+            {/* Common mistakes */}
+            {question.solution.commonMistakes?.length ? (
+              <Detective>
+                <span className="text-red-600 dark:text-red-400 font-medium text-xs">⚠️ 常見錯誤：</span>
+                <ul className="mt-1 space-y-1">
+                  {question.solution.commonMistakes.map((m, i) => (
+                    <li key={i} className="text-xs text-slate-500 dark:text-white/40 leading-relaxed">• {m}</li>
+                  ))}
+                </ul>
+              </Detective>
+            ) : null}
+
+            {/* Missed clues */}
+            {foundClues.size < totalClues && (
+              <Detective>
+                <span className="text-amber-600 dark:text-amber-400 font-medium text-xs">你漏掉的線索：</span>
+                <ul className="mt-1 space-y-1">
+                  {question.clues.map((c, i) => {
+                    if (foundClues.has(i)) return null;
+                    return <li key={i} className="text-xs text-slate-500 dark:text-white/40">•「{c.text}」— {c.why}</li>;
+                  })}
+                </ul>
+              </Detective>
+            )}
 
             {/* Summary */}
-            <div className="rounded-lg px-4 py-3 flex items-center gap-4 text-xs bg-violet-50 dark:bg-violet-900/[0.1] border border-violet-200 dark:border-violet-800/20">
+            <div className="rounded-xl p-4 flex items-center gap-4 text-xs bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800/20 my-2">
               <div className="text-center">
                 <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{foundClues.size}<span className="text-slate-400 dark:text-white/30 text-xs font-normal">/{totalClues}</span></div>
                 <div className="text-slate-400 dark:text-white/30">線索</div>
@@ -393,64 +400,28 @@ export function DetectivePlayer({ question, onBack }: Props) {
               </div>
               <div className="flex-1 text-right">
                 {foundClues.size === totalClues && missCount === 0
-                  ? <span className="text-amber-600 dark:text-amber-300">完美偵探 🏆</span>
+                  ? <span className="text-amber-600 dark:text-amber-300 font-medium">完美偵探 🏆</span>
                   : foundClues.size >= totalClues * 0.75
-                    ? <span className="text-emerald-600 dark:text-emerald-300">觀察敏銳</span>
+                    ? <span className="text-emerald-600 dark:text-emerald-300 font-medium">觀察敏銳</span>
                     : <span className="text-slate-400 dark:text-white/40">下次再仔細看看</span>
                 }
               </div>
             </div>
-
-            <div className="rounded-lg p-4 space-y-4 bg-violet-50 dark:bg-violet-900/[0.06] border border-violet-200 dark:border-violet-800/15">
-              <ol className="space-y-2">
-                {question.solution.steps.map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-violet-200 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
-                    <span className="text-slate-700 dark:text-white/65 leading-relaxed">{step}</span>
-                  </li>
-                ))}
-              </ol>
-              {question.solution.commonMistakes && question.solution.commonMistakes.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
-                  <p className="text-xs font-semibold text-red-500 dark:text-red-400/60">常見錯誤</p>
-                  {question.solution.commonMistakes.map((m, i) => (
-                    <p key={i} className="text-xs text-slate-500 dark:text-white/35 leading-relaxed pl-3 border-l-2 border-red-200 dark:border-red-500/15">{m}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
+          </>
         )}
+
+        <div ref={chatEndRef} />
       </main>
 
       {/* ── Footer ── */}
-      <footer className="shrink-0 border-t border-slate-200 dark:border-white/10 px-4 py-3 flex items-center gap-3 bg-white dark:bg-transparent" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-        {stage < 4 ? (
-          <>
-            {stage === 0 && selectedOption && !showAnswer && (
-              <button onClick={() => setShowAnswer(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white/70 hover:bg-slate-300 dark:hover:bg-white/15 transition-all">
-                確認答案
-              </button>
-            )}
-            <button onClick={() => setStage((stage + 1) as Stage)}
-              className="ml-auto px-5 py-2 rounded-lg text-sm font-medium bg-cyan-600 text-white hover:bg-cyan-500 transition-all flex items-center gap-2">
-              {stageIcons[stage + 1]} {stageLabels[stage + 1]}
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </>
-        ) : (
-          <div className="w-full flex items-center justify-between">
-            <button onClick={() => { setStage(0); setShowAnswer(true); }}
-              className="px-4 py-2 rounded-lg text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70 transition-all">
-              回到題目
-            </button>
-            <span className="text-xs text-slate-300 dark:text-white/25">
-              {question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}
-            </span>
-          </div>
+      <footer className="shrink-0 border-t border-slate-200 dark:border-white/10 px-4 py-3 bg-white dark:bg-transparent flex items-center justify-between" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+        <span className="text-[10px] text-slate-300 dark:text-white/20">
+          {question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}
+        </span>
+        {phase === 'solution' && (
+          <button onClick={onBack} className="text-xs text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70 transition-colors">
+            回到題庫
+          </button>
         )}
       </footer>
     </div>
