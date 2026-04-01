@@ -284,27 +284,28 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 <div key={`q-${i}`} className="space-y-3">
                   <Detective>{q.prompt}</Detective>
 
-                  {revealedHints.has(i) ? (
+                  {/* Show hint if revealed */}
+                  {revealedHints.has(i) && (
                     <>
                       <Student>我不太確定...</Student>
                       <Detective>{q.hint}</Detective>
                     </>
-                  ) : (
-                    isLatest && !showingOptions && !wrongAfterThis && (
-                      <div className="flex justify-end gap-2 my-1">
-                        <button onClick={() => setRevealedHints(prev => new Set(prev).add(i))}
-                          className="px-3 py-1.5 rounded-full text-xs bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-white/50 hover:bg-slate-300 dark:hover:bg-white/15 transition-all">
-                          卡住了，給我提示
-                        </button>
-                      </div>
-                    )
                   )}
 
-                  {/* "真相只有一個" button — shown after hint or as alternative */}
-                  {isLatest && !showingOptions && !wrongAfterThis && (revealedHints.has(i) || true) && (
-                    <ActionBtn onClick={tryAnswer}>
-                      🔎 我知道了，真相只有一個
-                    </ActionBtn>
+                  {/* Action buttons — only for the latest question, before answering */}
+                  {isLatest && !showingOptions && !wrongAfterThis && (
+                    <div className="flex justify-center gap-3 my-2">
+                      {!revealedHints.has(i) && (
+                        <button onClick={() => setRevealedHints(prev => new Set(prev).add(i))}
+                          className="px-4 py-2 rounded-full text-xs bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-white/50 hover:bg-slate-300 dark:hover:bg-white/15 transition-all">
+                          卡住了，給我提示
+                        </button>
+                      )}
+                      <button onClick={tryAnswer}
+                        className="px-5 py-2 rounded-full text-sm font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm transition-all flex items-center gap-1.5">
+                        🔎 我知道了，真相只有一個
+                      </button>
+                    </div>
                   )}
 
                   {/* ABCD letter buttons */}
