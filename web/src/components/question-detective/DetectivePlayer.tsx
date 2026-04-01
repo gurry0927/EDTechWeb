@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import type { DetectiveQuestion } from './types';
+import { useState, useCallback, useMemo } from 'react';
+import type { DetectiveQuestion, Clue } from './types';
 
 type Stage = 0 | 1 | 2 | 3 | 4; // 0=題目, 1=線索, 2=提問, 3=概念, 4=解析
 
@@ -10,19 +10,93 @@ interface Props {
   onBack: () => void;
 }
 
+// ── Build clickable segments from stem + clues ──
+interface Segment {
+  text: string;
+  clueIndex: number | null; // null = not a clue (distractor)
+}
+
+function buildSegments(stem: string, clues: Clue[]): Segment[] {
+  const validClues = clues
+    .map((c, i) => ({ ...c, idx: i }))
+    .filter(c => c.startIndex >= 0)
+    .sort((a, b) => a.startIndex - b.startIndex);
+
+  if (validClues.length === 0) {
+    // No in-stem clues: split by punctuation into tappable chunks
+    const chunks = stem.split(/(?<=[。，；：、？！）」])/);
+    return chunks.filter(Boolean).map(text => ({ text, clueIndex: null }));
+  }
+
+  const segments: Segment[] = [];
+  let cursor = 0;
+
+  validClues.forEach(clue => {
+    // Text before this clue — split by punctuation into smaller chunks
+    if (clue.startIndex > cursor) {
+      const before = stem.slice(cursor, clue.startIndex);
+      const chunks = before.split(/(?<=[。，；：、？！）」])/);
+      chunks.filter(Boolean).forEach(text => segments.push({ text, clueIndex: null }));
+    }
+    // The clue itself
+    segments.push({
+      text: stem.slice(clue.startIndex, clue.startIndex + clue.length),
+      clueIndex: clue.idx,
+    });
+    cursor = clue.startIndex + clue.length;
+  });
+
+  // Remaining text after last clue
+  if (cursor < stem.length) {
+    const tail = stem.slice(cursor);
+    const chunks = tail.split(/(?<=[。，；：、？！）」])/);
+    chunks.filter(Boolean).forEach(text => segments.push({ text, clueIndex: null }));
+  }
+
+  return segments;
+}
+
 export function DetectivePlayer({ question, onBack }: Props) {
   const [stage, setStage] = useState<Stage>(0);
-  const [revealedClues, setRevealedClues] = useState<Set<number>>(new Set());
+  const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
+  const [expandedClue, setExpandedClue] = useState<number | null>(null);
+  const [wrongTaps, setWrongTaps] = useState<Set<string>>(new Set());
   const [revealedHints, setRevealedHints] = useState<Set<number>>(new Set());
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const toggleClue = useCallback((i: number) => {
-    setRevealedClues(prev => {
-      const next = new Set(prev);
-      next.has(i) ? next.delete(i) : next.add(i);
-      return next;
-    });
+  // Clues that come from figure text (startIndex === -1)
+  const figureClues = useMemo(
+    () => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.startIndex === -1),
+    [question.clues]
+  );
+
+  const stemSegments = useMemo(
+    () => buildSegments(question.stem, question.clues),
+    [question.stem, question.clues]
+  );
+
+  const totalClues = question.clues.length;
+
+  const handleSegmentTap = useCallback((seg: Segment, segText: string) => {
+    if (seg.clueIndex !== null) {
+      // Correct clue found!
+      setFoundClues(prev => new Set(prev).add(seg.clueIndex!));
+      setExpandedClue(seg.clueIndex);
+    } else {
+      // Wrong tap — flash feedback
+      setWrongTaps(prev => new Set(prev).add(segText));
+      setTimeout(() => setWrongTaps(prev => {
+        const next = new Set(prev);
+        next.delete(segText);
+        return next;
+      }), 800);
+    }
+  }, []);
+
+  const handleFigureClueTap = useCallback((clueIdx: number) => {
+    setFoundClues(prev => new Set(prev).add(clueIdx));
+    setExpandedClue(clueIdx);
   }, []);
 
   const toggleHint = useCallback((i: number) => {
@@ -36,56 +110,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const stageLabels = ['閱讀題目', '線索收集', '推理提問', '概念定位', '完整解析'];
   const stageIcons = ['📖', '🔍', '💭', '🎯', '✅'];
 
-  // Highlight clues in stem text
-  const renderStem = () => {
-    if (stage < 1 || question.clues.every(c => c.startIndex === -1)) {
-      return <p className="text-base leading-relaxed text-white/90">{question.stem}</p>;
-    }
-
-    // Sort clues by startIndex, filter those with valid positions
-    const validClues = question.clues
-      .map((c, i) => ({ ...c, idx: i }))
-      .filter(c => c.startIndex >= 0)
-      .sort((a, b) => a.startIndex - b.startIndex);
-
-    if (validClues.length === 0) {
-      return <p className="text-base leading-relaxed text-white/90">{question.stem}</p>;
-    }
-
-    const parts: React.ReactNode[] = [];
-    let cursor = 0;
-
-    validClues.forEach(clue => {
-      if (clue.startIndex > cursor) {
-        parts.push(<span key={`t-${cursor}`}>{question.stem.slice(cursor, clue.startIndex)}</span>);
-      }
-      parts.push(
-        <mark
-          key={`c-${clue.idx}`}
-          className="bg-amber-500/30 text-amber-200 px-0.5 rounded cursor-help border-b border-amber-400/50"
-          title={revealedClues.has(clue.idx) ? clue.why : '點擊線索查看為什麼重要'}
-        >
-          {question.stem.slice(clue.startIndex, clue.startIndex + clue.length)}
-        </mark>
-      );
-      cursor = clue.startIndex + clue.length;
-    });
-
-    if (cursor < question.stem.length) {
-      parts.push(<span key="tail">{question.stem.slice(cursor)}</span>);
-    }
-
-    return <p className="text-base leading-relaxed text-white/90">{parts}</p>;
-  };
-
   return (
     <div className="min-h-[100dvh] bg-[#050510] text-white flex flex-col">
       {/* Header */}
       <header className="shrink-0 border-b border-white/10 px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="text-white/50 hover:text-white/80 transition-colors text-sm flex items-center gap-1"
-        >
+        <button onClick={onBack} className="text-white/50 hover:text-white/80 transition-colors text-sm flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
@@ -123,14 +152,76 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto px-4 py-5 space-y-5 max-w-2xl mx-auto w-full">
-        {/* ── Stage 0: 題目 ── */}
+        {/* ── 題目區 (always visible) ── */}
         <section className="space-y-4">
           <div className="space-y-3 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {renderStem()}
-            {question.figure && (
-              <p className="text-sm text-white/40 italic border-l-2 border-white/10 pl-3 mt-3">
-                {question.figure}
-              </p>
+            {/* Stem: interactive in stage 1, plain otherwise */}
+            {stage === 1 ? (
+              <div>
+                <p className="text-base leading-relaxed text-white/90">
+                  {stemSegments.map((seg, i) => {
+                    const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
+                    const isWrong = wrongTaps.has(seg.text);
+                    const isClue = seg.clueIndex !== null;
+                    return (
+                      <span
+                        key={i}
+                        onClick={() => handleSegmentTap(seg, seg.text)}
+                        className={`cursor-pointer transition-all duration-300 rounded-sm ${
+                          isFound
+                            ? 'bg-amber-500/30 text-amber-200 border-b border-amber-400/50'
+                            : isWrong
+                              ? 'bg-red-500/20 text-red-300'
+                              : isClue
+                                ? 'hover:bg-white/10'
+                                : 'hover:bg-white/5'
+                        }`}
+                      >
+                        {seg.text}
+                      </span>
+                    );
+                  })}
+                </p>
+              </div>
+            ) : (
+              <p className="text-base leading-relaxed text-white/90">{question.stem}</p>
+            )}
+
+            {/* Figure: image or text description */}
+            {(question.figureImage || question.figure) && (
+              <div className="mt-3 rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                {question.figureImage ? (
+                  <img src={question.figureImage} alt="題目附圖" className="w-full" />
+                ) : (
+                  <div className="px-4 py-3 flex items-start gap-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    <span className="text-white/25 text-lg shrink-0 mt-0.5">🖼</span>
+                    <p className="text-sm text-white/45 leading-relaxed">{question.figure}</p>
+                  </div>
+                )}
+
+                {/* Figure clues: tappable keywords from figure (stage 1 only) */}
+                {stage === 1 && figureClues.length > 0 && (
+                  <div className="px-4 py-2 flex flex-wrap gap-2 border-t border-white/5" style={{ background: 'rgba(255,255,255,0.01)' }}>
+                    <span className="text-[10px] text-white/30 self-center">圖中線索：</span>
+                    {figureClues.map(fc => {
+                      const isFound = foundClues.has(fc.idx);
+                      return (
+                        <button
+                          key={fc.idx}
+                          onClick={() => handleFigureClueTap(fc.idx)}
+                          className={`px-2.5 py-1 text-xs rounded-full transition-all ${
+                            isFound
+                              ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40'
+                              : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/25 hover:text-white/70'
+                          }`}
+                        >
+                          {fc.text}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -138,7 +229,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           {question.options && (
             <div className="space-y-2">
               {question.options.map((opt, i) => {
-                const letter = String.fromCharCode(65 + i); // A, B, C, D
+                const letter = String.fromCharCode(65 + i);
                 const isSelected = selectedOption === letter;
                 const isCorrect = showAnswer && letter === question.answer;
                 const isWrong = showAnswer && isSelected && letter !== question.answer;
@@ -153,14 +244,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
                           ? 'border-red-500/60 bg-red-500/15 text-red-300'
                           : isSelected
                             ? 'border-cyan-500/50 bg-cyan-500/10 text-cyan-300'
-                            : 'border-white/10 bg-white/3 text-white/70 hover:border-white/20 hover:bg-white/5'
+                            : 'border-white/10 text-white/70 hover:border-white/20 hover:bg-white/5'
                     }`}
                   >
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                       isCorrect ? 'bg-emerald-500/30' : isWrong ? 'bg-red-500/30' : isSelected ? 'bg-cyan-500/20' : 'bg-white/8'
-                    }`}>
-                      {letter}
-                    </span>
+                    }`}>{letter}</span>
                     <span className="text-sm">{opt}</span>
                   </button>
                 );
@@ -169,35 +258,70 @@ export function DetectivePlayer({ question, onBack }: Props) {
           )}
         </section>
 
-        {/* ── Stage 1: 線索收集 ── */}
+        {/* ── Stage 1: 線索收集 (interactive) ── */}
         {stage >= 1 && (
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-amber-400 flex items-center gap-2">
-              <span>🔍</span> 線索收集 — 題幹裡藏了什麼關鍵資訊？
-            </h3>
-            <div className="space-y-2">
-              {question.clues.map((clue, i) => (
-                <div key={i} className="rounded-lg border border-white/10 overflow-hidden">
-                  <button
-                    onClick={() => toggleClue(i)}
-                    className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors"
-                  >
-                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
-                      {i + 1}
-                    </span>
-                    <span className="text-sm text-amber-200 font-medium">「{clue.text}」</span>
-                    <svg className={`w-4 h-4 text-white/30 ml-auto transition-transform shrink-0 ${revealedClues.has(i) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {revealedClues.has(i) && (
-                    <div className="px-4 pb-3 text-sm text-white/60 leading-relaxed border-t border-white/5 pt-2 ml-9">
-                      {clue.why}
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-amber-400 flex items-center gap-2">
+                <span>🔍</span> 線索收集
+              </h3>
+              <span className="text-xs text-white/40">
+                找到 <span className="text-amber-400 font-bold">{foundClues.size}</span> / {totalClues} 個線索
+              </span>
             </div>
+
+            {stage === 1 && foundClues.size === 0 && (
+              <p className="text-xs text-white/35 leading-relaxed px-1">
+                點選題幹或圖片中你認為是關鍵資訊的部分。找對了會亮起來！
+              </p>
+            )}
+
+            {/* Found clues list */}
+            {foundClues.size > 0 && (
+              <div className="space-y-2">
+                {question.clues.map((clue, i) => {
+                  if (!foundClues.has(i)) return null;
+                  const isExpanded = expandedClue === i;
+                  return (
+                    <div key={i} className="rounded-lg border border-amber-500/20 overflow-hidden" style={{ background: 'rgba(245,158,11,0.05)' }}>
+                      <button
+                        onClick={() => setExpandedClue(isExpanded ? null : i)}
+                        className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors"
+                      >
+                        <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="text-sm text-amber-200 font-medium">「{clue.text}」</span>
+                        <svg className={`w-4 h-4 text-white/30 ml-auto transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {isExpanded && (
+                        <div className="px-4 pb-3 text-sm text-white/60 leading-relaxed border-t border-amber-500/10 pt-2 ml-9">
+                          {clue.why}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Show remaining after all found or stage > 1 */}
+            {stage > 1 && foundClues.size < totalClues && (
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <p className="text-xs text-white/30">你漏掉的線索：</p>
+                {question.clues.map((clue, i) => {
+                  if (foundClues.has(i)) return null;
+                  return (
+                    <div key={i} className="rounded-lg border border-white/10 px-4 py-3">
+                      <p className="text-sm text-white/50">「{clue.text}」</p>
+                      <p className="text-xs text-white/35 mt-1 leading-relaxed">{clue.why}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 
@@ -275,14 +399,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
                   </li>
                 ))}
               </ol>
-
               {question.solution.commonMistakes && question.solution.commonMistakes.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
                   <p className="text-xs font-semibold text-red-400/70">常見錯誤</p>
                   {question.solution.commonMistakes.map((m, i) => (
-                    <p key={i} className="text-xs text-white/40 leading-relaxed pl-3 border-l-2 border-red-500/20">
-                      {m}
-                    </p>
+                    <p key={i} className="text-xs text-white/40 leading-relaxed pl-3 border-l-2 border-red-500/20">{m}</p>
                   ))}
                 </div>
               )}
@@ -291,7 +412,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
         )}
       </main>
 
-      {/* Footer: next stage button */}
+      {/* Footer */}
       <footer className="shrink-0 border-t border-white/10 px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
         {stage < 4 ? (
           <>

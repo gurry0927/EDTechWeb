@@ -57,8 +57,10 @@ export interface DetectiveQuestion {
   // ── 原始題目 ──
   /** 題幹文字 */
   stem: string;
-  /** 附圖描述或圖片路徑（選填） */
+  /** 附圖文字描述（當沒有圖片時的替代說明） */
   figure?: string;
+  /** 附圖圖片路徑，放在 public/images/detective/ 下（選填） */
+  figureImage?: string;
   /** 選項（選擇題） */
   options?: string[];
   /** 正確答案 */
