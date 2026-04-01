@@ -12,11 +12,11 @@ interface Props {
 
 // ── Narrative copy ──
 const STAGE_INTROS = [
-  '仔細閱讀題目，先不急著作答。',
-  '像偵探一樣掃描現場 — 點選你覺得可疑的關鍵字。',
-  '收集到的線索指向什麼？順著推理看看。',
-  '鎖定目標 — 這題考的到底是哪個概念？',
-  '破案了。來看看完整的推理過程。',
+  '先把題目讀完，不急著選答案。注意題目在問什麼、給了什麼條件。',
+  '現在你是偵探。掃描題目和圖片，把你覺得「有問題」的地方點出來。小心，只有 3 次失誤機會。',
+  '手上有線索了。現在一步一步推 — 每個問題都不需要你知道答案，只需要你想一想。',
+  '推理完畢。看看這題到底在考哪個概念，跟課本哪個單元有關。',
+  '結案。回顧整個推理過程，看看你遺漏了什麼。',
 ];
 const HIT_MESSAGES = ['好眼力！', '關鍵線索！', '就是這個！', '偵探直覺很準！', '重要發現！'];
 const MISS_MESSAGES = ['不是這個，再看看', '這個不太關鍵', '再想想別的'];
@@ -202,8 +202,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
       </div>
 
       {/* ── Narrative intro ── */}
-      <div className="px-5 pt-4 pb-1 max-w-2xl mx-auto w-full">
-        <p className="text-xs text-white/35 italic">{STAGE_INTROS[stage]}</p>
+      <div className="px-5 pt-4 pb-2 max-w-2xl mx-auto w-full">
+        <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg" style={{ background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.1)' }}>
+          <span className="text-cyan-400/70 text-sm shrink-0 mt-0.5">🕵️</span>
+          <p className="text-sm text-cyan-200/70 leading-relaxed">{STAGE_INTROS[stage]}</p>
+        </div>
       </div>
 
       {/* ── Toast notification ── */}
@@ -236,7 +239,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                       className={`cursor-pointer transition-all duration-300 rounded-sm px-px ${
                         isFound
                           ? 'bg-amber-500/20 border-b border-amber-400/40'
-                          : 'hover:bg-white/8 active:bg-white/12'
+                          : 'active:bg-white/10'
                       }`}
                     >
                       {seg.text}
@@ -282,7 +285,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                               className={`cursor-pointer transition-all duration-300 rounded-sm px-px ${
                                 isFound
                                   ? 'bg-amber-500/20 border-b border-amber-400/40'
-                                  : 'hover:bg-white/8 active:bg-white/12'
+                                  : 'active:bg-white/10'
                               }`}
                             >
                               {seg.text}
