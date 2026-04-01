@@ -76,6 +76,37 @@ export function DetectivePlayer({ question, onBack }: Props) {
     [question.clues]
   );
   const stemSegments = useMemo(() => buildSegments(question.stem, question.clues), [question.stem, question.clues]);
+
+  // Build interactive segments for figure text (match figureClue keywords inside figure string)
+  const figureSegments = useMemo(() => {
+    if (!question.figure || figureClues.length === 0) return null;
+    const fig = question.figure;
+    // Find positions of each figure clue keyword in the figure text
+    const matches: { start: number; end: number; clueIdx: number }[] = [];
+    figureClues.forEach(fc => {
+      const pos = fig.indexOf(fc.text);
+      if (pos >= 0) matches.push({ start: pos, end: pos + fc.text.length, clueIdx: fc.idx });
+    });
+    matches.sort((a, b) => a.start - b.start);
+
+    if (matches.length === 0) return null;
+
+    const segs: Segment[] = [];
+    let cursor = 0;
+    matches.forEach(m => {
+      if (m.start > cursor) {
+        fig.slice(cursor, m.start).split(/(?<=[。，；：、？！）」])/).filter(Boolean)
+          .forEach(text => segs.push({ text, clueIndex: null }));
+      }
+      segs.push({ text: fig.slice(m.start, m.end), clueIndex: m.clueIdx });
+      cursor = m.end;
+    });
+    if (cursor < fig.length) {
+      fig.slice(cursor).split(/(?<=[。，；：、？！）」])/).filter(Boolean)
+        .forEach(text => segs.push({ text, clueIndex: null }));
+    }
+    return segs;
+  }, [question.figure, figureClues]);
   const totalClues = question.clues.length;
 
   // Toast auto-dismiss
@@ -233,33 +264,49 @@ export function DetectivePlayer({ question, onBack }: Props) {
             {/* Figure */}
             {(question.figureImage || question.figure) && (
               <div className="mt-3 rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-                {question.figureImage ? (
+                {question.figureImage && (
                   <img src={question.figureImage} alt="題目附圖" className="w-full" />
-                ) : (
+                )}
+                {question.figure && (
                   <div className="px-4 py-3 flex items-start gap-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
                     <span className="text-white/25 text-lg shrink-0 mt-0.5">🖼</span>
-                    <p className="text-sm text-white/45 leading-relaxed">{question.figure}</p>
-                  </div>
-                )}
-                {stage === 1 && !clueLocked && figureClues.length > 0 && (
-                  <div className="px-4 py-2 flex flex-wrap gap-2 border-t border-white/5" style={{ background: 'rgba(255,255,255,0.01)' }}>
-                    <span className="text-[10px] text-white/30 self-center">圖中可疑處：</span>
-                    {figureClues.map(fc => {
-                      const isFound = foundClues.has(fc.idx);
-                      return (
-                        <button
-                          key={fc.idx}
-                          onClick={() => handleFigureClueTap(fc.idx)}
-                          className={`px-2.5 py-1 text-xs rounded-full transition-all ${
-                            isFound
-                              ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40'
-                              : 'bg-white/5 text-white/50 border border-white/10 hover:border-amber-500/30 hover:text-amber-200'
-                          }`}
-                        >
-                          {fc.text}
-                        </button>
-                      );
-                    })}
+                    {stage === 1 && !clueLocked && figureSegments ? (
+                      <p className="text-sm leading-relaxed text-white/45">
+                        {figureSegments.map((seg, i) => {
+                          const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
+                          const isClue = seg.clueIndex !== null;
+                          return (
+                            <span
+                              key={i}
+                              onClick={() => isClue
+                                ? handleFigureClueTap(seg.clueIndex!)
+                                : handleSegmentTap(seg, seg.text)
+                              }
+                              className={`cursor-pointer transition-all duration-300 rounded-sm px-px ${
+                                isFound
+                                  ? 'bg-amber-500/30 text-amber-200 border-b-2 border-amber-400/60'
+                                  : isClue
+                                    ? 'hover:bg-amber-500/10 active:bg-amber-500/20 text-white/60'
+                                    : 'hover:bg-white/5 active:bg-red-500/10'
+                              }`}
+                            >
+                              {seg.text}
+                            </span>
+                          );
+                        })}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-white/45 leading-relaxed">
+                        {stage > 1 && figureSegments ? figureSegments.map((seg, i) => {
+                          const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
+                          return (
+                            <span key={i} className={isFound ? 'bg-amber-500/20 text-amber-200 rounded-sm px-px' : ''}>
+                              {seg.text}
+                            </span>
+                          );
+                        }) : question.figure}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -267,7 +314,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           </div>
 
           {/* Options */}
-          {question.options && (
+          {question.options && (stage === 0 || stage === 4) && (
             <div className="space-y-2">
               {question.options.map((opt, i) => {
                 const letter = String.fromCharCode(65 + i);
