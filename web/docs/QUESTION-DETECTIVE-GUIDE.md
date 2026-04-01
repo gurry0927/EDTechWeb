@@ -84,11 +84,11 @@ JSON 檔案 → page.tsx import → DetectivePlayer props → 渲染對話
   difficulty: 1|2|3;    // 難度
   tags: string[];       // 知識標籤，用於未來弱點分析
 
-  stem: string;         // 題幹（含選項文字，用 \n 換行）
-  figure?: string;      // 附圖文字描述
-  figureImage?: string; // 附圖路徑，如 "/images/detective/114-h-20.png"
-  options?: string[];   // 選項陣列（用於 ABCD 按鈕判斷數量）
-  answer: string;       // 正確答案，如 "C"
+  mainStem: string;      // 主要題幹文字（不含選項）
+  figure?: string;        // 附圖文字描述
+  figureImage?: string;   // 附圖路徑
+  options: string[];      // 選項陣列（用於顯示 A B C D 按鈕與選單）
+  answer: string;         // 正確答案，如 "C"
 
   clues: Clue[];                // 階段 1：線索
   deduction?: Deduction;        // 階段 2：推理與指證
@@ -195,10 +195,12 @@ answeredCorrectly: boolean   // 是否已答對
 - `steps`：逐步推理過程，每步一句話
 - `commonMistakes`：說明為什麼其他選項是錯的（排除法分析只在這裡出現）
 
-### 5.5 stem 欄位格式
-題幹文字包含選項，用 `\n` 換行：
-```
-"stem": "題幹正文...\n(A)選項A\n(B)選項B\n(C)選項C\n(D)選項D"
+### 5.5 mainStem 與 options 欄位格式
+- **mainStem**：僅包含題目正文。
+- **options**：獨立陣列，依序填寫 A, B, C, D 的內容。
+```json
+"mainStem": "圖(八)是博物館展覽對臺灣歷史上某陶製漏斗狀工具使用方式的介紹...",
+"options": ["甲", "乙", "丙", "丁"]
 ```
 
 ---
