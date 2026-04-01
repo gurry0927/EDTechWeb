@@ -20,15 +20,15 @@ interface Seg { text: string; clueIndex: number | null; }
 
 function buildSegs(src: string, clues: { startIndex: number; length: number; idx: number }[]): Seg[] {
   const valid = clues.filter(c => c.startIndex >= 0).sort((a, b) => a.startIndex - b.startIndex);
-  if (!valid.length) return src.split(/(?<=[。，；：、？！）」])/).filter(Boolean).map(t => ({ text: t, clueIndex: null }));
+  if (!valid.length) return [{ text: src, clueIndex: null }];
   const segs: Seg[] = [];
   let cur = 0;
   valid.forEach(c => {
-    if (c.startIndex > cur) src.slice(cur, c.startIndex).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
+    if (c.startIndex > cur) segs.push({ text: src.slice(cur, c.startIndex), clueIndex: null });
     segs.push({ text: src.slice(c.startIndex, c.startIndex + c.length), clueIndex: c.idx });
     cur = c.startIndex + c.length;
   });
-  if (cur < src.length) src.slice(cur).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
+  if (cur < src.length) segs.push({ text: src.slice(cur), clueIndex: null });
   return segs;
 }
 
@@ -60,11 +60,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const segs: Seg[] = [];
     let cur = 0;
     matches.forEach(m => {
-      if (m.start > cur) question.figure!.slice(cur, m.start).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
+      if (m.start > cur) segs.push({ text: question.figure!.slice(cur, m.start), clueIndex: null });
       segs.push({ text: question.figure!.slice(m.start, m.end), clueIndex: m.clueIdx });
       cur = m.end;
     });
-    if (cur < question.figure!.length) question.figure!.slice(cur).split(/(?<=[。，；：、？！）」])/).filter(Boolean).forEach(t => segs.push({ text: t, clueIndex: null }));
+    if (cur < question.figure!.length) segs.push({ text: question.figure!.slice(cur), clueIndex: null });
     return segs;
   }, [question.figure, figureClues]);
 
@@ -156,15 +156,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
     </div>
   );
 
-  const clsFound = 'bg-amber-100 dark:bg-amber-500/20 border-b border-amber-400 dark:border-amber-400/40 rounded-sm';
-  const clsFoundPassive = 'bg-amber-50 dark:bg-amber-500/10 border-b border-amber-300 dark:border-amber-400/30 rounded-sm';
+  const clsFound = 'bg-amber-100 dark:bg-amber-500/20 border-b border-amber-400 dark:border-amber-400/40';
+  const clsFoundPassive = 'bg-amber-50 dark:bg-amber-500/10 border-b border-amber-300 dark:border-amber-400/30';
 
   const renderInteractiveSegs = (segs: Seg[], isFigure: boolean) => segs.map((seg, i) => {
     const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
     return (
       <span key={i}
         onClick={() => seg.clueIndex !== null ? (isFigure ? onClueHit(seg.clueIndex) : onSegTap(seg)) : onSegTap(seg)}
-        className={`cursor-pointer transition-all duration-200 px-px ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}
+        className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}
       >{seg.text}</span>
     );
   });
