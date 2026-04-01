@@ -209,7 +209,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           </button>
           {stemOpen && (
             <div className="px-4 pb-3 space-y-2">
-              <p className="text-sm leading-relaxed text-slate-700 dark:text-white/85">
+              <p className="text-sm leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line">
                 {phase === 'clue' && !clueLocked ? renderInteractiveSegs(stemSegs, false) : renderPassiveSegs(stemSegs)}
               </p>
               {(question.figureImage || question.figure) && (
@@ -307,25 +307,22 @@ export function DetectivePlayer({ question, onBack }: Props) {
                     </ActionBtn>
                   )}
 
-                  {/* Options overlay during this question */}
+                  {/* ABCD letter buttons */}
                   {isLatest && showingOptions && (
-                    <div className="space-y-2 my-2">
-                      {question.options?.map((opt, oi) => {
+                    <div className="flex justify-center gap-3 my-3">
+                      {question.options?.map((_, oi) => {
                         const letter = String.fromCharCode(65 + oi);
                         const wasWrong = wrongAttempts.includes(letter);
                         return (
                           <button key={oi} onClick={() => !wasWrong && onSelectOption(letter)}
-                            className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${
+                            className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all ${
                               wasWrong
-                                ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-400 dark:text-red-400/50 cursor-not-allowed'
-                                : 'border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70 hover:border-cyan-400 dark:hover:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-900/10'
+                                ? 'bg-red-100 dark:bg-red-500/15 text-red-300 dark:text-red-500/40 border border-red-200 dark:border-red-500/20 cursor-not-allowed line-through'
+                                : 'bg-white dark:bg-white/10 text-slate-700 dark:text-white/80 border-2 border-slate-300 dark:border-white/20 hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:text-cyan-700 dark:hover:text-cyan-300 shadow-sm'
                             }`}
                             disabled={wasWrong}
                           >
-                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                              wasWrong ? 'bg-red-200 dark:bg-red-500/20' : 'bg-slate-100 dark:bg-white/8'
-                            }`}>{wasWrong ? '✗' : letter}</span>
-                            <span className="text-sm">{opt}</span>
+                            {letter}
                           </button>
                         );
                       })}
