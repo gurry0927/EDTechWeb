@@ -6,10 +6,53 @@ import type { LayerManifest } from './types';
 import { MapUI } from './MapUI';
 import * as d3 from 'd3-geo';
 
-// 🚨 AI 開發者請注意：
-// 1. 本檔案是控制核心 (Orchestrator)，負責取得資料、管理狀態 (Context)、建立 d3 的 geoPath。
-// 2. 嚴禁在此檔內寫死任何跟「台灣」有關的邏輯，所有地理資訊都必須依賴傳入的 `layers`。
-// 3. 我已經搭好了 useState 跟 fetch 的空殼結構。
+// ── Rewind helper ──
+// D3 follows RFC 7946: exterior rings must be CCW, holes CW.
+// taiwan.geo.json uses CW exterior rings → D3 treats them as "the rest of the Earth".
+// This function reverses all exterior rings to CCW.
+function rewindRing(ring: number[][]): number[][] {
+  let area = 0;
+  for (let i = 0; i < ring.length - 1; i++) {
+    area += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+  }
+  // area > 0 = CCW (correct for exterior), area < 0 = CW (needs reverse)
+  return area < 0 ? [...ring].reverse() : ring;
+}
+
+function rewindFeature(feature: any): any {
+  const geom = feature.geometry;
+  if (!geom) return feature;
+  if (geom.type === 'Polygon') {
+    return {
+      ...feature,
+      geometry: {
+        ...geom,
+        coordinates: geom.coordinates.map((ring: number[][], i: number) =>
+          i === 0 ? rewindRing(ring) : ring // only rewind exterior ring (index 0)
+        ),
+      },
+    };
+  }
+  if (geom.type === 'MultiPolygon') {
+    return {
+      ...feature,
+      geometry: {
+        ...geom,
+        coordinates: geom.coordinates.map((polygon: number[][][]) =>
+          polygon.map((ring: number[][], i: number) =>
+            i === 0 ? rewindRing(ring) : ring
+          )
+        ),
+      },
+    };
+  }
+  return feature; // Point, LineString etc. — no rewind needed
+}
+
+function rewindGeoJSON(fc: any): any {
+  if (!fc?.features) return fc;
+  return { ...fc, features: fc.features.map(rewindFeature) };
+}
 
 interface Props {
   // 由外部（例如 demo page）定義本場實驗有哪幾個圖層可選
@@ -231,8 +274,9 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
         }
 
         if (featureData && featureData.features) {
-          console.log(`[Orchestrator] Data loaded for ${layerId}, count: ${featureData.features.length}`);
-          setGeoDataCache(prev => ({ ...prev, [layerId]: featureData }));
+          const rewound = rewindGeoJSON(featureData);
+          console.log(`[Orchestrator] Data loaded for ${layerId}, count: ${rewound.features.length}`);
+          setGeoDataCache(prev => ({ ...prev, [layerId]: rewound }));
         } else {
           console.warn(`[Orchestrator] Data loaded for ${layerId} is invalid (no features)!`);
         }
@@ -248,17 +292,24 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
   const { projection, pathGenerator } = React.useMemo(() => {
     const width = 800;
     const height = 600;
+    const padding = 40;
 
-    // 建立投影：預設以台灣海峽為中心
-    // 捨棄 fitSize 自動縮放，避免 GeoJSON 右手法則(多邊形繪製順序)
-    // 造成 D3 誤判為「地球除外」的剩餘區域而自動縮滿全球
     const proj = d3.geoMercator()
-      .center([120.0, 23.8]) // 台灣海峽中央偏北，確保包含苗栗/台中與福建
-      .scale(6500)          // 放大比例，6500 適合 800x600 塞入台灣西半部 + 海峽
+      .center([120.0, 23.8])
+      .scale(6500)
       .translate([width / 2, height / 2]);
 
-    const path = d3.geoPath().projection(proj);
+    // If we have a baseMap layer loaded, use fitSize for accurate projection
+    const baseLayer = initialLayers.find(l => l.isBaseMap);
+    const baseData = baseLayer ? geoDataCache[baseLayer.id] : null;
+    if (baseData) {
+      proj.fitSize([width - padding * 2, height - padding * 2], baseData);
+      // fitSize resets translate; re-center with padding
+      const [tx, ty] = proj.translate();
+      proj.translate([tx + padding, ty + padding]);
+    }
 
+    const path = d3.geoPath().projection(proj);
     return { projection: proj, pathGenerator: path };
   }, [geoDataCache, initialLayers]);
 
@@ -345,8 +396,53 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
             return (
               <g key={layer.id} opacity={layer.opacity ?? 1} className="transition-opacity duration-1000">
                 {data.features.map((feature: any, idx: number) => {
-                  // 行政區域渲染
-                  if (layer.renderType === 'polygon') {
+                  const geomType = feature.geometry?.type;
+
+                  // ── Point features: render regardless of layer renderType ──
+                  if (geomType === 'Point') {
+                    const coords = projection(feature.geometry.coordinates);
+                    if (!coords) return null;
+                    const [x, y] = coords;
+
+                    // 安平古堡特殊樣式
+                    if (feature.properties.type === 'fortress') {
+                      return (
+                        <g key={idx}>
+                          <rect x={x - 8} y={y - 8} width={16} height={16}
+                            fill="url(#fortressGold)" stroke="#78350f" strokeWidth={2}
+                            className="drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
+                          <text x={x} y={y - 14} textAnchor="middle"
+                            className="fill-amber-200 text-[9px] font-bold pointer-events-none"
+                            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                            {feature.properties.name}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    // Heatmap points
+                    if (layer.renderType === 'heatmap') {
+                      return (
+                        <g key={idx} className="animate-pulse">
+                          <circle cx={x} cy={y} r={feature.properties.radius || 30} fill="url(#popHeat)" />
+                          <circle cx={x} cy={y} r={3} className="fill-sky-400" />
+                        </g>
+                      );
+                    }
+
+                    // Generic point marker
+                    return (
+                      <g key={idx}>
+                        <circle cx={x} cy={y} r={6} className="fill-rose-500 stroke-slate-100" strokeWidth={2} />
+                        <text x={x + 10} y={y + 4} className="fill-rose-300 text-[10px] font-bold pointer-events-none">
+                          {feature.properties.name}
+                        </text>
+                      </g>
+                    );
+                  }
+
+                  // ── Polygon / MultiPolygon rendering ──
+                  if (layer.renderType === 'polygon' && (geomType === 'Polygon' || geomType === 'MultiPolygon')) {
                     // 冰河陸橋渲染 - 根據 seaLevel 控制
                     if (layer.id === 'land_bridge') {
                       const seaLevel = controlValues['seaLevel'] ?? 0;
@@ -426,50 +522,6 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
                     );
                   }
 
-                  // 點圖層渲染
-                  if (layer.renderType === 'points' && feature.geometry.type === 'Point') {
-                    const coords = projection(feature.geometry.coordinates);
-                    if (!coords) return null;
-                    const [x, y] = coords;
-
-                    // 安平古堡特殊樣式 - 強烈對比色方形
-                    if (layer.id === 'anping_siltation' && feature.properties.type === 'fortress') {
-                      return (
-                        <g key={idx}>
-                          {/* 安平古堡 - 金色邊框的紅色正方形 */}
-                          <rect
-                            x={x - 8}
-                            y={y - 8}
-                            width={16}
-                            height={16}
-                            fill="url(#fortressGold)"
-                            stroke="#78350f"
-                            strokeWidth={2}
-                            className="drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
-                          />
-                          {/* 古堡標籤 */}
-                          <text
-                            x={x}
-                            y={y - 14}
-                            textAnchor="middle"
-                            className="fill-amber-200 text-[9px] font-bold pointer-events-none"
-                            style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
-                          >
-                            {feature.properties.name}
-                          </text>
-                        </g>
-                      );
-                    }
-
-                    // 正常標記點...
-                    return (
-                      <g key={idx}>
-                        <circle cx={x} cy={y} r={6} className="fill-rose-500 shadow-md stroke-slate-100" strokeWidth={2}></circle>
-                        <text x={x + 10} y={y + 4} className="fill-rose-300 text-[10px] font-bold pointer-events-none">{feature.properties.name}</text>
-                      </g>
-                    );
-                  }
-
                   // 斷層線與歷史遷徙線渲染
                   if (layer.renderType === 'lines') {
                     // 動物遷徙路徑 - 只有在冰河期 (seaLevel <= -50) 才可見
@@ -483,16 +535,14 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
 
                       // 根據物種給予不同顏色
                       const isBear = feature.properties.species === 'bear';
-                      const strokeColor = isBear ? 'stroke-amber-400' : 'stroke-sky-400';
-                      const glowColor = isBear ? 'rgba(251, 191, 36, 0.6)' : 'rgba(56, 189, 248, 0.5)';
+                      const strokeHex = isBear ? '#fbbf24' : '#38bdf8'; // amber-400 / sky-400
 
                       return (
                         <g key={idx}>
-                          {/* 遷徙路徑線條 - 動態 dash 效果 */}
                           <path
                             d={pathGenerator(feature) || ''}
                             fill="none"
-                            className={`${strokeColor} drop-shadow-[0_0_8px_${glowColor.replace(/\s+/g, '')}]`}
+                            stroke={strokeHex}
                             strokeWidth={3}
                             strokeLinecap="round"
                             strokeDasharray="6,8"
@@ -511,17 +561,14 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
                             return (
                               <g>
                                 <circle
-                                  cx={ex}
-                                  cy={ey}
-                                  r={5}
-                                  className={isBear ? 'fill-amber-500' : 'fill-sky-500'}
-                                  stroke="#fff"
-                                  strokeWidth={1.5}
+                                  cx={ex} cy={ey} r={5}
+                                  fill={isBear ? '#f59e0b' : '#0ea5e9'}
+                                  stroke="#fff" strokeWidth={1.5}
                                 />
                                 <text
-                                  x={ex + 10}
-                                  y={ey + 4}
-                                  className={`${isBear ? 'fill-amber-300' : 'fill-sky-300'} text-[9px] font-bold pointer-events-none`}
+                                  x={ex + 10} y={ey + 4}
+                                  fill={isBear ? '#fcd34d' : '#7dd3fc'}
+                                  className="text-[9px] font-bold pointer-events-none"
                                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
                                 >
                                   {feature.properties.name}
@@ -544,27 +591,6 @@ export function LayeredMapOrchestrator({ initialLayers }: Props) {
                         strokeLinecap="round"
                         strokeDasharray="4,6"
                       />
-                    );
-                  }
-
-                  // 人口熱度渲染
-                  if (layer.renderType === 'heatmap' && feature.geometry.type === 'Point') {
-                    const [x, y] = projection(feature.geometry.coordinates) || [0, 0];
-                    return (
-                      <g key={idx} className="animate-pulse">
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={feature.properties.radius || 30}
-                          fill="url(#popHeat)"
-                        />
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={3}
-                          className="fill-sky-400"
-                        />
-                      </g>
                     );
                   }
 
