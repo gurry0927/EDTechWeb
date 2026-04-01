@@ -175,45 +175,44 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </header>
 
-      {/* ── Sticky stem card ── */}
+      {/* ── Sticky stem card — centered, compact ── */}
       <div className="shrink-0 sticky top-0 z-10 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#050510]/95 backdrop-blur-sm">
-        <button onClick={() => setStemOpen(!stemOpen)} className="w-full px-4 py-2.5 flex items-center gap-2 text-left">
-          <span className="text-xs font-medium text-slate-400 dark:text-white/40">📄 題目</span>
-          <svg className={`w-3.5 h-3.5 text-slate-400 dark:text-white/30 ml-auto transition-transform ${stemOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {stemOpen && (
-          <div className="px-4 pb-3 space-y-2">
-            <p className="text-sm leading-relaxed text-slate-700 dark:text-white/85">
-              {phase === 'clue' && !clueLocked ? renderInteractiveSegs(stemSegs, false) : renderPassiveSegs(stemSegs)}
-            </p>
-            {(question.figureImage || question.figure) && (
-              <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-white/[0.08] text-xs">
-                {question.figureImage && <img src={question.figureImage} alt="附圖" className="w-full" />}
-                {question.figure && (
-                  <div className="px-3 py-2 bg-slate-50 dark:bg-white/[0.02] flex items-start gap-2">
-                    <span className="text-slate-300 dark:text-white/20 shrink-0">🖼</span>
-                    <p className="text-slate-500 dark:text-white/45 leading-relaxed">
-                      {phase === 'clue' && !clueLocked && figureSegs ? renderInteractiveSegs(figureSegs, true) : (figureSegs ? renderPassiveSegs(figureSegs) : question.figure)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-            {/* Clue progress in stem card */}
+        <div className="max-w-xl mx-auto">
+          <button onClick={() => setStemOpen(!stemOpen)} className="w-full px-4 py-2 flex items-center gap-2 text-left">
+            <span className="text-xs font-medium text-slate-400 dark:text-white/40">📄 題目</span>
             {phase === 'clue' && (
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-[10px] text-slate-400 dark:text-white/30">線索 {foundClues.size}/{totalClues}</span>
-                <span className="flex gap-0.5 ml-auto">
-                  {Array.from({ length: MAX_MISSES }).map((_, i) => (
-                    <span key={i} className={`w-2 h-2 rounded-full ${i < missCount ? 'bg-red-400' : 'bg-slate-200 dark:bg-white/15'}`} />
-                  ))}
-                </span>
-              </div>
+              <span className="text-[10px] text-slate-400 dark:text-white/30 ml-2">線索 {foundClues.size}/{totalClues}</span>
             )}
-          </div>
-        )}
+            <span className="flex gap-0.5 ml-auto">
+              {phase === 'clue' && Array.from({ length: MAX_MISSES }).map((_, i) => (
+                <span key={i} className={`w-2 h-2 rounded-full ${i < missCount ? 'bg-red-400' : 'bg-slate-200 dark:bg-white/15'}`} />
+              ))}
+            </span>
+            <svg className={`w-3.5 h-3.5 text-slate-400 dark:text-white/30 transition-transform ${stemOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {stemOpen && (
+            <div className="px-4 pb-3 space-y-2">
+              <p className="text-sm leading-relaxed text-slate-700 dark:text-white/85">
+                {phase === 'clue' && !clueLocked ? renderInteractiveSegs(stemSegs, false) : renderPassiveSegs(stemSegs)}
+              </p>
+              {(question.figureImage || question.figure) && (
+                <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-white/[0.08] text-xs">
+                  {question.figureImage && <img src={question.figureImage} alt="附圖" className="w-full" />}
+                  {question.figure && (
+                    <div className="px-3 py-2 bg-slate-50 dark:bg-white/[0.02] flex items-start gap-2">
+                      <span className="text-slate-300 dark:text-white/20 shrink-0">🖼</span>
+                      <p className="text-slate-500 dark:text-white/45 leading-relaxed">
+                        {phase === 'clue' && !clueLocked && figureSegs ? renderInteractiveSegs(figureSegs, true) : (figureSegs ? renderPassiveSegs(figureSegs) : question.figure)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Toast ── */}
@@ -226,7 +225,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       )}
 
       {/* ── Chat area ── */}
-      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-w-2xl mx-auto w-full">
+      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-w-xl mx-auto w-full">
         {/* ── Phase: Clue ── */}
         <Detective>看看這道題，有些關鍵字藏在題幹和附圖裡。<br/>點選你覺得可疑的地方，只有 {MAX_MISSES} 次失誤機會。</Detective>
 
