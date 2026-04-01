@@ -235,12 +235,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
                       onClick={() => handleSegmentTap(seg, seg.text)}
                       className={`cursor-pointer transition-all duration-300 rounded-sm px-px ${
                         isFound
-                          ? 'bg-amber-500/30 text-amber-200 border-b-2 border-amber-400/60 animate-pulse'
-                          : isClue
-                            ? 'hover:bg-amber-500/10 active:bg-amber-500/20'
-                            : 'hover:bg-white/5 active:bg-red-500/10'
+                          ? 'bg-amber-500/20 border-b border-amber-400/40'
+                          : 'hover:bg-white/8 active:bg-white/12'
                       }`}
-                      style={isFound ? { animationIterationCount: 2, animationDuration: '1s' } : undefined}
                     >
                       {seg.text}
                     </span>
@@ -253,7 +250,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 {stage > 1 ? stemSegments.map((seg, i) => {
                   const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
                   return (
-                    <span key={i} className={isFound ? 'bg-amber-500/20 text-amber-200 rounded-sm px-px' : ''}>
+                    <span key={i} className={isFound ? 'bg-amber-500/15 border-b border-amber-400/30 rounded-sm px-px' : ''}>
                       {seg.text}
                     </span>
                   );
@@ -284,10 +281,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
                               }
                               className={`cursor-pointer transition-all duration-300 rounded-sm px-px ${
                                 isFound
-                                  ? 'bg-amber-500/30 text-amber-200 border-b-2 border-amber-400/60'
-                                  : isClue
-                                    ? 'hover:bg-amber-500/10 active:bg-amber-500/20 text-white/60'
-                                    : 'hover:bg-white/5 active:bg-red-500/10'
+                                  ? 'bg-amber-500/20 border-b border-amber-400/40'
+                                  : 'hover:bg-white/8 active:bg-white/12'
                               }`}
                             >
                               {seg.text}
@@ -300,7 +295,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                         {stage > 1 && figureSegments ? figureSegments.map((seg, i) => {
                           const isFound = seg.clueIndex !== null && foundClues.has(seg.clueIndex);
                           return (
-                            <span key={i} className={isFound ? 'bg-amber-500/20 text-amber-200 rounded-sm px-px' : ''}>
+                            <span key={i} className={isFound ? 'bg-amber-500/15 border-b border-amber-400/30 rounded-sm px-px' : ''}>
                               {seg.text}
                             </span>
                           );
