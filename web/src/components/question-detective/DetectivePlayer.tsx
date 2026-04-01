@@ -38,10 +38,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [missCount, setMissCount] = useState(0);
   const [expandedClue, setExpandedClue] = useState<number | null>(null);
-  const [revealedQuestions, setRevealedQuestions] = useState(0); // how many socratic Qs shown
+  const [revealedQuestions, setRevealedQuestions] = useState(0);
   const [revealedHints, setRevealedHints] = useState<Set<number>>(new Set());
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [showingOptions, setShowingOptions] = useState(false); // show options during question phase
+  const [wrongAttempts, setWrongAttempts] = useState<string[]>([]); // wrong answers tried
+  const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
   const [stemOpen, setStemOpen] = useState(true);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -68,7 +69,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [question.figure, figureClues]);
 
   // Auto-scroll chat
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [phase, foundClues.size, revealedQuestions, revealedHints.size, showAnswer]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [phase, foundClues.size, revealedQuestions, revealedHints.size, showingOptions, wrongAttempts.length, answeredCorrectly]);
 
   // ── Handlers ──
   const [toast, setToast] = useState<string | null>(null);
@@ -97,17 +98,31 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setRevealedQuestions(1);
   }, []);
 
-  const nextQuestion = useCallback(() => {
-    if (revealedQuestions < question.questions.length) {
-      setRevealedQuestions(prev => prev + 1);
+  const tryAnswer = useCallback(() => {
+    setShowingOptions(true);
+  }, []);
+
+  const onSelectOption = useCallback((letter: string) => {
+    if (letter === question.answer) {
+      setAnsweredCorrectly(true);
+      setShowingOptions(false);
+      // Short delay then advance to concept
+      setTimeout(() => setPhase('concept'), 600);
     } else {
-      setPhase('concept');
+      setWrongAttempts(prev => [...prev, letter]);
+      setShowingOptions(false);
+      // Advance to next question if available
+      if (revealedQuestions < question.questions.length) {
+        setRevealedQuestions(prev => prev + 1);
+      } else {
+        // All questions exhausted, force to concept
+        setTimeout(() => setPhase('concept'), 600);
+      }
     }
-  }, [revealedQuestions, question.questions.length]);
+  }, [question.answer, question.questions.length, revealedQuestions]);
 
   const advanceToSolution = useCallback(() => {
     setPhase('solution');
-    setShowAnswer(true);
   }, []);
 
   // ── Render helpers ──
@@ -260,35 +275,88 @@ export function DetectivePlayer({ question, onBack }: Props) {
         {phase === 'question' && (
           <>
             <Detective>好，根據你找到的線索，我有幾個問題想問你。</Detective>
-            {question.questions.slice(0, revealedQuestions).map((q, i) => (
-              <div key={`q-${i}`} className="space-y-3">
-                <Detective>{q.prompt}</Detective>
-                {revealedHints.has(i) ? (
-                  <>
-                    <Student>我不太確定...</Student>
-                    <Detective>{q.hint}</Detective>
-                  </>
-                ) : (
-                  <div className="flex justify-end gap-2 my-1">
-                    <button onClick={() => setRevealedHints(prev => new Set(prev).add(i))}
-                      className="px-3 py-1.5 rounded-full text-xs bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-white/50 hover:bg-slate-300 dark:hover:bg-white/15 transition-all">
-                      卡住了，給我提示
-                    </button>
-                    {i === revealedQuestions - 1 && (
-                      <button onClick={nextQuestion}
-                        className="px-3 py-1.5 rounded-full text-xs bg-cyan-600 text-white hover:bg-cyan-500 transition-all">
-                        {revealedQuestions < question.questions.length ? '我想到了，下一題 →' : '推理完畢 →'}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {revealedHints.has(i) && i === revealedQuestions - 1 && (
-                  <ActionBtn onClick={nextQuestion} variant="primary">
-                    {revealedQuestions < question.questions.length ? '下一個問題 →' : '推理完畢 →'}
-                  </ActionBtn>
-                )}
-              </div>
-            ))}
+            {question.questions.slice(0, revealedQuestions).map((q, i) => {
+              // Was this question followed by a wrong answer attempt?
+              const wrongAfterThis = wrongAttempts[i];
+              const isLatest = i === revealedQuestions - 1;
+
+              return (
+                <div key={`q-${i}`} className="space-y-3">
+                  <Detective>{q.prompt}</Detective>
+
+                  {revealedHints.has(i) ? (
+                    <>
+                      <Student>我不太確定...</Student>
+                      <Detective>{q.hint}</Detective>
+                    </>
+                  ) : (
+                    isLatest && !showingOptions && !wrongAfterThis && (
+                      <div className="flex justify-end gap-2 my-1">
+                        <button onClick={() => setRevealedHints(prev => new Set(prev).add(i))}
+                          className="px-3 py-1.5 rounded-full text-xs bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-white/50 hover:bg-slate-300 dark:hover:bg-white/15 transition-all">
+                          卡住了，給我提示
+                        </button>
+                      </div>
+                    )
+                  )}
+
+                  {/* "真相只有一個" button — shown after hint or as alternative */}
+                  {isLatest && !showingOptions && !wrongAfterThis && (revealedHints.has(i) || true) && (
+                    <ActionBtn onClick={tryAnswer}>
+                      🔎 我知道了，真相只有一個
+                    </ActionBtn>
+                  )}
+
+                  {/* Options overlay during this question */}
+                  {isLatest && showingOptions && (
+                    <div className="space-y-2 my-2">
+                      {question.options?.map((opt, oi) => {
+                        const letter = String.fromCharCode(65 + oi);
+                        const wasWrong = wrongAttempts.includes(letter);
+                        return (
+                          <button key={oi} onClick={() => !wasWrong && onSelectOption(letter)}
+                            className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${
+                              wasWrong
+                                ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-400 dark:text-red-400/50 cursor-not-allowed'
+                                : 'border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70 hover:border-cyan-400 dark:hover:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-900/10'
+                            }`}
+                            disabled={wasWrong}
+                          >
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                              wasWrong ? 'bg-red-200 dark:bg-red-500/20' : 'bg-slate-100 dark:bg-white/8'
+                            }`}>{wasWrong ? '✗' : letter}</span>
+                            <span className="text-sm">{opt}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Wrong answer feedback */}
+                  {wrongAfterThis && (
+                    <>
+                      <Student>我選 ({wrongAfterThis})！</Student>
+                      <Detective>
+                        不對喔，({wrongAfterThis}) 不是正確答案。
+                        {i < question.questions.length - 1
+                          ? '別急，再想想看。我再問你一個問題。'
+                          : '線索都在了，讓我們來看看正確的推理。'}
+                      </Detective>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Correct answer celebration */}
+            {answeredCorrectly && (
+              <>
+                <Student>我選 ({question.answer})！</Student>
+                <Detective>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">正確！🎉</span> 你的推理很到位。讓我們看看完整的概念。
+                </Detective>
+              </>
+            )}
           </>
         )}
 
@@ -315,31 +383,6 @@ export function DetectivePlayer({ question, onBack }: Props) {
         {/* ── Phase: Solution ── */}
         {phase === 'solution' && (
           <>
-            {/* Options */}
-            {question.options && (
-              <div className="space-y-2 my-2">
-                {question.options.map((opt, i) => {
-                  const letter = String.fromCharCode(65 + i);
-                  const isCorrect = letter === question.answer;
-                  const isSelected = selectedOption === letter;
-                  const isWrong = isSelected && !isCorrect;
-                  return (
-                    <button key={i} onClick={() => !showAnswer && setSelectedOption(letter)}
-                      className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${
-                        isCorrect && showAnswer ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                        : isWrong && showAnswer ? 'border-red-400 bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300'
-                        : 'border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/5'
-                      }`}>
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                        isCorrect && showAnswer ? 'bg-emerald-200 dark:bg-emerald-500/30' : isWrong && showAnswer ? 'bg-red-200 dark:bg-red-500/30' : 'bg-slate-100 dark:bg-white/8'
-                      }`}>{letter}</span>
-                      <span className="text-sm">{opt}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
             <Detective>
               答案是 <span className="font-bold text-emerald-700 dark:text-emerald-300">({question.answer})</span>。來看完整推理：
             </Detective>
