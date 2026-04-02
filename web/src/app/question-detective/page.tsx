@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation';
 import { DetectivePlayer } from '@/components/question-detective/DetectivePlayer';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 
-import q1 from '@/data/detective-questions/114-history-20.json';
-import q2 from '@/data/detective-questions/114-history-31.json';
-
-const ALL_QUESTIONS: DetectiveQuestion[] = [q1, q2] as DetectiveQuestion[];
+import { ALL_QUESTIONS } from '@/data/detective-questions';
 
 // Extract year from source string like "114年會考-社會-第20題"
 function getYear(q: DetectiveQuestion): string {
