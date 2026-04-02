@@ -307,11 +307,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
         {phase === 'clue' && clueLocked && foundClues.size < totalClues && (
           <Detective>調查機會用完了。帶著目前的線索繼續推理吧。</Detective>
         )}
-        {phase === 'clue' && (allCriticalFound || clueLocked) && (
-          <ActionBtn onClick={enterReasoning}>
-            {allCriticalFound ? '🔎 關鍵線索到手，開始推理' : '帶著現有線索繼續 →'}
-          </ActionBtn>
-        )}
+        {/* ActionBtn moved to floating bar outside main */}
         {phase === 'clue' && foundClues.size > 0 && !allCriticalFound && !clueLocked && (
           <Detective><span className="text-sm text-slate-400 dark:text-white/35">還有關鍵線索沒找到，繼續調查吧。</span></Detective>
         )}
@@ -450,8 +446,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </main>
 
+      {/* Floating action bar */}
+      {phase === 'clue' && (allCriticalFound || clueLocked) && (
+        <div className="shrink-0 px-4 py-3 flex justify-center border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: '#f4efe4' }}>
+          <button onClick={enterReasoning} className="px-6 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all flex items-center gap-2">
+            {allCriticalFound ? '🔎 關鍵線索到手，開始推理' : '帶著現有線索繼續 →'}
+          </button>
+        </div>
+      )}
+
       {/* Footer */}
-      <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10 px-4 py-3 flex items-center justify-between" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+      <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10 px-4 py-2 flex items-center justify-between" style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
         <span className="text-xs text-slate-300 dark:text-white/20">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
         {phase === 'solution' && <button onClick={onBack} className="text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70">回到題庫</button>}
       </footer>
