@@ -259,16 +259,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
             </div>
           </div>
         </div>
-        {/* Folder tabs — overlapping, stacked at same position */}
-        <div className="max-w-2xl mx-auto px-4 relative h-8">
-          <div className="folder-tab folder-tab-3 absolute left-4 top-0 pl-28">
-            <LivesDisplay lives={lives} />
+        {/* Folder tabs — fanned out, front covers back */}
+        <div className="max-w-2xl mx-auto px-4 flex items-start">
+          <div className="folder-tab folder-tab-1 relative z-[3]">
+            <span className="text-red-900/30 dark:text-red-400/20 font-bold text-xs tracking-[0.15em]" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>機密檔案</span>
           </div>
-          <div className="folder-tab folder-tab-2 absolute left-4 top-0 pl-20">
+          <div className="folder-tab folder-tab-2 relative z-[2] -ml-2">
             <span className="text-amber-800/40 dark:text-white/35 text-xs font-medium">線索 {foundClues.size}/{totalClues}</span>
           </div>
-          <div className="folder-tab folder-tab-1 absolute left-4 top-0">
-            <span className="text-red-900/30 dark:text-red-400/20 font-bold text-xs tracking-[0.2em]" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>機密檔案</span>
+          <div className="folder-tab folder-tab-3 relative z-[1] -ml-2">
+            <LivesDisplay lives={lives} />
           </div>
         </div>
       </div>
