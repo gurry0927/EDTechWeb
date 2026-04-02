@@ -218,7 +218,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const livesLost = MAX_LIVES - lives;
 
   return (
-    <div className="min-h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col">
+    <div className="h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col overflow-hidden">
       {/* Header + Stem card + folder tabs — all sticky together */}
       <div className="shrink-0 sticky top-0 z-10">
         <header className="px-4 py-2 flex items-center gap-3 case-file border-b border-amber-200/20 dark:border-white/5">
