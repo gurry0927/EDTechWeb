@@ -307,10 +307,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
         {phase === 'clue' && clueLocked && foundClues.size < totalClues && (
           <Detective>調查機會用完了。帶著目前的線索繼續推理吧。</Detective>
         )}
-        {/* ActionBtn moved to floating bar outside main */}
-        {phase === 'clue' && foundClues.size > 0 && !allCriticalFound && !clueLocked && (
-          <Detective><span className="text-sm text-slate-400 dark:text-white/35">還有關鍵線索沒找到，繼續調查吧。</span></Detective>
-        )}
+        {/* Hints moved to floating bar outside main */}
 
         {/* Phase: Reasoning */}
         {(phase === 'reasoning' || phase === 'answer' || phase === 'solution') && reasoningClues.length > 0 && (
@@ -447,11 +444,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
       </main>
 
       {/* Floating action bar */}
-      {phase === 'clue' && (allCriticalFound || clueLocked) && (
-        <div className="shrink-0 px-4 py-3 flex justify-center border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: '#f4efe4' }}>
-          <button onClick={enterReasoning} className="px-6 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all flex items-center gap-2">
-            {allCriticalFound ? '🔎 關鍵線索到手，開始推理' : '帶著現有線索繼續 →'}
-          </button>
+      {phase === 'clue' && foundClues.size > 0 && (
+        <div className="shrink-0 px-4 py-2.5 flex justify-center border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: '#f4efe4' }}>
+          {allCriticalFound || clueLocked ? (
+            <button onClick={enterReasoning} className="px-6 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all">
+              {allCriticalFound ? '🔎 關鍵線索到手，開始推理' : '帶著現有線索繼續 →'}
+            </button>
+          ) : (
+            <span className="text-sm text-slate-400 dark:text-white/35">還有關鍵線索沒找到，繼續調查吧。</span>
+          )}
         </div>
       )}
 
