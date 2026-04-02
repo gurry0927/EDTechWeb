@@ -259,12 +259,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
             </div>
           </div>
         </div>
-        {/* Folder tabs — staggered overlap */}
-        <div className="max-w-2xl mx-auto px-4 relative h-7">
-          <div className="folder-tab folder-tab-3 absolute left-[10.5rem] top-0">
+        {/* Folder tabs — overlapping, stacked at same position */}
+        <div className="max-w-2xl mx-auto px-4 relative h-8">
+          <div className="folder-tab folder-tab-3 absolute left-4 top-0 pl-28">
             <LivesDisplay lives={lives} />
           </div>
-          <div className="folder-tab folder-tab-2 absolute left-[5.5rem] top-0">
+          <div className="folder-tab folder-tab-2 absolute left-4 top-0 pl-20">
             <span className="text-amber-800/40 dark:text-white/35 text-xs font-medium">線索 {foundClues.size}/{totalClues}</span>
           </div>
           <div className="folder-tab folder-tab-1 absolute left-4 top-0">
