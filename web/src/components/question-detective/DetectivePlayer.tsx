@@ -147,7 +147,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [question.figure, figureClues]);
 
   // Auto-scroll & auto-advance
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [phase, foundClues.size, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [phase, foundClues.size, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), 800); return () => clearTimeout(t); } }, [reasoningDone]);
 
   // ── Handlers ──
