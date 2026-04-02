@@ -212,63 +212,152 @@ answeredCorrectly: boolean   // 是否已答對
 
 ---
 
-## 六、維護操作手冊
+## 六、模組架構與檔案說明
 
-### 6.1 新增一道題目
-1. 在 `web/src/data/detective-questions/` 建立 JSON 檔案
-   - 命名規則：`{年份}-{科目}-{題號}.json`，如 `114-history-20.json`
-2. 按照 `DetectiveQuestion` 型別填寫所有欄位
-3. 如果有附圖：
-   - 將圖片放到 `web/public/images/detective/`
-   - 在 JSON 中加 `"figureImage": "/images/detective/{檔名}.png"`
-4. 在 `web/src/app/question-detective/page.tsx` 加上 import：
-   ```typescript
-   import q3 from '@/data/detective-questions/114-history-XX.json';
-   // 加到陣列
-   const ALL_QUESTIONS: DetectiveQuestion[] = [q1, q2, q3] as DetectiveQuestion[];
-   ```
-5. `git add` → `git commit` → `git push origin main`（Vercel 自動部署）
-
-### 6.2 修改現有題目
-直接編輯對應的 JSON 檔案，注意：
-- 修改 `stem` 後要重新計算所有 `clue.startIndex`
-- `startIndex` 是從 `stem` 字串的第 0 個字元開始數（包含標點符號）
-
-### 6.3 新增題目附圖
-1. 圖片放到 `web/public/images/detective/`
-2. 在 JSON 中加上 `"figureImage": "/images/detective/114-history-20.png"`
-3. `figure` 欄位（文字描述）建議保留作為無圖片時的 fallback
-4. 圖片和文字描述可以同時存在（圖片顯示在上方，文字在下方）
-
-### 6.4 計算 startIndex 的方法
-```javascript
-const stem = "圖(八)是博物館展覽對臺灣歷史上某陶製漏斗狀工具使用方式的介紹。";
-const clueText = "陶製漏斗狀工具";
-console.log(stem.indexOf(clueText)); // → 17
 ```
-在瀏覽器 console 或 Node.js 裡跑即可。如果線索在 `figure` 欄位中（不在 stem），`startIndex` 設為 `-1`。
+web/src/
+├── components/question-detective/
+│   ├── types.ts              # 資料型別定義（DetectiveQuestion, Clue 等）
+│   ├── detective-config.ts   # 遊戲參數、偵探台詞、成就判定（改語氣改這裡）
+│   └── DetectivePlayer.tsx   # 主互動元件（不含任何寫死字串）
+├── data/detective-questions/
+│   ├── index.ts              # 題庫索引（加題只改這裡）
+│   ├── 114-history-20.json   # 題目資料
+│   └── 114-history-31.json
+├── app/question-detective/
+│   └── page.tsx              # 入口頁面（自動讀取 index.ts）
+└── app/globals.css           # 偵探模組 CSS 變數（--det-paper 等）
+```
+
+**核心原則**：元件只負責邏輯和渲染，所有可變內容都在外部檔案。
 
 ---
 
-## 七、未來擴展方向
+## 七、維護操作手冊
 
-### 7.1 Agent 自動生成題目
+### 7.1 新增一道題目（最常用）
+
+**只需要改兩個檔案：**
+
+1. **建立 JSON** — 在 `web/src/data/detective-questions/` 新增
+   - 命名：`{年份}-{科目}-{題號}.json`，如 `114-history-20.json`
+   - 按 `DetectiveQuestion` 型別填寫（參考現有 JSON）
+   - 如有附圖：放到 `web/public/images/detective/`，JSON 加 `"figureImage"`
+
+2. **註冊到索引** — 在 `web/src/data/detective-questions/index.ts` 加一行：
+   ```typescript
+   import q114hXX from './114-history-XX.json';
+   // 加到 ALL_QUESTIONS 陣列
+   export const ALL_QUESTIONS: DetectiveQuestion[] = [
+     q114h20, q114h31, q114hXX,  // ← 加這裡
+   ] as DetectiveQuestion[];
+   ```
+
+3. `git push origin main` → Vercel 自動部署
+
+### 7.2 修改偵探台詞或遊戲參數
+
+編輯 `web/src/components/question-detective/detective-config.ts`：
+
+| 要改的東西 | 對應區塊 |
+|-----------|---------|
+| 生命值數量 | `GAME.maxLives` |
+| 打字延遲時間 | `GAME.typingDelay` |
+| 掃描動畫持續 | `GAME.scanDuration` |
+| 偵探的開場白 | `DIALOGUE.intro` |
+| 找到線索的反應 | `DIALOGUE.clueReactions` 陣列 |
+| 推理階段的提示 | `DIALOGUE.reasoning*` 系列 |
+| 結案報告的標題 | `DIALOGUE.solution*` 系列 |
+| 成就判定邏輯 | `ACHIEVEMENTS` 陣列 |
+
+### 7.3 修改視覺風格
+
+編輯 `web/src/app/globals.css` 裡的 CSS 變數：
+
+```css
+:root {
+  --det-paper: #f4efe4;      /* 紙張底色 */
+  --det-paper-dark: #111119;  /* 暗色模式紙張 */
+  --det-accent: #c2553a;      /* 紅色強調線 */
+  --det-line: ...;             /* 橫線紋理 */
+  --det-dot: ...;              /* 點狀紋理 */
+}
+```
+
+### 7.4 修改現有題目
+
+直接編輯對應的 JSON 檔案，注意：
+- 修改 `mainStem` 後要重新計算所有 `clue.startIndex`
+- `startIndex` 從 `mainStem` 字串第 0 個字元開始（含標點）
+- 線索在 `figure` 中 → `startIndex` 設為 `-1`
+- `aliases` 用於同義詞群組（如「糖汁」「糖蜜」「糖塊」），點任一個都算找到
+
+### 7.5 計算 startIndex
+
+```javascript
+const stem = "此種工具在十八至十九世紀之間...";
+console.log(stem.indexOf("十八至十九世紀")); // → 37
+```
+
+### 7.6 JSON 欄位速查
+
+```json
+{
+  "id": "114-social-history-20",
+  "source": "114年會考-社會-第20題",
+  "subject": "社會",
+  "difficulty": 2,
+  "tags": ["清領時期", "台灣糖業"],      // 結案報告才顯示，避免洩漏答案
+  "subSubject": "歷史",                   // 列表頁顯示
+  "gradeLevel": "一上",                   // 列表頁顯示
+  "mainStem": "...",                       // 題幹主文
+  "figure": "...",                         // 附圖文字描述（-1 線索從這裡找）
+  "figureImage": "/images/detective/...",  // 附圖路徑
+  "options": ["甲", "乙", "丙", "丁"],
+  "answer": "C",
+  "clues": [
+    {
+      "text": "糖",                        // 對話中顯示的名稱
+      "startIndex": -1,                    // -1=在 figure 中
+      "length": 1,
+      "aliases": ["糖汁", "糖蜜", "糖塊"], // 同義詞，點任一個都算
+      "why": "...",                         // 偵探回應（不透露答案）
+      "isCritical": true,                  // 必須找到才能進推理
+      "reasoning": {                       // 逆轉裁判式推理小題
+        "prompt": "...",
+        "choices": ["A", "B", "C"],
+        "answerIndex": 2,
+        "correct": "答對回應",
+        "wrong": "答錯引導"
+      }
+    }
+  ],
+  "questions": [{ "prompt": "...", "hint": "..." }],  // 延伸思考
+  "concept": { "unit": "...", "brief": "..." },        // 概念定位
+  "solution": { "steps": [...], "commonMistakes": [...] }
+}
+
+---
+
+## 八、未來擴展方向
+
+### 8.1 Agent 自動生成題目
 - 輸入：題目原文 + 詳解
 - Prompt 指令讓 Claude API 自動產出四階段 JSON
 - 硬規則：clues.why 和 questions.hint 禁止提及選項字母
 - 產出後人工快速審閱再入庫
 
-### 7.2 RAG 即時對話
+### 8.2 RAG 即時對話
 - 現在的對話是靜態（JSON 定義好的問答）
 - 未來可接 AI 即時回應：學生打字提問，AI 根據題目 context 回答
 - 前端 `<Detective>` 和 `<Student>` 泡泡元件不用改，只需要把資料來源從 JSON 換成 streaming API
 
-### 7.3 學習數據追蹤
+### 8.3 學習數據追蹤
 - 記錄每題：找到幾個線索、失誤次數、用了幾個提示、答對/答錯
 - 透過 `tags` 欄位做弱點分析（哪些概念一直答錯）
 - 需要後端（Supabase）+ 會員系統
 
-### 7.4 跨科支援
+### 8.4 跨科支援
 - 目前型別已支援 `'自然' | '數學' | '社會' | '國文' | '英文'`
 - 數學題可能需要額外的 `keyFormula` 欄位和公式渲染（MathJax/KaTeX）
 - 自然科可能需要實驗圖片支援
