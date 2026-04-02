@@ -102,6 +102,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [evidenceWrongMsg, setEvidenceWrongMsg] = useState<string | null>(null);
   const [wrongAttempts, setWrongAttempts] = useState<string[]>([]);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
+  const [figureOpen, setFigureOpen] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -243,17 +244,21 @@ export function DetectivePlayer({ question, onBack }: Props) {
               </div>
               {question.figureImage && (
                 <div className="sm:w-[45%] shrink-0">
-                  <img src={question.figureImage} alt="附圖" className="w-full rounded mix-blend-darken dark:invert dark:mix-blend-lighten dark:opacity-90" />
+                  <button onClick={() => setFigureOpen(!figureOpen)} className="sm:hidden w-full text-left text-xs text-amber-800/40 dark:text-white/35 py-1 flex items-center gap-1">
+                    <svg className={`w-3 h-3 transition-transform ${figureOpen ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    {figureOpen ? '收合附圖' : '展開附圖'}
+                  </button>
+                  <img src={question.figureImage} alt="附圖" className={`w-full rounded mix-blend-darken dark:invert dark:mix-blend-lighten dark:opacity-90 ${figureOpen ? '' : 'hidden sm:block'}`} />
                 </div>
               )}
             </div>
           </div>
         </div>
-        {/* Folder tabs — stacked layers hanging below */}
+        {/* Folder tabs */}
         <div className="max-w-2xl mx-auto px-4 relative z-20">
-          <div className="flex items-start">
+          <div className="flex">
             <div className="folder-tab folder-tab-1">
-              <span className="text-red-900/30 dark:text-red-400/20 font-bold text-xs tracking-[0.25em]" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>機 密 檔 案</span>
+              <span className="text-red-900/30 dark:text-red-400/20 font-bold text-xs tracking-[0.2em]" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>機密檔案</span>
             </div>
             <div className="folder-tab folder-tab-2">
               <span className="text-amber-800/40 dark:text-white/35 text-xs font-medium">線索 {foundClues.size}/{totalClues}</span>
