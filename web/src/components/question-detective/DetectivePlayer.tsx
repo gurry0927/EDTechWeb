@@ -149,7 +149,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // Auto-scroll & auto-advance
   useEffect(() => {
     const t = setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 300);
     return () => clearTimeout(t);
   }, [phase, foundClues.size, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
