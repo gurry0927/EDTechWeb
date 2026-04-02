@@ -17,6 +17,29 @@
     "發起原住民族正名運動"
   ],
   "answer": "A",
+  "scaffolding": [
+    {
+      "text": "北大武山",
+      "startIndex": 3,
+      "length": 4,
+      "type": "context",
+      "hint": "這是故事發生的地點，位於屏東，也是排灣族與魯凱族的聖山。"
+    },
+    {
+      "text": "莎綺",
+      "startIndex": 0,
+      "length": 2,
+      "type": "noise",
+      "hint": "這只是題目的主角名字，對破案沒有直接幫助。"
+    },
+    {
+      "text": "大武祠",
+      "startIndex": -1,
+      "length": 3,
+      "type": "context",
+      "hint": "這是紀念碑所在的遺址名稱。"
+    }
+  ],
 
   "clues": [
     {

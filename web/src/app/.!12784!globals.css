@@ -86,39 +86,12 @@ body {
 .dark .detective-paper { background-image: radial-gradient(circle, var(--det-dot-dark) 1px, transparent 1px); background-size: 18px 18px; }
 
 /* Folder tabs */
-.folder-tab { 
-  position: relative; 
-  top: 0; 
-  border: 1px solid var(--det-border); 
-  border-bottom: none; 
-  border-radius: 12px 12px 0 0; 
-  padding: 8px 20px 4px; 
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  height: 100%;
-  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
-  margin-right: -8px;
-}
-.folder-tab-1 { z-index: 3; box-shadow: 0 -2px 6px rgba(80,60,30,0.05); }
-.folder-tab-2 { z-index: 2; box-shadow: 0 -2px 4px rgba(80,60,30,0.04); filter: brightness(0.97); }
-.folder-tab-3 { z-index: 1; box-shadow: 0 -2px 3px rgba(80,60,30,0.02); filter: brightness(0.94); }
-
-.tab-active {
-  filter: brightness(1) !important;
-  height: calc(100% + 6px);
-  padding-bottom: 8px;
-  border-top: 3px solid var(--det-accent);
-  box-shadow: 0 -4px 12px var(--det-shadow) !important;
-  z-index: 10 !important;
-  clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
-}
-
-.dark .tab-active {
-  border-top-color: rgba(194,85,58,0.8);
-}
-
-.dark .folder-tab { border-color: rgba(140,120,80,0.1); }
-.dark .folder-tab-1 { box-shadow: 0 -3px 8px rgba(0,0,0,0.3); }
+.folder-tab { position: relative; top: -1px; border: 1px solid var(--det-border); border-top: none; border-radius: 0 0 6px 6px; padding: 5px 12px 6px; }
+.folder-tab-1 { z-index: 3; box-shadow: 0 3px 6px rgba(80,60,30,0.12); }
+.folder-tab-2 { z-index: 2; box-shadow: 0 2px 4px rgba(80,60,30,0.08); filter: brightness(0.97); }
+.folder-tab-3 { z-index: 1; box-shadow: 0 2px 3px rgba(80,60,30,0.06); filter: brightness(0.94); }
+.dark .folder-tab { border-color: rgba(140,120,80,0.08); }
+.dark .folder-tab-1 { box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
 .dark .folder-tab-2 { filter: brightness(0.9); }
 .dark .folder-tab-3 { filter: brightness(0.8); }
 
@@ -128,9 +101,7 @@ body {
 @keyframes typing-dot { 0%,60%,100% { transform: translateY(0); opacity: 0.4 } 30% { transform: translateY(-4px); opacity: 1 } }
 .typing-dots span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: typing-dot 1.2s ease-in-out infinite; }
 .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
-
-/* ── [NEW] 偵探筆記本面板 (Notebook Panel) ── */
+.typing-dots span:nth-child(3) { animation-delay: 0/* ── [NEW] 偵探筆記本面板 (Notebook Panel) ── */
 .notebook-paper {
   background-color: var(--det-paper);
   background-image: repeating-linear-gradient(

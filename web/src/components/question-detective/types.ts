@@ -1,6 +1,38 @@
 // src/components/question-detective/types.ts
 // 「題目偵探」核心資料結構
 
+// ─────────────────────────────────────────────────────────────────────────────
+// [NEW] ScaffoldingRegion — 動態鷹架：區分「脈絡區」與「雜訊區」
+//
+// 設計說明：
+//   這個型別讓內容作者在題幹/附圖中標記「非線索但有語意」的文字片段。
+//   與 Clue 不同，ScaffoldingRegion 不會推進遊戲進度，只改變偵探的回應語氣。
+//
+//   type: 'context' → 有用的背景資訊，不扣血，偵探給「溫暖提示」
+//   type: 'noise'   → 無關的雜訊，扣 1 血，偵探給「冷靜提示」
+//
+// 在 JSON 中的範例（見 114-history-20.json 的 "scaffolding" 欄位）：
+// {
+//   "text": "陶製漏斗狀",
+//   "startIndex": 8,
+//   "length": 5,
+//   "type": "context",
+//   "hint": "這描述了工具的外形，但我們更需要知道它的用途。"
+// }
+// ─────────────────────────────────────────────────────────────────────────────
+export interface ScaffoldingRegion {
+  /** 要標記的原文片段 */
+  text: string;
+  /** 起始位置（字元索引），-1 = 在 figure 中 */
+  startIndex: number;
+  /** 片段長度 */
+  length: number;
+  /** 'context' = 脈絡區（不扣血）；'noise' = 雜訊區（扣 1 血） */
+  type: 'context' | 'noise';
+  /** 點擊後偵探的回應（context 給方向、noise 給冷場） */
+  hint: string;
+}
+
 /** 線索附帶的推理小題（方案二：每個線索各自出題） */
 export interface ClueReasoning {
   /** 推理問題，如 "這個稱呼是哪個時代的用語？" */
@@ -95,6 +127,14 @@ export interface DetectiveQuestion {
   /** 階段 1：線索收集 — 標記題幹/附圖中的關鍵資訊 */
   clues: Clue[];
 
+  // [NEW] 動態鷹架區域（選填）
+  // 若有，buildSegs 會同時解析 clues 與 scaffolding，區分三種 Seg 類型：
+  //   1. clue segment    → clueIndex != null
+  //   2. scaffold segment → scaffoldIndex != null
+  //   3. plain text      → 兩者皆 null（點擊 = 失誤）
+  // 不填此欄位則行為與舊版完全相同（所有非線索點擊都算失誤）。
+  scaffolding?: ScaffoldingRegion[];
+
   /** 階段 2：蘇格拉底提問 — 引導思考方向 */
   questions: SocraticQuestion[];
 
@@ -103,4 +143,10 @@ export interface DetectiveQuestion {
 
   /** 階段 4：完整解析 */
   solution: Solution;
+
+  /** 保底提示（選填）：連續失誤達閾值時顯示，比 pityCategoryHint 更具題目針對性 */
+  pityHint?: string;
+
+  /** 筆記本初始提示（選填）：尚未找到任何線索時開啟筆記本顯示的引導語 */
+  startHint?: string;
 }

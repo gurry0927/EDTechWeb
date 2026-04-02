@@ -3,12 +3,23 @@
 
 /** 遊戲參數 */
 export const GAME = {
-  maxLives: 3,
+  maxLives: 5,
   typingDelay: { short: 500, medium: 800, long: 1200 } as const,
   scanDuration: 4000,
   scrollDelay: 300,
   reasoningAdvanceDelay: 600,
   answerAdvanceDelay: 800,
+
+  // [NEW] 掃描器（放大鏡模式）
+  // scanActiveDuration：按下掃描鈕後，掃描高亮持續幾毫秒
+  // scanCooldown：掃描鈕冷卻時間（毫秒），防止連續觸發
+  scanActiveDuration: 3500,
+  scanCooldown: 6000,
+
+  // [NEW] 憐憫機制：連續失誤幾次後觸發高價值提示
+  // pityScanThreshold = 3 → 第 3 次連續失誤時觸發
+  // 「連續」的定義：命中真實線索或 context 區域可重置計數器；noise 與空白失誤會累計
+  pityScanThreshold: 3,
 };
 
 /** 偵探台詞（可替換語氣/語言） */
@@ -17,9 +28,44 @@ export const DIALOGUE = {
   intro: '有一份文件送到了偵探社。裡面藏著破案的關鍵線索。',
   introHint: '👆 點選題目中你覺得可疑的地方',
   clueMiss: '這裡沒什麼線索，再看看別的。',
+  clueMissReactions: [
+    '這裡似乎只是背景細節，試著找找能決定「時間」或「位置」的關鍵詞？',
+    '冷靜點，偵探。觀察一下，這個片段對案件的進展有幫助嗎？',
+    '沒什麼特別的。再仔細讀讀看，哪些資訊是解開謎題必不可少的？',
+    '直覺告訴我，這不是我們要找的關鍵。往更具體的名詞看。',
+  ],
+
+  // [NEW] 三種分層回饋台詞：
+  // contextHit：點到「脈絡區」— 有用但非關鍵，不扣血，給方向感
+  // noiseHit：點到「雜訊區」— 無關，扣血，讓偵探冷冷回應
+  // plainMiss：點到完全空白區— 現有行為，扣血
+  //
+  // 這三個 key 在 onContextHit / onNoiseMiss / onClueMiss 中使用（見 DetectivePlayer.tsx）
+  contextHitReactions: [
+    '這個細節有點意思，但還不是最關鍵的線索。',
+    '記下來，但我們先繼續找其他證據。',
+    '有背景知識，但還不足以定案。',
+  ],
+  noiseHitReactions: [
+    '這個跟案子沒關係。',
+    '調查機會消耗了，要謹慎選擇。',
+    '這不是我們要找的線索。',
+  ],
   clueReactions: ['有道理。', '說得沒錯。', '好眼力。', '這很關鍵。'],
   clueLocked: '調查機會用完了。帶著目前的線索繼續推理吧。',
   clueHintMore: '還有關鍵線索沒找到，繼續調查吧。',
+
+  // [NEW] 憐憫機制台詞
+  // pityCategoryHint：連續失誤達 GAME.pityScanThreshold 次後觸發。
+  // 接受一個 tag 字串（通常是 question.tags[1] 或最具體的那個），
+  // 組成一句明確的分類提示。
+  // 呼叫方式：DIALOGUE.pityCategoryHint(question.tags[1])
+  // 範例輸出：「提示：這道題的關鍵與「台灣糖業」有關，試著往那個方向找。」
+  pityCategoryHint: (tag: string) => `提示：這道題的關鍵與「${tag}」有關，試著往那個方向找。`,
+
+  // [NEW] 掃描器台詞
+  scanActivate: '🔍 掃描模式啟動，注意高亮的區域。',
+  scanCooldownMsg: '掃描器冷卻中…',
   clueReady: '🔎 關鍵線索到手，開始推理',
   clueForceAdvance: '帶著現有線索繼續 →',
 
@@ -56,6 +102,13 @@ export const DIALOGUE = {
   // 圖片
   figureExpand: '展開附圖',
   figureCollapse: '收合附圖',
+
+  // [NEW] 偵探筆記本 UI 台詞
+  notebookTitle: '偵探筆記本',
+  notebookCluesSection: '已收集的線索',
+  notebookHintsSection: '偵探提示',
+  notebookEmpty: '還沒有找到任何線索',
+  notebookClose: '收合',
 };
 
 /** 成就判定（依序檢查，第一個符合的生效） */
