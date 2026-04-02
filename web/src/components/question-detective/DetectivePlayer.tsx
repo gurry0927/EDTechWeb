@@ -443,23 +443,23 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </main>
 
-      {/* Floating action bar */}
-      {phase === 'clue' && foundClues.size > 0 && (
-        <div className="shrink-0 px-4 py-2.5 flex justify-center border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: '#f4efe4' }}>
-          {allCriticalFound || clueLocked ? (
-            <button onClick={enterReasoning} className="px-6 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all">
-              {allCriticalFound ? '🔎 關鍵線索到手，開始推理' : '帶著現有線索繼續 →'}
-            </button>
-          ) : (
-            <span className="text-sm text-slate-400 dark:text-white/35">還有關鍵線索沒找到，繼續調查吧。</span>
-          )}
+      {/* Fixed bottom bar — never scrolls */}
+      <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: '#f4efe4', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
+        {phase === 'clue' && foundClues.size > 0 && (
+          <div className="px-4 py-2.5 flex justify-center">
+            {allCriticalFound || clueLocked ? (
+              <button onClick={enterReasoning} className="px-6 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all">
+                {allCriticalFound ? '🔎 關鍵線索到手，開始推理' : '帶著現有線索繼續 →'}
+              </button>
+            ) : (
+              <span className="text-sm text-slate-400 dark:text-white/35">還有關鍵線索沒找到，繼續調查吧。</span>
+            )}
+          </div>
+        )}
+        <div className="px-4 py-1.5 flex items-center justify-between">
+          <span className="text-xs text-slate-300 dark:text-white/20">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
+          {phase === 'solution' && <button onClick={onBack} className="text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70">回到題庫</button>}
         </div>
-      )}
-
-      {/* Footer */}
-      <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10 px-4 py-2 flex items-center justify-between" style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
-        <span className="text-xs text-slate-300 dark:text-white/20">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
-        {phase === 'solution' && <button onClick={onBack} className="text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70">回到題庫</button>}
       </footer>
     </div>
   );
