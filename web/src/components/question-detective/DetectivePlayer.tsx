@@ -165,12 +165,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [showPulse, setShowPulse] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerH, setHeaderH] = useState(0);
 
   // [NEW] 連續失誤計數器（憐憫機制）
   // 計數規則：noise 失誤 +1、空白失誤 +1；clue 命中或 context 命中 → 重置為 0
   // 當 consecutiveMisses 達到 GAME.pityScanThreshold 時，觸發 pityCategoryHint 並重置
   const [consecutiveMisses, setConsecutiveMisses] = useState(0);
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   // [NEW] 掃描器狀態
   // activeScanning = true 時，題幹 <p> 套用 "stem-scan" class（已有），並顯示 magnifier overlay
@@ -181,6 +184,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setHeaderH(el.offsetHeight));
+    ro.observe(el);
+    setHeaderH(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 1400); return () => clearTimeout(t); }, [toast]);
 
   useEffect(() => {
@@ -329,9 +341,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding]);
 
   const openNotebook = useCallback(() => {
+    setIsClosing(false);
     setIsNotebookOpen(true);
     setNotebookSeenCount(chatEvents.length);
   }, [chatEvents.length]);
+
+  const closeNotebook = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => { setIsNotebookOpen(false); setIsClosing(false); }, 260);
+  }, []);
 
   const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); }, []);
 
@@ -380,7 +398,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   return (
     <div className="h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col overflow-hidden">
       {/* Header + Stem + Tabs */}
-      <div className="shrink-0 sticky top-0 z-10">
+      <div ref={headerRef} className="shrink-0 sticky top-0 z-10">
         <header className="px-4 py-2 flex items-center gap-3 case-file border-b border-amber-200/20 dark:border-white/5">
           <button onClick={onBack} className="text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/80 text-base flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -639,101 +657,126 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </footer>
 
+      {/* Notebook overlay — fixed top-down from below header */}
       {isNotebookOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsNotebookOpen(false)} />
-          <div className="fixed bottom-0 left-0 right-0 z-50 notebook-paper notebook-slide-in rounded-t-3xl shadow-2xl max-h-[75vh] overflow-y-auto"
-               style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
-            <div className="max-w-xl mx-auto px-6 pt-6 pb-2">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="font-bold text-xl text-slate-700 dark:text-white/80 flex items-center gap-2">
-                  <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
-                </h2>
-                <button onClick={() => setIsNotebookOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70">
-                  ✕
-                </button>
-              </div>
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+            style={{ top: headerH }}
+            onClick={closeNotebook}
+          />
+          <div
+            className={`fixed inset-x-0 mx-auto z-50 w-full max-w-2xl overflow-hidden flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
+            style={{ top: headerH + 10, maxHeight: '68vh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
+          >
+            {/* 頂部撕裂紙邊 */}
+            <div className="paper-tear-top" aria-hidden="true" />
 
-              <div className="space-y-6">
-
-                {/* 案件附圖：白邊照片 + 迴紋針 */}
-                {question.figureImage && (
-                  <div className="flex justify-center py-2">
-                    <div className="relative">
-                      <div className="absolute -top-5 right-6 z-10 rotate-[-8deg]">
-                        <PaperclipIcon />
-                      </div>
-                      <div className="bg-white dark:bg-white/90 p-2 pb-3 shadow-md rotate-[-1.5deg] rounded-sm">
-                        <img
-                          src={question.figureImage}
-                          alt="案件附圖"
-                          className="w-full max-w-[260px] mix-blend-darken dark:mix-blend-normal rounded-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <h3 className="text-xs font-bold text-red-800/40 dark:text-red-400/30 uppercase tracking-widest mb-3 border-b border-red-800/10 dark:border-red-400/10 pb-1">
-                    {DIALOGUE.notebookCluesSection} ({foundClues.size}/{totalClues})
-                  </h3>
-                  {foundClues.size === 0 ? (
-                    <div className="space-y-2 py-1">
-                      <p className="text-sm text-slate-400 dark:text-white/25 italic">{DIALOGUE.notebookEmpty}</p>
-                      {question.startHint && (
-                        <div className="flex gap-2 items-start bg-amber-50/60 dark:bg-amber-900/10 rounded-lg px-3 py-2.5 border border-amber-200/40 dark:border-amber-700/20">
-                          <span className="text-amber-500 shrink-0 mt-0.5">💡</span>
-                          <p className="text-sm text-amber-800 dark:text-amber-300/80">{question.startHint}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <ul className="space-y-3">
-                      {chatEvents.filter(e => e.type === 'clue').map((e, i) => {
-                        const clue = question.clues[(e as { type: 'clue'; idx: number }).idx];
-                        return (
-                          <li key={i} className="flex flex-col gap-0.5">
-                            <span className="text-amber-700 dark:text-amber-300 font-bold text-base flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 opacity-50" />
-                              {clue.text}
-                            </span>
-                            <span className="text-slate-500 dark:text-white/50 pl-4 border-l-2 border-slate-100 dark:border-white/5 ml-0.5 py-1">
-                              {clue.why}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+            {/* 筆記本內容（可捲動） */}
+            <div className="notebook-paper overflow-y-auto flex-1" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+              <div className="max-w-xl mx-auto px-6 pt-5 pb-2">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-bold text-xl text-slate-700 dark:text-white/80 flex items-center gap-2">
+                    <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
+                  </h2>
+                  <button onClick={closeNotebook}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70">
+                    ✕
+                  </button>
                 </div>
 
-                {chatEvents.some(e => e.type === 'context' || e.type === 'pity') && (
+                <div className="space-y-6">
+                  {question.figureImage && (
+                    <div className="flex justify-center py-2">
+                      <div className="relative">
+                        <div className="absolute -top-5 right-6 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
+                        <div className="bg-white dark:bg-white/90 p-2 pb-3 shadow-md rotate-[-1.5deg] rounded-sm">
+                          <img src={question.figureImage} alt="案件附圖" className="w-full max-w-[260px] mix-blend-darken dark:mix-blend-normal rounded-sm" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
-                    <h3 className="text-xs font-bold text-cyan-600/50 dark:text-cyan-400/40 uppercase tracking-widest mb-3 border-b border-cyan-600/10 dark:border-cyan-400/10 pb-1">
-                      {DIALOGUE.notebookHintsSection}
+                    <h3 className="text-xs font-bold text-red-800/40 dark:text-red-400/30 uppercase tracking-widest mb-3 border-b border-red-800/10 dark:border-red-400/10 pb-1">
+                      {DIALOGUE.notebookCluesSection} ({foundClues.size}/{totalClues})
                     </h3>
-                    <ul className="space-y-2.5">
-                      {chatEvents.filter(e => e.type === 'context' || e.type === 'pity').map((e, i) => (
-                        <li key={i} className={`text-sm rounded-xl px-4 py-3 border shadow-sm relative overflow-hidden ${
-                          e.type === 'pity'
-                            ? 'text-amber-800 dark:text-amber-200/80 bg-amber-50/60 dark:bg-amber-900/15 border-amber-200/50 dark:border-amber-600/20'
-                            : 'text-cyan-700 dark:text-cyan-300/80 bg-cyan-50/50 dark:bg-cyan-900/20 border-cyan-100/50 dark:border-cyan-800/20'
-                        }`}>
-                          <div className={`absolute left-0 top-0 bottom-0 w-1 ${e.type === 'pity' ? 'bg-amber-400/40' : 'bg-cyan-400/30'}`} />
-                          {e.type === 'pity' && <span className="mr-1.5">🔍</span>}
-                          {(e as { type: string; hint: string }).hint}
-                        </li>
-                      ))}
-                    </ul>
+                    {foundClues.size === 0 ? (
+                      <div className="space-y-2 py-1">
+                        <p className="text-sm text-slate-400 dark:text-white/25 italic">{DIALOGUE.notebookEmpty}</p>
+                        {question.startHint && (
+                          <div className="flex gap-2 items-start bg-amber-50/60 dark:bg-amber-900/10 rounded-lg px-3 py-2.5 border border-amber-200/40 dark:border-amber-700/20">
+                            <span className="text-amber-500 shrink-0 mt-0.5">💡</span>
+                            <p className="text-sm text-amber-800 dark:text-amber-300/80">{question.startHint}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <ul className="space-y-3">
+                        {chatEvents.filter(e => e.type === 'clue').map((e, i) => {
+                          const clue = question.clues[(e as { type: 'clue'; idx: number }).idx];
+                          return (
+                            <li key={i} className="flex flex-col gap-0.5">
+                              <span className="text-amber-700 dark:text-amber-300 font-bold text-base flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 opacity-50" />
+                                {clue.text}
+                              </span>
+                              <span className="text-slate-500 dark:text-white/50 pl-4 border-l-2 border-slate-100 dark:border-white/5 ml-0.5 py-1">
+                                {clue.why}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </div>
-                )}
+
+                  {chatEvents.some(e => e.type === 'context' || e.type === 'pity') && (
+                    <div>
+                      <h3 className="text-xs font-bold text-cyan-600/50 dark:text-cyan-400/40 uppercase tracking-widest mb-3 border-b border-cyan-600/10 dark:border-cyan-400/10 pb-1">
+                        {DIALOGUE.notebookHintsSection}
+                      </h3>
+                      <ul className="space-y-2.5">
+                        {chatEvents.filter(e => e.type === 'context' || e.type === 'pity').map((e, i) => (
+                          <li key={i} className={`text-sm rounded-xl px-4 py-3 border shadow-sm relative overflow-hidden ${
+                            e.type === 'pity'
+                              ? 'text-amber-800 dark:text-amber-200/80 bg-amber-50/60 dark:bg-amber-900/15 border-amber-200/50 dark:border-amber-600/20'
+                              : 'text-cyan-700 dark:text-cyan-300/80 bg-cyan-50/50 dark:bg-cyan-900/20 border-cyan-100/50 dark:border-cyan-800/20'
+                          }`}>
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${e.type === 'pity' ? 'bg-amber-400/40' : 'bg-cyan-400/30'}`} />
+                            {e.type === 'pity' && <span className="mr-1.5">🔍</span>}
+                            {(e as { type: string; hint: string }).hint}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* 底部撕裂紙邊（更破爛） */}
+            <div className="paper-tear-bottom" aria-hidden="true" />
           </div>
         </>
       )}
+
+      {/* SVG filter 定義 */}
+      <svg style={{ display: 'none' }} aria-hidden="true">
+        <defs>
+          {/* 頂部：中等撕裂 */}
+          <filter id="det-paper-tear-top" x="-2%" y="-80%" width="104%" height="300%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.055 0.09" numOctaves="4" seed="15" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          {/* 底部：較低 x 頻率（長波）＋更高位移量，看起來更破爛 */}
+          <filter id="det-paper-tear-bottom" x="-2%" y="-60%" width="104%" height="300%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.038 0.13" numOctaves="5" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="16" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
     </div>
   );
 }

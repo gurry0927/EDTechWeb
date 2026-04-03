@@ -86,13 +86,13 @@ body {
 .dark .detective-paper { background-image: radial-gradient(circle, var(--det-dot-dark) 1px, transparent 1px); background-size: 18px 18px; }
 
 /* Folder tabs */
-.folder-tab { 
-  position: relative; 
-  top: 0; 
-  border: 1px solid var(--det-border); 
-  border-bottom: none; 
-  border-radius: 12px 12px 0 0; 
-  padding: 8px 20px 4px; 
+.folder-tab {
+  position: relative;
+  top: 0;
+  border: 1px solid var(--det-border);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 8px 20px 4px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   height: 100%;
@@ -103,24 +103,42 @@ body {
 .folder-tab-2 { z-index: 2; box-shadow: 0 -2px 4px rgba(80,60,30,0.04); filter: brightness(0.97); }
 .folder-tab-3 { z-index: 1; box-shadow: 0 -2px 3px rgba(80,60,30,0.02); filter: brightness(0.94); }
 
+/* 主動 tab：陰影加深即可，不用紅邊（紅邊留給抽屜頂端的毛邊處理） */
 .tab-active {
   filter: brightness(1) !important;
   height: calc(100% + 6px);
   padding-bottom: 8px;
-  border-top: 3px solid var(--det-accent);
-  box-shadow: 0 -4px 12px var(--det-shadow) !important;
+  box-shadow: 0 -6px 18px var(--det-shadow) !important;
   z-index: 10 !important;
   clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
-}
-
-.dark .tab-active {
-  border-top-color: rgba(194,85,58,0.8);
 }
 
 .dark .folder-tab { border-color: rgba(140,120,80,0.1); }
 .dark .folder-tab-1 { box-shadow: 0 -3px 8px rgba(0,0,0,0.3); }
 .dark .folder-tab-2 { filter: brightness(0.9); }
 .dark .folder-tab-3 { filter: brightness(0.8); }
+
+/* SVG feTurbulence 撕裂紙邊條 */
+.paper-tear-top {
+  height: 22px;
+  background: var(--det-paper);
+  filter: url(#det-paper-tear-top);
+  position: relative;
+  z-index: 1;
+  margin-bottom: -11px;
+  flex-shrink: 0;
+}
+.paper-tear-bottom {
+  height: 30px;                        /* 比頂部高，更破爛 */
+  background: var(--det-paper);
+  filter: url(#det-paper-tear-bottom);
+  position: relative;
+  z-index: 1;
+  margin-top: -15px;
+  flex-shrink: 0;
+}
+.dark .paper-tear-top,
+.dark .paper-tear-bottom { background: var(--det-paper-dark); }
 
 /* Bubble & typing animations */
 @keyframes bubble-up { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
@@ -138,8 +156,7 @@ body {
     transparent, transparent 27px,
     var(--det-line) 27px, var(--det-line) 28px
   );
-  border-top: 3px solid var(--det-accent);
-  box-shadow: 0 -8px 32px var(--det-shadow), 0 -1px 0 rgba(140,120,80,0.15);
+  box-shadow: 0 8px 28px var(--det-shadow), 0 1px 0 rgba(140,120,80,0.08);
 }
 
 .dark .notebook-paper {
@@ -149,7 +166,7 @@ body {
     transparent, transparent 27px,
     var(--det-line-dark) 27px, var(--det-line-dark) 28px
   );
-  box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
 }
 
 /* ── [NEW] 放大鏡掃描效果 (Magnifier Mode) ── */
@@ -178,12 +195,19 @@ body {
   filter: brightness(1.1) contrast(1.08);
 }
 
-/* ── [NEW] 筆記本面板滑入動畫 ── */
-@keyframes notebook-slide-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+/* ── [NEW] 筆記本面板滑入／滑出動畫 ── */
+@keyframes notebook-slide-down {
+  from { opacity: 0; transform: translateY(-10%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes notebook-slide-up-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8%); }
 }
 
 .notebook-slide-in {
-  animation: notebook-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: notebook-slide-down 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.notebook-slide-out {
+  animation: notebook-slide-up-out 0.28s cubic-bezier(0.4, 0, 1, 0.8) both;
 }
