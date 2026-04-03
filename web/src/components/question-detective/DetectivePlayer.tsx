@@ -164,6 +164,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [notebookSeenCount, setNotebookSeenCount] = useState(0);
   const [showPulse, setShowPulse] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+  const [toastKey, setToastKey] = useState(0);
+  const showToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); }, []);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerH, setHeaderH] = useState(0);
@@ -193,7 +195,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setHeaderH(el.offsetHeight);
     return () => ro.disconnect();
   }, []);
-  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 1400); return () => clearTimeout(t); }, [toast]);
+  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 2500); return () => clearTimeout(t); }, [toast]);
 
   useEffect(() => {
     if (!activeScanning) return;
@@ -286,7 +288,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const next = consecutiveMisses + 1;
     if (next >= GAME.pityScanThreshold) {
       const hint = question.pityHint ?? DIALOGUE.pityCategoryHint(question.tags[1] ?? question.tags[0] ?? '本題');
-      setToast(hint);
+      showToast(hint);
       setChatEvents(prev => [...prev, { type: 'pity', hint }]);
       setConsecutiveMisses(0);
     } else {
@@ -298,7 +300,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     if (clueLocked) return;
     const msg = pick((DIALOGUE as any).clueMissReactions || [DIALOGUE.clueMiss]);
     setLives(prev => prev - 1);
-    setToast(msg);
+    showToast(msg);
     triggerMissIncrement();
   }, [clueLocked, triggerMissIncrement]);
 
@@ -306,7 +308,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const region = question.scaffolding?.[regionIdx];
     if (!region) return;
     const msg = region.hint || pick(DIALOGUE.contextHitReactions);
-    setToast(msg);
+    showToast(msg);
     setConsecutiveMisses(0);
     // 每個 context 區域只加一次泡泡（防止重複點同一處刷屏）
     if (!seenContextRegions.has(regionIdx)) {
@@ -320,7 +322,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const region = question.scaffolding?.[regionIdx];
     const msg = region?.hint || pick(DIALOGUE.noiseHitReactions);
     setLives(prev => Math.max(0, prev - 1));
-    setToast(msg);
+    showToast(msg);
     triggerMissIncrement();
   }, [clueLocked, question.scaffolding, triggerMissIncrement]);
 
@@ -457,13 +459,6 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
       {/* Chat */}
       <main className="flex-1 overflow-y-auto flex flex-col">
-        {toast && (
-          <div className="sticky top-2 z-30 flex justify-center pointer-events-none px-4">
-            <div className="px-4 py-2 rounded-xl text-sm font-medium shadow-md bg-amber-100 dark:bg-amber-500/90 text-amber-800 dark:text-black border border-amber-300 dark:border-transparent">
-              {toast}
-            </div>
-          </div>
-        )}
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
@@ -639,7 +634,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <div className="px-4 pb-1 flex justify-end">
             <button
               disabled={scanOnCooldown}
-              onClick={() => { setActiveScanning(true); setToast(DIALOGUE.scanActivate); }}
+              onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); }}
               className={`text-xs flex items-center gap-1 px-3 py-1 rounded-full border transition-all
                 ${scanOnCooldown
                   ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
@@ -657,6 +652,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </footer>
 
+      {/* Toast — fixed z-[60]，永遠在最頂層，不被 notebook backdrop 壓住 */}
+      {toast && (
+        <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4" style={{ top: headerH + 10 }}>
+          <div key={toastKey} className="toast-anim px-4 py-2 rounded-xl text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-800 dark:text-black border border-amber-300 dark:border-transparent">
+            {toast}
+          </div>
+        </div>
+      )}
+
       {/* Notebook overlay — fixed top-down from below header */}
       {isNotebookOpen && (
         <>
@@ -667,7 +671,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           />
           <div
             className={`fixed inset-x-0 mx-auto z-50 w-full max-w-2xl overflow-hidden flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
-            style={{ top: headerH + 10, maxHeight: '68vh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
+            style={{ top: headerH + 10, height: '65vh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
           >
             {/* 頂部撕裂紙邊 */}
             <div className="paper-tear-top" aria-hidden="true" />

@@ -140,6 +140,15 @@ body {
 .dark .paper-tear-top,
 .dark .paper-tear-bottom { background: var(--det-paper-dark); }
 
+/* Toast 淡入停留淡出 */
+@keyframes toast-life {
+  0%   { opacity: 0; transform: translateY(-8px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  78%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+.toast-anim { animation: toast-life 2.2s ease-out forwards; }
+
 /* Bubble & typing animations */
 @keyframes bubble-up { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
 .bubble-in { animation: bubble-up 0.25s ease-out both; }
