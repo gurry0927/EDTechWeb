@@ -162,6 +162,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [wrongAttempts, setWrongAttempts] = useState<string[]>([]);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
   const [notebookSeenCount, setNotebookSeenCount] = useState(0);
+  const [hasOpenedNotebook, setHasOpenedNotebook] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [toastKey, setToastKey] = useState(0);
@@ -345,6 +346,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const openNotebook = useCallback(() => {
     setIsClosing(false);
     setIsNotebookOpen(true);
+    setHasOpenedNotebook(true);
     setNotebookSeenCount(chatEvents.length);
   }, [chatEvents.length]);
 
@@ -407,14 +409,6 @@ export function DetectivePlayer({ question, onBack }: Props) {
             返回
           </button>
           <span className="flex-1 text-center text-sm text-slate-400 dark:text-white/40">{question.source}</span>
-          <button onClick={openNotebook} className="relative text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/80 text-base p-1">
-            📓
-            {chatEvents.length > notebookSeenCount && (
-              <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500">
-                <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75" />
-              </span>
-            )}
-          </button>
         </header>
 
         <div className={`case-file transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/50 ring-inset' : ''}`}>
@@ -444,12 +438,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
             <span className="text-xs font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
               線索 {foundClues.size}/{totalClues}
               {question.figureImage && <span className="opacity-50">🖇</span>}
+              {(chatEvents.length > notebookSeenCount || (!!question.figureImage && !hasOpenedNotebook)) && (
+                <span className="relative flex w-2 h-2 shrink-0">
+                  <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75" />
+                  <span className="relative w-2 h-2 rounded-full bg-red-500" />
+                </span>
+              )}
             </span>
-            {chatEvents.length > notebookSeenCount && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500">
-                <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75" />
-              </span>
-            )}
           </button>
           <div className="folder-tab folder-tab-3 relative z-[1] -ml-2 cursor-default">
             <LivesDisplay lives={lives} />
