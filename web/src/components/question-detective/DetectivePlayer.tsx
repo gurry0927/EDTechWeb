@@ -696,6 +696,61 @@ export function DetectivePlayer({ question, onBack }: Props) {
                     </div>
                   )}
 
+                  {/* 嫌疑犯清單 — 多層漸進式除霧 */}
+                  {(() => {
+                    // 每找到一個關鍵線索解除一層，推理完成解除最後一層
+                    const totalCritical = criticalClues.length;
+                    const criticalFoundCount = criticalClues.filter(c => foundClues.has(c.idx)).length;
+                    const reasoningComplete = phase === 'answer' || phase === 'solution';
+                    const canIdentify = reasoningComplete;
+                    // blurSteps = totalCritical + 1；最後一步留給推理完成
+                    const blurSteps = totalCritical + 1;
+                    const remainingSteps = Math.max(0, blurSteps - criticalFoundCount - (reasoningComplete ? 1 : 0));
+                    const blurPx = remainingSteps === 0 ? 0 : Math.round((remainingSteps / blurSteps) * 16);
+                    return (
+                      <div>
+                        <h3 className={`text-xs font-bold uppercase tracking-widest mb-2 border-b pb-1 transition-colors duration-500 ${
+                          canIdentify
+                            ? 'text-emerald-600/60 dark:text-emerald-400/50 border-emerald-200/40 dark:border-emerald-600/20'
+                            : 'text-slate-400/60 dark:text-white/20 border-slate-100/60 dark:border-white/5'
+                        }`}>
+                          嫌疑犯名單
+                          {canIdentify && <span className="ml-2 text-emerald-500">✓ 可指認</span>}
+                        </h3>
+                        <ul className="space-y-1.5">
+                          {question.options.map((opt, i) => {
+                            const letter = String.fromCharCode(65 + i);
+                            return (
+                              <li key={i}
+                                onClick={() => {
+                                  if (canIdentify) return;
+                                  if (criticalFoundCount < totalCritical) showToast('證據不足，無法指認嫌疑犯，請繼續掃描題幹！');
+                                  else showToast('請先完成推理分析，再指認嫌疑犯！');
+                                }}
+                                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm transition-all duration-500 ${
+                                  canIdentify
+                                    ? 'border-emerald-200/50 dark:border-emerald-600/20 bg-emerald-50/40 dark:bg-emerald-900/10 cursor-default'
+                                    : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] cursor-pointer'
+                                }`}
+                                style={{ boxShadow: canIdentify ? '0 0 10px rgba(52,211,153,0.12)' : 'none' }}
+                              >
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-500 ${
+                                  canIdentify
+                                    ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                                    : 'bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/30'
+                                }`}>{letter}</span>
+                                <span
+                                  className="text-slate-600 dark:text-white/60 leading-snug transition-all duration-700 select-none"
+                                  style={{ filter: blurPx > 0 ? `blur(${blurPx}px)` : 'none' }}
+                                >{opt}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+
                   <div>
                     <h3 className="text-xs font-bold text-red-800/40 dark:text-red-400/30 uppercase tracking-widest mb-3 border-b border-red-800/10 dark:border-red-400/10 pb-1">
                       {DIALOGUE.notebookCluesSection} ({foundClues.size}/{totalClues})
