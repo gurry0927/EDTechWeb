@@ -45,6 +45,7 @@ body {
 :root {
   --det-paper: #f4efe4;
   --det-paper-dark: #111119;
+  --det-wood: #c8b49a;
   --det-accent: #c2553a;
   --det-line: rgba(140,120,80,0.07);
   --det-line-dark: rgba(140,120,80,0.04);
@@ -52,6 +53,10 @@ body {
   --det-dot-dark: rgba(160,140,100,0.08);
   --det-border: rgba(140,120,80,0.15);
   --det-shadow: rgba(80,60,30,0.08);
+}
+
+.dark {
+  --det-wood: #2a1f16;
 }
 
 /* Scan sweep animation — 單次掃描（入場 / 掃描模式） */
@@ -99,21 +104,85 @@ body {
 .case-file, .detective-paper, .folder-tab { background-color: var(--det-paper); }
 .dark .case-file, .dark .detective-paper, .dark .folder-tab { background-color: var(--det-paper-dark); }
 
-/* Case file: ruled lines + red accent */
+/* Case file: ruled lines + red accent — 卡片化後四邊都有陰影 */
 .case-file {
   background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--det-line) 23px, var(--det-line) 24px);
   border-left: 3px solid var(--det-accent);
-  box-shadow: 0 4px 16px var(--det-shadow);
+  box-shadow: 0 4px 6px rgba(60,35,10,0.08), 0 10px 32px rgba(60,35,10,0.20);
 }
 .dark .case-file {
   background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--det-line-dark) 23px, var(--det-line-dark) 24px);
   border-left: 3px solid rgba(194,85,58,0.6);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.25), 0 10px 32px rgba(0,0,0,0.50);
 }
 
-/* Chat area: dot grid */
-.detective-paper { background-image: radial-gradient(circle, var(--det-dot) 1px, transparent 1px); background-size: 18px 18px; }
-.dark .detective-paper { background-image: radial-gradient(circle, var(--det-dot-dark) 1px, transparent 1px); background-size: 18px 18px; }
+
+/* 文件標頭列 */
+.case-file-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 2px solid var(--det-accent);
+  opacity: 0.85;
+}
+.case-file-header-label {
+  font-size: 1rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  color: var(--det-accent);
+}
+.case-file-header-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--det-accent), transparent);
+  opacity: 0.3;
+  align-self: center;
+}
+.dark .case-file-header-label { color: rgba(194,85,58,0.85); }
+.dark .case-file-header-rule { opacity: 0.2; }
+
+/* Chat area: 胡桃木桌面 */
+.detective-paper {
+  background-color: #c8b49a;
+  background-image:
+    repeating-linear-gradient(
+      108deg,
+      transparent, transparent 9px,
+      rgba(255,255,255,0.06) 9px, rgba(255,255,255,0.06) 10px
+    ),
+    repeating-linear-gradient(
+      72deg,
+      transparent, transparent 22px,
+      rgba(0,0,0,0.04) 22px, rgba(0,0,0,0.04) 23px
+    ),
+    repeating-linear-gradient(
+      108deg,
+      transparent, transparent 40px,
+      rgba(80,45,20,0.05) 40px, rgba(80,45,20,0.05) 42px
+    );
+}
+.dark .detective-paper {
+  background-color: #2a1f16;
+  background-image:
+    repeating-linear-gradient(
+      108deg,
+      transparent, transparent 9px,
+      rgba(255,255,255,0.025) 9px, rgba(255,255,255,0.025) 10px
+    ),
+    repeating-linear-gradient(
+      72deg,
+      transparent, transparent 22px,
+      rgba(0,0,0,0.08) 22px, rgba(0,0,0,0.08) 23px
+    ),
+    repeating-linear-gradient(
+      108deg,
+      transparent, transparent 40px,
+      rgba(255,200,140,0.03) 40px, rgba(255,200,140,0.03) 42px
+    );
+}
 
 /* Folder tabs */
 .folder-tab {
@@ -129,22 +198,20 @@ body {
   clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
   margin-right: -8px;
 }
-.folder-tab-1 { z-index: 3; box-shadow: 0 -2px 6px rgba(80,60,30,0.05); }
-.folder-tab-2 { z-index: 2; box-shadow: 0 -2px 4px rgba(80,60,30,0.04); filter: brightness(0.97); }
-.folder-tab-3 { z-index: 1; box-shadow: 0 -2px 3px rgba(80,60,30,0.02); filter: brightness(0.94); }
+.folder-tab-1 { z-index: 3; box-shadow: 0 3px 8px rgba(80,60,30,0.12); }
+.folder-tab-2 { z-index: 2; box-shadow: 0 2px 6px rgba(80,60,30,0.08); filter: brightness(0.97); }
+.folder-tab-3 { z-index: 1; box-shadow: 0 2px 4px rgba(80,60,30,0.04); filter: brightness(0.94); }
 
-/* 主動 tab：陰影加深即可，不用紅邊（紅邊留給抽屜頂端的毛邊處理） */
+/* 主動 tab：投影向下，貼合文件頂邊 */
 .tab-active {
-  filter: brightness(1) !important;
-  height: calc(100% + 6px);
-  padding-bottom: 8px;
-  box-shadow: 0 -6px 18px var(--det-shadow) !important;
+  filter: brightness(1.02) !important;
+  box-shadow: 0 4px 14px rgba(80,60,30,0.20) !important;
   z-index: 10 !important;
   clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
 }
 
 .dark .folder-tab { border-color: rgba(140,120,80,0.1); }
-.dark .folder-tab-1 { box-shadow: 0 -3px 8px rgba(0,0,0,0.3); }
+.dark .folder-tab-1 { box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
 .dark .folder-tab-2 { filter: brightness(0.9); }
 .dark .folder-tab-3 { filter: brightness(0.8); }
 

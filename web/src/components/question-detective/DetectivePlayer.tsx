@@ -444,38 +444,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   return (
     <div className="h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col overflow-hidden">
-      {/* Header + Stem + Tabs */}
-      <div ref={headerRef} className="shrink-0 sticky top-0 z-10">
-        <header className="px-4 py-2 flex items-center gap-3 case-file border-b border-amber-200/20 dark:border-white/5">
-          <button onClick={onBack} className="text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/80 text-base flex items-center gap-1">
+      {/* Header + Tabs + Stem card — 全體木紋底色，case-file 浮卡 */}
+      <div ref={headerRef} className="shrink-0 sticky top-0 z-10" style={{ backgroundColor: 'var(--det-wood)' }}>
+        <header className="px-4 py-2 flex items-center gap-3">
+          <button onClick={onBack} className="text-stone-600 dark:text-white/60 hover:text-stone-800 dark:hover:text-white/90 text-base flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             返回
           </button>
-          <span className="flex-1 text-center text-sm text-slate-400 dark:text-white/40">{question.source}</span>
+          <span className="flex-1 text-center text-sm text-stone-500 dark:text-white/40">{question.source}</span>
         </header>
 
-        <div className={`case-file transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/50 ring-inset' : ''}`}>
-          <div className="max-w-2xl mx-auto px-4 py-3 space-y-2">
-            {isPointingPhase && <div className="text-sm text-amber-600 dark:text-amber-400 font-medium">{DIALOGUE.reasoningPointingBanner}</div>}
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold tracking-widest uppercase text-red-700/50 dark:text-red-400/40 border border-red-700/20 dark:border-red-400/15 px-1.5 py-0.5 rounded">案件証詞</span>
-            </div>
-            <div>
-              <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
-                {renderSegs(stemSegs, onSegTap)}
-              </p>
-              {question.figure && (
-                <div className={`mt-2 px-2 py-1.5 rounded text-sm ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
-                  <p className="text-slate-500 dark:text-white/45 leading-relaxed">
-                    {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
+        {/* Tabs — 資料夾索引，貼在浮卡頂端 */}
         <div className="max-w-2xl mx-auto px-4 flex items-end h-9">
           <div className="folder-tab folder-tab-1 tab-active relative z-[3]">
             <span className="font-bold text-xs tracking-wider text-red-700 dark:text-red-400">機密檔案</span>
@@ -483,7 +462,6 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <button onClick={openNotebook} className="folder-tab folder-tab-2 relative z-[2] -ml-2">
             <span className="text-xs font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
               線索 {foundClues.size}/{totalClues}
-              {question.figureImage && <span className="opacity-50">🖇</span>}
               {(chatEvents.length > notebookSeenCount || (!!question.figureImage && !hasOpenedNotebook)) && (
                 <span className="relative flex w-2 h-2 shrink-0">
                   <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75" />
@@ -494,6 +472,35 @@ export function DetectivePlayer({ question, onBack }: Props) {
           </button>
           <div className="folder-tab folder-tab-3 relative z-[1] -ml-2 cursor-default">
             <LivesDisplay lives={lives} />
+          </div>
+        </div>
+
+        {/* Case-file 浮卡：左右 padding 露出木紋，底部 pb 露出木紋投影 */}
+        <div className="max-w-2xl mx-auto px-4 pb-4">
+          <div className={`case-file rounded-xl overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/50 ring-inset' : ''}`}>
+            <div className="px-4 pt-3 pb-4 space-y-2">
+              {isPointingPhase
+                ? <div className="text-sm text-amber-600 dark:text-amber-400 font-medium">{DIALOGUE.reasoningPointingBanner}</div>
+                : (
+                  <div className="case-file-header">
+                    <span className="case-file-header-label">案件証詞</span>
+                    <div className="case-file-header-rule" />
+                  </div>
+                )
+              }
+              <div>
+                <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                  {renderSegs(stemSegs, onSegTap)}
+                </p>
+                {question.figure && (
+                  <div className={`mt-2 px-2 py-1.5 rounded text-sm ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                    <p className="text-slate-500 dark:text-white/45 leading-relaxed">
+                      {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
