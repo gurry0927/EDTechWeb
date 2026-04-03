@@ -171,6 +171,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const showPersistToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); setToastPersist(true); }, []);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const clueTabRef = useRef<HTMLButtonElement>(null);
   const [headerH, setHeaderH] = useState(0);
 
   // [NEW] 連續失誤計數器（憐憫機制）
@@ -310,12 +311,47 @@ export function DetectivePlayer({ question, onBack }: Props) {
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
 
   // ── Handlers ──
-  const onClueHit = useCallback((idx: number) => {
+  const [clueFlyer, setClueFlyer] = useState<{ x: number, y: number, kfId: string } | null>(null);
+  const [isTabShaking, setIsTabShaking] = useState(false);
+
+  // 共用飛行觸發：動態注入 @keyframes（避免 var() 在 keyframes 的相容問題）
+  const triggerFlight = useCallback((e: React.MouseEvent) => {
+    if (!clueTabRef.current) return;
+    const tabRect = clueTabRef.current.getBoundingClientRect();
+    const dx = tabRect.left + tabRect.width / 2 - e.clientX;
+    const dy = tabRect.top + tabRect.height / 2 - e.clientY;
+    const kfId = `cfl-${Date.now()}`;
+    const styleEl = document.createElement('style');
+    styleEl.id = kfId;
+    styleEl.textContent = `
+      @keyframes ${kfId}-x {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(${dx}px); }
+      }
+      @keyframes ${kfId}-y {
+        0%   { transform: translateY(0) scale(1); opacity: 1; }
+        35%  { transform: translateY(${dy * 0.1}px) scaleX(1.6) scaleY(0.55); opacity: 1; }
+        70%  { transform: translateY(${dy * 0.72}px) scaleX(1.3) scaleY(0.7); opacity: 1; }
+        100% { transform: translateY(${dy}px) scale(0.25); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(styleEl);
+    setClueFlyer({ x: e.clientX, y: e.clientY, kfId });
+    setTimeout(() => {
+      document.getElementById(kfId)?.remove();
+      setClueFlyer(null);
+      setIsTabShaking(true);
+      setTimeout(() => setIsTabShaking(false), 500);
+    }, 560);
+  }, []);
+
+  const onClueHit = useCallback((idx: number, e?: React.MouseEvent) => {
     if (clueLocked || foundClues.has(idx)) return;
+    if (e) triggerFlight(e);
     setFoundClues(prev => new Set(prev).add(idx));
     setChatEvents(prev => [...prev, { type: 'clue', idx }]);
     setConsecutiveMisses(0);
-  }, [clueLocked, foundClues]);
+  }, [clueLocked, foundClues, triggerFlight]);
 
   const triggerMissIncrement = useCallback(() => {
     const next = consecutiveMisses + 1;
@@ -337,7 +373,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     triggerMissIncrement();
   }, [clueLocked, triggerMissIncrement]);
 
-  const onContextHit = useCallback((regionIdx: number) => {
+  const onContextHit = useCallback((regionIdx: number, e?: React.MouseEvent) => {
     const region = question.scaffolding?.[regionIdx];
     if (!region) return;
     const msg = region.hint || pick(DIALOGUE.contextHitReactions);
@@ -345,10 +381,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setConsecutiveMisses(0);
     // 每個 context 區域只加一次泡泡（防止重複點同一處刷屏）
     if (!seenContextRegions.has(regionIdx)) {
+      if (e) triggerFlight(e);
       setChatEvents(prev => [...prev, { type: 'context', hint: msg, text: region.text }]);
       setSeenContextRegions(prev => new Set(prev).add(regionIdx));
     }
-  }, [question.scaffolding, seenContextRegions]);
+  }, [question.scaffolding, seenContextRegions, triggerFlight]);
 
   const onNoiseMiss = useCallback((regionIdx: number) => {
     if (clueLocked) return;
@@ -363,7 +400,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // clueIndex != null  → onClueHit（不變）
   // scaffoldIndex != null → 查 ScaffoldingRegion.type，呼叫 onContextHit 或 onNoiseMiss
   // 兩者皆 null        → onClueMiss（不變）
-  const onSegTap = useCallback((seg: Seg) => {
+  const onSegTap = useCallback((seg: Seg, e: React.MouseEvent) => {
     // 首次點擊 → 永久停止 shimmer + persist toast
     if (!hasEverTapped) {
       setHasEverTapped(true);
@@ -374,10 +411,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }
 
     if (seg.clueIndex !== null) {
-      onClueHit(seg.clueIndex);
+      onClueHit(seg.clueIndex, e);
     } else if (seg.scaffoldIndex !== null) {
       const region = question.scaffolding?.[seg.scaffoldIndex];
-      if (region?.type === 'context') onContextHit(seg.scaffoldIndex);
+      if (region?.type === 'context') onContextHit(seg.scaffoldIndex, e);
       else onNoiseMiss(seg.scaffoldIndex);
     } else {
       onClueMiss();
@@ -426,7 +463,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const isCluePhase = phase === 'clue' && !clueLocked;
   const isPointingPhase = phase === 'reasoning' && reasoningMode === 'pointing';
 
-  const renderSegs = (segs: Seg[], onTap: (seg: Seg) => void) => segs.map((seg, i) => {
+  const renderSegs = (segs: Seg[], onTap: (seg: Seg, e: React.MouseEvent) => void) => segs.map((seg, i) => {
     const isClue = seg.clueIndex !== null;
     const isFound = isClue && foundClues.has(seg.clueIndex!);
     if (isPointingPhase) {
@@ -434,7 +471,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       return <span key={i} className={clsDim}>{seg.text}</span>;
     }
     if (phase === 'reasoning') return <span key={i} className={isFound ? clsFound : clsDim}>{seg.text}</span>;
-    if (isCluePhase) return <span key={i} onClick={() => onTap(seg)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
+    if (isCluePhase) return <span key={i} onClick={(e) => onTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
     return <span key={i} className={isFound ? clsFound : ''}>{seg.text}</span>;
   });
 
@@ -445,7 +482,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   return (
     <div className="h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col overflow-hidden">
       {/* Header + Tabs + Stem card — 全體木紋底色，case-file 浮卡 */}
-      <div ref={headerRef} className="shrink-0 sticky top-0 z-10" style={{ backgroundColor: 'var(--det-wood)' }}>
+      <div ref={headerRef} className="shrink-0 sticky top-0 z-10 bg-transparent">
         <header className="px-4 py-2 flex items-center gap-3">
           <button onClick={onBack} className="text-stone-600 dark:text-white/60 hover:text-stone-800 dark:hover:text-white/90 text-base flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -455,11 +492,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </header>
 
         {/* Tabs — 資料夾索引，貼在浮卡頂端 */}
-        <div className="max-w-2xl mx-auto px-4 flex items-end h-9">
+        <div className="max-w-2xl mx-auto px-4 pl-6 flex items-end h-9">
           <div className="folder-tab folder-tab-1 tab-active relative z-[3]">
             <span className="font-bold text-xs tracking-wider text-red-700 dark:text-red-400">機密檔案</span>
           </div>
-          <button onClick={openNotebook} className="folder-tab folder-tab-2 relative z-[2] -ml-2">
+          <button 
+            ref={clueTabRef}
+            onClick={openNotebook} 
+            className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${isTabShaking ? 'animate-tab-shake' : ''}`}
+          >
             <span className="text-xs font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
               線索 {foundClues.size}/{totalClues}
               {(chatEvents.length > notebookSeenCount || (!!question.figureImage && !hasOpenedNotebook)) && (
@@ -477,7 +518,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
         {/* Case-file 浮卡：左右 padding 露出木紋，底部 pb 露出木紋投影 */}
         <div className="max-w-2xl mx-auto px-4 pb-4">
-          <div className={`case-file rounded-xl overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/50 ring-inset' : ''}`}>
+          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/50 ring-inset' : ''}`}>
             <div className="px-4 pt-3 pb-4 space-y-2">
               {isPointingPhase
                 ? <div className="text-sm text-amber-600 dark:text-amber-400 font-medium">{DIALOGUE.reasoningPointingBanner}</div>
@@ -911,6 +952,22 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </defs>
       </svg>
 
+      {/* Clue Flyer — dual-container parabolic arc (dynamic keyframes) */}
+      {clueFlyer && (
+        <div
+          className="clue-flyer-x"
+          style={{
+            left: clueFlyer.x,
+            top: clueFlyer.y,
+            animation: `${clueFlyer.kfId}-x 0.56s cubic-bezier(0.25,0.46,0.45,0.94) forwards`,
+          } as React.CSSProperties}
+        >
+          <div
+            className="clue-flyer-y"
+            style={{ animation: `${clueFlyer.kfId}-y 0.56s cubic-bezier(0.45,0.05,0.55,0.95) forwards` }}
+          />
+        </div>
+      )}
     </div>
   );
 }

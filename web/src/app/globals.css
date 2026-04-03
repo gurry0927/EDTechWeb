@@ -100,6 +100,32 @@ body {
   );
 }
 
+/* Clue flight & Tab pop effects */
+/* 拋物線軌跡 keyframes 由 JS 動態注入（避免 var() 在 @keyframes 的瀏覽器相容問題） */
+/* 卡比彈跳：輕巧版 */
+@keyframes tab-pop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.10); }
+  65%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+/* 外層：fixed 錨點，animation 由 inline style 指定 */
+.clue-flyer-x {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+}
+/* 內層：視覺顆粒，animation 由 inline style 指定 */
+.clue-flyer-y {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #F59E0B;
+  box-shadow: 0 0 8px 3px rgba(245,158,11,0.65);
+  transform-origin: center center;
+}
+.animate-tab-shake {
+  animation: tab-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* Shared paper base */
 .case-file, .detective-paper, .folder-tab { background-color: var(--det-paper); }
 .dark .case-file, .dark .detective-paper, .dark .folder-tab { background-color: var(--det-paper-dark); }
@@ -108,12 +134,18 @@ body {
 .case-file {
   background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--det-line) 23px, var(--det-line) 24px);
   border-left: 3px solid var(--det-accent);
-  box-shadow: 0 4px 6px rgba(60,35,10,0.08), 0 10px 32px rgba(60,35,10,0.20);
+  box-shadow: 
+    0 1px 3px rgba(60,35,10,0.1),
+    0 4px 12px rgba(60,35,10,0.15),
+    0 12px 40px rgba(60,35,10,0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .dark .case-file {
   background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--det-line-dark) 23px, var(--det-line-dark) 24px);
   border-left: 3px solid rgba(194,85,58,0.6);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.25), 0 10px 32px rgba(0,0,0,0.50);
+  box-shadow: 
+    0 4px 12px rgba(0,0,0,0.4),
+    0 15px 45px rgba(0,0,0,0.6);
 }
 
 
@@ -198,20 +230,23 @@ body {
   clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
   margin-right: -8px;
 }
-.folder-tab-1 { z-index: 3; box-shadow: 0 3px 8px rgba(80,60,30,0.12); }
-.folder-tab-2 { z-index: 2; box-shadow: 0 2px 6px rgba(80,60,30,0.08); filter: brightness(0.97); }
-.folder-tab-3 { z-index: 1; box-shadow: 0 2px 4px rgba(80,60,30,0.04); filter: brightness(0.94); }
+.folder-tab-1 { z-index: 3; box-shadow: 0 4px 12px rgba(60,35,10,0.25), 0 1px 3px rgba(60,35,10,0.15); }
+.folder-tab-2 { z-index: 2; box-shadow: 0 3px 8px rgba(60,35,10,0.18); filter: brightness(0.97); }
+.folder-tab-3 { z-index: 1; box-shadow: 0 3px 6px rgba(60,35,10,0.12); filter: brightness(0.94); }
 
-/* 主動 tab：投影向下，貼合文件頂邊 */
+/* 主動 tab：擬真立體化 */
 .tab-active {
   filter: brightness(1.02) !important;
-  box-shadow: 0 4px 14px rgba(80,60,30,0.20) !important;
+  box-shadow: 
+    0 1px 2px rgba(255,255,255,0.4) inset,
+    0 8px 24px rgba(60,35,10,0.35) !important;
   z-index: 10 !important;
   clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
+  transition: all 0.25s ease;
 }
 
 .dark .folder-tab { border-color: rgba(140,120,80,0.1); }
-.dark .folder-tab-1 { box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
+.dark .folder-tab-1 { box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
 .dark .folder-tab-2 { filter: brightness(0.9); }
 .dark .folder-tab-3 { filter: brightness(0.8); }
 
