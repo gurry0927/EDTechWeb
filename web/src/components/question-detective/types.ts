@@ -149,4 +149,10 @@ export interface DetectiveQuestion {
 
   /** 筆記本初始提示（選填）：尚未找到任何線索時開啟筆記本顯示的引導語 */
   startHint?: string;
+
+  /** 偵探開場問出的案件問題（選填）
+   *  填寫後：偵探以泡泡形式提問，讓學生帶著問題去閱讀上方証詞找線索
+   *  不填：行為與舊版相同（向後相容）
+   */
+  caseQuestion?: string;
 }

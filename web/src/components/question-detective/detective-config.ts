@@ -25,8 +25,9 @@ export const GAME = {
 /** 偵探台詞（可替換語氣/語言） */
 export const DIALOGUE = {
   // 線索階段
-  intro: '有一份文件送到了偵探社。裡面藏著破案的關鍵線索。',
-  introHint: '👆 點選題目中你覺得可疑的地方',
+  intro: '案件送達！一份証詞送到了偵探社。',
+  introHint: '👆 點選上方證詞中你覺得可疑的字詞',
+  caseQuestionPrompt: '仔細閱讀上方證詞，點擊你認為證詞中和案件相關的關鍵字詞！',
   clueMiss: '這裡沒什麼線索，再看看別的。',
   clueMissReactions: [
     '這裡似乎只是背景細節，試著找找能決定「時間」或「位置」的關鍵詞？',

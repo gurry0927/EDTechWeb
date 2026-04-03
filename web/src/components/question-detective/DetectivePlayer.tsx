@@ -166,7 +166,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [showPulse, setShowPulse] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [toastKey, setToastKey] = useState(0);
-  const showToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); }, []);
+  const [toastPersist, setToastPersist] = useState(false);
+  const showToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); setToastPersist(false); }, []);
+  const showPersistToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); setToastPersist(true); }, []);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerH, setHeaderH] = useState(0);
@@ -185,6 +187,31 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [activeScanning, setActiveScanning] = useState(false);
   const [scanOnCooldown, setScanOnCooldown] = useState(false);
 
+  // 閒置 shimmer：8 秒未點擊題幹 → 循環掃光；首次點擊後永久關閉
+  const [idleShimmer, setIdleShimmer] = useState(false);
+  const [hasEverTapped, setHasEverTapped] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetIdleTimer = useCallback((withToast = false) => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    setIdleShimmer(false);
+    idleTimerRef.current = setTimeout(() => {
+      setIdleShimmer(true);
+      if (withToast) showPersistToast('👆 點擊上方証詞中可疑的字詞！');
+    }, 8000);
+  }, [showPersistToast]);
+
+  // 進場後啟動 idle timer（附 toast）；首次點擊或離開 clue phase 後清除
+  useEffect(() => {
+    if (phase !== 'clue' || hasEverTapped) {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      setIdleShimmer(false);
+      return;
+    }
+    resetIdleTimer(true);
+    return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
+  }, [phase, hasEverTapped]);
+
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
 
@@ -196,7 +223,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setHeaderH(el.offsetHeight);
     return () => ro.disconnect();
   }, []);
-  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 2500); return () => clearTimeout(t); }, [toast]);
+  useEffect(() => { if (!toast || toastPersist) return; const t = setTimeout(() => setToast(null), 2500); return () => clearTimeout(t); }, [toast, toastPersist]);
+
+  // #17: 進入指認證物階段時自動關閉筆記本，讓使用者回到題幹操作
+  useEffect(() => {
+    if (reasoningMode === 'pointing' && isNotebookOpen) closeNotebook();
+  }, [reasoningMode]);
 
   useEffect(() => {
     if (!activeScanning) return;
@@ -332,6 +364,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // scaffoldIndex != null → 查 ScaffoldingRegion.type，呼叫 onContextHit 或 onNoiseMiss
   // 兩者皆 null        → onClueMiss（不變）
   const onSegTap = useCallback((seg: Seg) => {
+    // 首次點擊 → 永久停止 shimmer + persist toast
+    if (!hasEverTapped) {
+      setHasEverTapped(true);
+      setIdleShimmer(false);
+      setToast(null);
+      setToastPersist(false);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    }
+
     if (seg.clueIndex !== null) {
       onClueHit(seg.clueIndex);
     } else if (seg.scaffoldIndex !== null) {
@@ -341,19 +382,21 @@ export function DetectivePlayer({ question, onBack }: Props) {
     } else {
       onClueMiss();
     }
-  }, [onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding]);
+  }, [hasEverTapped, resetIdleTimer, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding]);
 
   const openNotebook = useCallback(() => {
     setIsClosing(false);
     setIsNotebookOpen(true);
     setHasOpenedNotebook(true);
     setNotebookSeenCount(chatEvents.length);
-  }, [chatEvents.length]);
+    if (!hasEverTapped) resetIdleTimer(true);
+  }, [chatEvents.length, hasEverTapped, resetIdleTimer]);
 
   const closeNotebook = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => { setIsNotebookOpen(false); setIsClosing(false); }, 260);
-  }, []);
+    if (!hasEverTapped) resetIdleTimer(true);
+  }, [hasEverTapped, resetIdleTimer]);
 
   const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); }, []);
 
@@ -414,12 +457,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
         <div className={`case-file transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/50 ring-inset' : ''}`}>
           <div className="max-w-2xl mx-auto px-4 py-3 space-y-2">
             {isPointingPhase && <div className="text-sm text-amber-600 dark:text-amber-400 font-medium">{DIALOGUE.reasoningPointingBanner}</div>}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-red-700/50 dark:text-red-400/40 border border-red-700/20 dark:border-red-400/15 px-1.5 py-0.5 rounded">案件証詞</span>
+            </div>
             <div>
-              <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''}`}>
+              <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                 {renderSegs(stemSegs, onSegTap)}
               </p>
               {question.figure && (
-                <div className={`mt-2 px-2 py-1.5 rounded text-sm ${showPulse ? 'stem-scan' : ''}`}>
+                <div className={`mt-2 px-2 py-1.5 rounded text-sm ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                   <p className="text-slate-500 dark:text-white/45 leading-relaxed">
                     {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
                   </p>
@@ -457,6 +503,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
+
+        {question.caseQuestion && (
+          <>
+            <TypedDetective delay="medium">
+              <span className="font-medium text-amber-700 dark:text-amber-300">📌 本案問題：</span><br/>
+              {question.caseQuestion}
+            </TypedDetective>
+            <TypedDetective delay="long">{DIALOGUE.caseQuestionPrompt}</TypedDetective>
+          </>
+        )}
 
         {chatEvents.map((event, i) => {
           if (event.type === 'clue') {
@@ -629,7 +685,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <div className="px-4 pb-1 flex justify-end">
             <button
               disabled={scanOnCooldown}
-              onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); }}
+              onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
               className={`text-xs flex items-center gap-1 px-3 py-1 rounded-full border transition-all
                 ${scanOnCooldown
                   ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
@@ -650,7 +706,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       {/* Toast — fixed z-[60]，永遠在最頂層，不被 notebook backdrop 壓住 */}
       {toast && (
         <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4" style={{ top: headerH + 10 }}>
-          <div key={toastKey} className="toast-anim px-4 py-2 rounded-xl text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-800 dark:text-black border border-amber-300 dark:border-transparent">
+          <div key={toastKey} className={`${toastPersist ? 'toast-persist' : 'toast-anim'} px-4 py-2 rounded-xl text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-800 dark:text-black border border-amber-300 dark:border-transparent`}>
             {toast}
           </div>
         </div>
@@ -661,12 +717,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
         <>
           <div
             className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-            style={{ top: headerH }}
+            style={{ top: 0 }}
             onClick={closeNotebook}
           />
           <div
             className={`fixed inset-x-0 mx-auto z-50 w-full max-w-2xl overflow-hidden flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
-            style={{ top: headerH + 10, height: '65vh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
+            style={{ top: '2dvh', height: '80dvh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
           >
             {/* 頂部撕裂紙邊 */}
             <div className="paper-tear-top" aria-hidden="true" />
@@ -689,8 +745,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
                     <div className="flex justify-center py-2">
                       <div className="relative">
                         <div className="absolute -top-5 right-6 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
-                        <div className="bg-white dark:bg-white/90 p-2 pb-3 shadow-md rotate-[-1.5deg] rounded-sm">
-                          <img src={question.figureImage} alt="案件附圖" className="w-full max-w-[260px] mix-blend-darken dark:mix-blend-normal rounded-sm" />
+                        <div className="bg-white dark:bg-white/90 p-2 pb-3 shadow-md rotate-[-1.5deg] rounded-sm case-photo">
+                          <img
+                            src={question.figureImage}
+                            alt="案件附圖"
+                            onClick={() => showToast("請勿直接接觸證物，請仔細閱讀題幹文字進行調查")}
+                            className="w-full max-w-[200px] mix-blend-darken dark:mix-blend-normal rounded-sm"
+                          />
                         </div>
                       </div>
                     </div>
@@ -808,6 +869,18 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 </div>
               </div>
             </div>
+
+            {/* 底部捷徑：開始推理 */}
+            {phase === 'clue' && (allCriticalFound || clueLocked) && (
+              <div className="shrink-0 px-6 py-3 flex justify-center" style={{ backgroundColor: 'var(--det-paper)' }}>
+                <button
+                  onClick={() => { closeNotebook(); setTimeout(enterReasoning, 280); }}
+                  className="px-8 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all active:scale-95"
+                >
+                  {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
+                </button>
+              </div>
+            )}
 
             {/* 底部撕裂紙邊（更破爛） */}
             <div className="paper-tear-bottom" aria-hidden="true" />

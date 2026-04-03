@@ -54,15 +54,45 @@ body {
   --det-shadow: rgba(80,60,30,0.08);
 }
 
-/* Scan sweep animation */
+/* Scan sweep animation — 單次掃描（入場 / 掃描模式） */
 @keyframes scan-sweep { 0% { background-position: -100% 0 } 100% { background-position: 200% 0 } }
 .stem-scan {
-  background-image: linear-gradient(90deg, transparent 0%, rgba(34,211,238,0.15) 40%, rgba(34,211,238,0.3) 50%, rgba(34,211,238,0.15) 60%, transparent 100%);
+  background-image: linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.15) 40%, rgba(34,211,238,0.3) 50%, rgba(34,211,238,0.15) 60%, rgba(34,211,238,0) 100%);
   background-position: -100% 0; background-size: 50% 100%; background-repeat: no-repeat;
   animation: scan-sweep 1.8s ease-in-out 2;
 }
 .dark .stem-scan {
-  background-image: linear-gradient(90deg, transparent 0%, rgba(34,211,238,0.08) 40%, rgba(34,211,238,0.18) 50%, rgba(34,211,238,0.08) 60%, transparent 100%);
+  background-image: linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.08) 40%, rgba(34,211,238,0.18) 50%, rgba(34,211,238,0.08) 60%, rgba(34,211,238,0) 100%);
+}
+
+/* Idle shimmer — 閒置 8 秒後循環掃光，吸引使用者點擊題幹 */
+@keyframes idle-shimmer {
+  0%   { background-position: -60% 0 }
+  100% { background-position: 160% 0 }
+}
+.stem-idle-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    rgba(245,158,11,0) 0%,
+    rgba(245,158,11,0.15) 40%,
+    rgba(245,158,11,0.3) 50%,
+    rgba(245,158,11,0.15) 60%,
+    rgba(245,158,11,0) 100%
+  );
+  background-position: -60% 0;
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  animation: idle-shimmer 2.2s ease-in-out infinite;
+}
+.dark .stem-idle-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    rgba(245,158,11,0) 0%,
+    rgba(245,158,11,0.08) 40%,
+    rgba(245,158,11,0.18) 50%,
+    rgba(245,158,11,0.08) 60%,
+    rgba(245,158,11,0) 100%
+  );
 }
 
 /* Shared paper base */
@@ -149,6 +179,13 @@ body {
 }
 .toast-anim { animation: toast-life 2.2s ease-out forwards; }
 
+/* Toast 淡入後常駐（不淡出），由 JS 手動清除 */
+@keyframes toast-enter {
+  0%   { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.toast-persist { animation: toast-enter 0.3s ease-out forwards; }
+
 /* Bubble & typing animations */
 @keyframes bubble-up { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
 .bubble-in { animation: bubble-up 0.25s ease-out both; }
@@ -217,6 +254,27 @@ body {
 .notebook-slide-in {
   animation: notebook-slide-down 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* ── 證物照片樣式與濾鏡 ── */
+/* filter 套在外框 div：白邊 + 圖片一起做舊，避免白框太新的層次問題 */
+.case-photo {
+  filter: sepia(0.65) saturate(0.72) contrast(1.1);
+  cursor: zoom-in;
+  position: relative;
+}
+/* 暗角效果：偽元素疊加漸層，模擬老照片邊角發黃褪色 */
+.case-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(80,55,20,0.18) 100%);
+  mix-blend-mode: multiply;
+}
+.dark .case-photo {
+  filter: sepia(0.55) saturate(0.65) contrast(1.08) brightness(0.82);
+}
+
 .notebook-slide-out {
   animation: notebook-slide-up-out 0.28s cubic-bezier(0.4, 0, 1, 0.8) both;
 }
