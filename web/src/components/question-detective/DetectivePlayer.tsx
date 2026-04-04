@@ -736,12 +736,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
       </main>
 
       {/* Fixed bottom bar — 1 列 3 欄 grid：左 hashtags / 中 推理按鈕(置中) / 右 掃描按鈕 */}
-      <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: 'var(--det-paper)', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
-        <div className="px-4 py-1.5 grid items-center gap-1" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+      <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: 'var(--det-paper)', paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+        <div className="px-4 py-2.5 grid items-center gap-1" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
           <span className="text-xs text-slate-300 dark:text-white/20 truncate">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
           <div className="flex justify-center">
             {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
-              <button onClick={enterReasoning} className="h-8 text-[10px] sm:text-xs px-4 rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_12px_rgba(8,145,178,0.3)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center border border-cyan-400/30">
+              <button onClick={enterReasoning} className="h-9 text-[10px] sm:text-[13px] px-4 rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_15px_rgba(8,145,178,0.35)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center border border-cyan-400/30">
                 {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
               </button>
             )}
@@ -751,7 +751,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
               <button
                 disabled={scanOnCooldown}
                 onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
-                className={`text-xs flex items-center justify-center w-8 h-8 rounded-full border transition-all
+                className={`text-base flex items-center justify-center w-9 h-9 rounded-full border transition-all
                   ${scanOnCooldown
                     ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
                     : 'border-cyan-300 dark:border-cyan-700/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
