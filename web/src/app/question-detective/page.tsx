@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DetectivePlayer } from '@/components/question-detective/DetectivePlayer';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 
 import { ALL_QUESTIONS } from '@/data/detective-questions';
@@ -17,7 +16,6 @@ type GroupBy = 'subject' | 'year';
 
 export default function QuestionDetectivePage() {
   const router = useRouter();
-  const [activeQuestion, setActiveQuestion] = useState<DetectiveQuestion | null>(null);
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
 
   const grouped = useMemo(() => {
@@ -29,10 +27,6 @@ export default function QuestionDetectivePage() {
     });
     return Array.from(map.entries());
   }, [groupBy]);
-
-  if (activeQuestion) {
-    return <DetectivePlayer question={activeQuestion} onBack={() => setActiveQuestion(null)} />;
-  }
 
   return (
     <div className="min-h-[100dvh] bg-stone-100 dark:bg-zinc-900 text-slate-800 dark:text-white flex flex-col">
@@ -86,7 +80,7 @@ export default function QuestionDetectivePage() {
               {/* Question cards */}
               <div className="space-y-2">
                 {questions.map(q => (
-                  <button key={q.id} onClick={() => setActiveQuestion(q)}
+                  <button key={q.id} onClick={() => router.push(`/question-detective/${q.id}`)}
                     className="w-full text-left rounded-lg p-4 case-file hover:shadow-md transition-all group">
                     <div className="flex items-start gap-3">
                       {/* Case number badge */}
