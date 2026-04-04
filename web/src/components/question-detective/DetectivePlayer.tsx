@@ -341,35 +341,18 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   // ── Handlers ──
   const [clueFlyer, setClueFlyer] = useState<{ x: number, y: number, kfId: string } | null>(null);
-  const [isNotebookShaking, setIsNotebookShaking] = useState(false);
-  const [isHeartsShaking, setIsHeartsShaking] = useState(false);
+  const [notebookShakeKey, setNotebookShakeKey] = useState(0);
   const [wrongFeedbackKey, setWrongFeedbackKey] = useState(0);
   const [wrongOptionIdx, setWrongOptionIdx] = useState<number | null>(null);
   const [lifeLossFeedbacks, setLifeLossFeedbacks] = useState<{ id: number; x: number; y: number }[]>([]);
 
-  const triggerWrongFeedback = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+  const triggerWrongFeedback = useCallback((e?: React.MouseEvent) => {
     setWrongFeedbackKey(prev => prev + 1);
-    
-    // 獲取觸發點坐標
-    let x = window.innerWidth / 2;
-    let y = window.innerHeight / 2;
-    
-    if (e && 'clientX' in e) {
-      x = e.clientX;
-      y = e.clientY;
-    } else if (e && 'touches' in e && e.touches.length > 0) {
-      x = e.touches[0].clientX;
-      y = e.touches[0].clientY;
-    }
-
+    const x = e ? e.clientX : window.innerWidth / 2;
+    const y = e ? e.clientY : window.innerHeight / 2;
     const newId = Date.now();
     setLifeLossFeedbacks(prev => [...prev, { id: newId, x, y }]);
-    setTimeout(() => {
-      setLifeLossFeedbacks(prev => prev.filter(f => f.id !== newId));
-    }, 1000);
-
-    setIsHeartsShaking(true);
-    setTimeout(() => setIsHeartsShaking(false), 400);
+    setTimeout(() => setLifeLossFeedbacks(prev => prev.filter(f => f.id !== newId)), 1000);
   }, []);
 
   // 共用飛行觸發：動態注入 @keyframes（避免 var() 在 keyframes 的相容問題）
@@ -398,8 +381,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setTimeout(() => {
       document.getElementById(kfId)?.remove();
       setClueFlyer(null);
-      setIsNotebookShaking(true);
-      setTimeout(() => setIsNotebookShaking(false), 500);
+      setNotebookShakeKey(prev => prev + 1);
     }, 560);
   }, []);
 
@@ -524,17 +506,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }
   }, [reasoningClues, reasoningStep, triggerWrongFeedback]);
 
-  const onEvidencePoint = useCallback((clueIdx: number) => {
+  const onEvidencePoint = useCallback((clueIdx: number, e: React.MouseEvent) => {
     const current = reasoningClues[reasoningStep];
     if (!current) return;
-    if (clueIdx === current.idx) { 
-      setEvidenceWrongMsg(null); 
-      setReasoningMode('choosing'); 
-      setTimeout(() => setReasoningStep(prev => prev + 1), GAME.reasoningAdvanceDelay); 
-    } else { 
-      setLives(prev => Math.max(0, prev - 1)); 
-      triggerWrongFeedback(); 
-      setEvidenceWrongMsg(pick(DIALOGUE.wrongEvidence)); 
+    if (clueIdx === current.idx) {
+      setEvidenceWrongMsg(null);
+      setReasoningMode('choosing');
+      setTimeout(() => setReasoningStep(prev => prev + 1), GAME.reasoningAdvanceDelay);
+    } else {
+      setLives(prev => Math.max(0, prev - 1));
+      triggerWrongFeedback(e);
+      setEvidenceWrongMsg(pick(DIALOGUE.wrongEvidence));
     }
   }, [reasoningClues, reasoningStep, triggerWrongFeedback]);
 
@@ -560,7 +542,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const isClue = seg.clueIndex !== null;
     const isFound = isClue && foundClues.has(seg.clueIndex!);
     if (isPointingPhase) {
-      if (isFound) return <span key={i} onClick={() => onEvidencePoint(seg.clueIndex!)} className={clsPointable}>{seg.text}</span>;
+      if (isFound) return <span key={i} onClick={(e) => onEvidencePoint(seg.clueIndex!, e)} className={clsPointable}>{seg.text}</span>;
       return <span key={i} className={clsDim}>{seg.text}</span>;
     }
     if (phase === 'reasoning') return <span key={i} className={isFound ? clsFound : clsDim}>{seg.text}</span>;
@@ -592,7 +574,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <button 
             ref={clueTabRef}
             onClick={openNotebook} 
-            className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${isNotebookShaking ? 'animate-notebook-shake' : ''}`}
+            className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${notebookShakeKey > 0 ? 'animate-notebook-shake' : ''}`} key={`notebook-${notebookShakeKey}`}
           >
             <span className="text-xs font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
               偵探筆記本
@@ -605,7 +587,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             </span>
           </button>
           <div className="folder-tab folder-tab-3 relative z-[1] -ml-2 cursor-default">
-            <div className={isHeartsShaking ? 'animate-hearts-shake' : ''}>
+            <div key={`hearts-${wrongFeedbackKey}`} className={wrongFeedbackKey > 0 ? 'animate-hearts-shake' : ''}>
               <LivesDisplay lives={lives} />
             </div>
           </div>
