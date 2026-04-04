@@ -341,7 +341,36 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   // ── Handlers ──
   const [clueFlyer, setClueFlyer] = useState<{ x: number, y: number, kfId: string } | null>(null);
-  const [isTabShaking, setIsTabShaking] = useState(false);
+  const [isNotebookShaking, setIsNotebookShaking] = useState(false);
+  const [isHeartsShaking, setIsHeartsShaking] = useState(false);
+  const [wrongFeedbackKey, setWrongFeedbackKey] = useState(0);
+  const [wrongOptionIdx, setWrongOptionIdx] = useState<number | null>(null);
+  const [lifeLossFeedbacks, setLifeLossFeedbacks] = useState<{ id: number; x: number; y: number }[]>([]);
+
+  const triggerWrongFeedback = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+    setWrongFeedbackKey(prev => prev + 1);
+    
+    // 獲取觸發點坐標
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    
+    if (e && 'clientX' in e) {
+      x = e.clientX;
+      y = e.clientY;
+    } else if (e && 'touches' in e && e.touches.length > 0) {
+      x = e.touches[0].clientX;
+      y = e.touches[0].clientY;
+    }
+
+    const newId = Date.now();
+    setLifeLossFeedbacks(prev => [...prev, { id: newId, x, y }]);
+    setTimeout(() => {
+      setLifeLossFeedbacks(prev => prev.filter(f => f.id !== newId));
+    }, 1000);
+
+    setIsHeartsShaking(true);
+    setTimeout(() => setIsHeartsShaking(false), 400);
+  }, []);
 
   // 共用飛行觸發：動態注入 @keyframes（避免 var() 在 keyframes 的相容問題）
   const triggerFlight = useCallback((e: React.MouseEvent) => {
@@ -369,8 +398,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setTimeout(() => {
       document.getElementById(kfId)?.remove();
       setClueFlyer(null);
-      setIsTabShaking(true);
-      setTimeout(() => setIsTabShaking(false), 500);
+      setIsNotebookShaking(true);
+      setTimeout(() => setIsNotebookShaking(false), 500);
     }, 560);
   }, []);
 
@@ -396,13 +425,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }
   }, [consecutiveMisses, question.pityHint, question.tags]);
 
-  const onClueMiss = useCallback(() => {
+  const onClueMiss = useCallback((e?: React.MouseEvent) => {
     if (clueLocked) return;
     const msg = pick((DIALOGUE as any).clueMissReactions || [DIALOGUE.clueMiss]);
     setLives(prev => prev - 1);
+    triggerWrongFeedback(e);
     showToast(msg);
     triggerMissIncrement();
-  }, [clueLocked, triggerMissIncrement]);
+  }, [clueLocked, triggerMissIncrement, triggerWrongFeedback]);
 
   const onContextHit = useCallback((regionIdx: number, e?: React.MouseEvent) => {
     const region = question.scaffolding?.[regionIdx];
@@ -418,14 +448,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }
   }, [question.scaffolding, seenContextRegions, triggerFlight]);
 
-  const onNoiseMiss = useCallback((regionIdx: number) => {
+  const onNoiseMiss = useCallback((regionIdx: number, e?: React.MouseEvent) => {
     if (clueLocked) return;
     const region = question.scaffolding?.[regionIdx];
     const msg = region?.hint || pick(DIALOGUE.noiseHitReactions);
     setLives(prev => Math.max(0, prev - 1));
+    triggerWrongFeedback(e);
     showToast(msg);
     triggerMissIncrement();
-  }, [clueLocked, question.scaffolding, triggerMissIncrement]);
+  }, [clueLocked, question.scaffolding, triggerMissIncrement, triggerWrongFeedback]);
 
   // [MODIFY] onSegTap：三層分歧邏輯（原本只有兩層：clue / miss）
   // clueIndex != null  → onClueHit（不變）
@@ -446,11 +477,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
     } else if (seg.scaffoldIndex !== null) {
       const region = question.scaffolding?.[seg.scaffoldIndex];
       if (region?.type === 'context') onContextHit(seg.scaffoldIndex, e);
-      else onNoiseMiss(seg.scaffoldIndex);
+      else onNoiseMiss(seg.scaffoldIndex, e);
     } else {
-      onClueMiss();
+      onClueMiss(e);
     }
-  }, [hasEverTapped, resetIdleTimer, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding]);
+  }, [hasEverTapped, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding]);
 
   const openNotebook = useCallback(() => {
     // 暫停 idle 計時器 + 隱藏 toast（筆記本蓋住題幹，提示會誤導）
@@ -477,24 +508,46 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // 共用推理按鈕樣式：footer（小）與筆記本（大）同色同形，尺寸透過 padding 區分
   const reasoningBtnBase = 'rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 border border-cyan-400/30 shadow-[0_0_15px_rgba(8,145,178,0.35)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center';
 
-  const onReasoningChoice = useCallback((choiceIdx: number) => {
+  const onReasoningChoice = useCallback((choiceIdx: number, e: React.MouseEvent) => {
     const current = reasoningClues[reasoningStep];
     if (!current?.reasoning) return;
-    if (choiceIdx === current.reasoning.answerIndex) { setReasoningWrong(false); setReasoningMode('pointing'); setEvidenceWrongMsg(null); }
-    else { setReasoningWrong(true); setLives(prev => Math.max(0, prev - 1)); }
-  }, [reasoningClues, reasoningStep]);
+    if (choiceIdx === current.reasoning.answerIndex) { 
+      setReasoningWrong(false); 
+      setReasoningMode('pointing'); 
+      setEvidenceWrongMsg(null); 
+      setWrongOptionIdx(null); 
+    } else { 
+      setReasoningWrong(true); 
+      setWrongOptionIdx(choiceIdx); 
+      setLives(prev => Math.max(0, prev - 1)); 
+      triggerWrongFeedback(e); 
+    }
+  }, [reasoningClues, reasoningStep, triggerWrongFeedback]);
 
   const onEvidencePoint = useCallback((clueIdx: number) => {
     const current = reasoningClues[reasoningStep];
     if (!current) return;
-    if (clueIdx === current.idx) { setEvidenceWrongMsg(null); setReasoningMode('choosing'); setTimeout(() => setReasoningStep(prev => prev + 1), GAME.reasoningAdvanceDelay); }
-    else { setLives(prev => Math.max(0, prev - 1)); setEvidenceWrongMsg(pick(DIALOGUE.wrongEvidence)); }
-  }, [reasoningClues, reasoningStep]);
+    if (clueIdx === current.idx) { 
+      setEvidenceWrongMsg(null); 
+      setReasoningMode('choosing'); 
+      setTimeout(() => setReasoningStep(prev => prev + 1), GAME.reasoningAdvanceDelay); 
+    } else { 
+      setLives(prev => Math.max(0, prev - 1)); 
+      triggerWrongFeedback(); 
+      setEvidenceWrongMsg(pick(DIALOGUE.wrongEvidence)); 
+    }
+  }, [reasoningClues, reasoningStep, triggerWrongFeedback]);
 
-  const onSelectAnswer = useCallback((letter: string) => {
-    if (letter === question.answer) { setAnsweredCorrectly(true); setTimeout(() => setPhase('solution'), GAME.answerAdvanceDelay); }
-    else { setWrongAttempts(prev => [...prev, letter]); setLives(prev => Math.max(0, prev - 1)); }
-  }, [question.answer]);
+  const onSelectAnswer = useCallback((letter: string, e: React.MouseEvent) => {
+    if (letter === question.answer) { 
+      setAnsweredCorrectly(true); 
+      setTimeout(() => setPhase('solution'), GAME.answerAdvanceDelay); 
+    } else { 
+      setWrongAttempts(prev => [...prev, letter]); 
+      setLives(prev => Math.max(0, prev - 1)); 
+      triggerWrongFeedback(e); 
+    }
+  }, [question.answer, triggerWrongFeedback]);
 
   // ── Stem rendering ──
   const clsFound = 'bg-amber-100 dark:bg-amber-500/20 border-b-2 border-amber-400 dark:border-amber-400/40';
@@ -539,7 +592,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <button 
             ref={clueTabRef}
             onClick={openNotebook} 
-            className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${isTabShaking ? 'animate-tab-shake' : ''}`}
+            className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${isNotebookShaking ? 'animate-notebook-shake' : ''}`}
           >
             <span className="text-xs font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
               偵探筆記本
@@ -552,7 +605,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
             </span>
           </button>
           <div className="folder-tab folder-tab-3 relative z-[1] -ml-2 cursor-default">
-            <LivesDisplay lives={lives} />
+            <div className={isHeartsShaking ? 'animate-hearts-shake' : ''}>
+              <LivesDisplay lives={lives} />
+            </div>
           </div>
         </div>
 
@@ -670,9 +725,20 @@ export function DetectivePlayer({ question, onBack }: Props) {
                   <D>{r.prompt}</D>
                   {isActive && reasoningMode === 'choosing' && (
                     <div className="flex flex-col gap-2 my-2 pl-10">
-                      {r.choices.map((choice, ci) => (
-                        <button key={ci} onClick={() => onReasoningChoice(ci)} className="text-left px-4 py-2 rounded-xl text-base border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:border-cyan-400 dark:hover:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 transition-all">{choice}</button>
-                      ))}
+                      {r.choices.map((choice, ci) => {
+                        const isWrong = wrongOptionIdx === ci;
+                        return (
+                          <button 
+                            key={`${ci}-${isWrong ? wrongFeedbackKey : 0}`} 
+                            onClick={(e) => onReasoningChoice(ci, e)}
+                            className={`text-left px-4 py-2 rounded-xl text-base border transition-colors duration-200
+                              ${isWrong
+                                ? 'border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300 animate-wrong-shake'
+                                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:border-cyan-400 dark:hover:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-900/10'
+                              }`}
+                          >{choice}</button>
+                        );
+                      })}
                     </div>
                   )}
                   {isActive && reasoningMode === 'choosing' && reasoningWrong && (
@@ -729,7 +795,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 const letter = String.fromCharCode(65 + i);
                 const wasWrong = wrongAttempts.includes(letter);
                 return (
-                  <button key={i} onClick={() => !wasWrong && onSelectAnswer(letter)} disabled={wasWrong}
+                  <button key={i} onClick={(e) => !wasWrong && onSelectAnswer(letter, e)} disabled={wasWrong}
                     className={`text-left px-3 py-2 rounded-lg text-base transition-all flex items-center gap-2 ${wasWrong ? 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-300 dark:text-red-500/40 line-through' : 'bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-cyan-400 dark:hover:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 cursor-pointer'}`}>
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${wasWrong ? 'bg-red-200 dark:bg-red-500/20 text-red-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-white/50'}`}>{letter}</span>
                     <span>{opt}</span>
@@ -1062,6 +1128,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
           />
         </div>
       )}
+      {/* 飄浮扣血回饋 */}
+      {lifeLossFeedbacks.map(f => (
+        <span
+          key={f.id}
+          className="minus-life-pop text-xl font-black text-red-500 pointer-events-none whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+          style={{ left: `${f.x}px`, top: `${f.y}px` }}
+        >
+          -1 💔
+        </span>
+      ))}
     </div>
   );
 }

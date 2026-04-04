@@ -122,8 +122,38 @@ body {
   box-shadow: 0 0 8px 3px rgba(245,158,11,0.65);
   transform-origin: center center;
 }
-.animate-tab-shake {
-  animation: tab-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+/* 通用抖動樣式 (左右) */
+@keyframes shake-x {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+.animate-wrong-shake { animation: shake-x 0.4s ease-in-out both; }
+.animate-hearts-shake { animation: shake-x 0.4s ease-in-out both; }
+.animate-notebook-shake { animation: shake-x 0.4s ease-in-out both; }
+
+/* 舊的 tab-pop 改名為 tab-pulse 供其他地方使用 */
+@keyframes tab-pulse {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.10); }
+  65%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+.animate-tab-pulse { animation: tab-pulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* -1 💔 飄走 */
+@keyframes minus-life {
+  0%   { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -80px) scale(0.8); }
+}
+.minus-life-pop { 
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  animation: minus-life 1s ease-out forwards; 
+  filter: drop-shadow(0 0 8px white);
+  line-height: 1;
 }
 
 /* Shared paper base */
