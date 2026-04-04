@@ -68,7 +68,7 @@ export const DIALOGUE = {
   // [NEW] 掃描器台詞
   scanActivate: '🔍 掃描模式啟動，注意高亮的區域。',
   scanCooldownMsg: '掃描器冷卻中…',
-  clueReady: '🔎 關鍵線索到手，開始推理',
+  clueReady: '🔎 線索到手，開始推理',
   clueForceAdvance: '帶著現有線索繼續 →',
 
   // 推理階段
