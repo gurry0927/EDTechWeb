@@ -794,7 +794,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           />
           <div
             className={`notebook-paper fixed inset-x-0 mx-auto z-50 w-full max-w-2xl flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
-            style={{ top: '2dvh', height: '80dvh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
+            style={{ top: '2dvh', height: '80dvh', overflow: 'visible', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
           >
             {/* 頂部撕裂紙邊（自帶 var(--det-paper) 背景，不受父層透明影響） */}
             <div className="paper-tear-top" aria-hidden="true" />
