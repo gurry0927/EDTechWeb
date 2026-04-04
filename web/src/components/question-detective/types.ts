@@ -55,7 +55,9 @@ export interface Clue {
   startIndex: number;
   /** 片段長度 */
   length: number;
-  /** 點擊後偵探的回應（隱晦補充，不直接透露答案） */
+  /** 聊天室顯示的一句話鉤子（點到線索後立刻說，話說一半留懸念，引導去筆記本） */
+  teaser?: string;
+  /** 筆記本中顯示的完整說明（為什麼這是線索） */
   why: string;
   /** 同義詞/相關詞，點到任一個都算找到這條線索（選填） */
   aliases?: string[];

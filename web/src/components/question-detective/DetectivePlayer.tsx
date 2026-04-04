@@ -143,7 +143,7 @@ function buildSegs(
 type Phase = 'clue' | 'reasoning' | 'answer' | 'solution';
 type ReasoningMode = 'choosing' | 'pointing';
 type ChatEvent =
-  | { type: 'clue';    idx: number }
+  | { type: 'clue';    idx: number; reaction: string }
   | { type: 'context'; hint: string; text: string }
   | { type: 'pity';    hint: string }
 interface Props { question: DetectiveQuestion; onBack: () => void; }
@@ -266,7 +266,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [scanOnCooldown]);
 
   // Derived
-  const clueLocked = phase === 'clue' && lives <= 0;
+  const gameOver = lives <= 0 && phase !== 'solution';
+  const clueLocked = phase === 'clue' && gameOver;
   const totalClues = question.clues.length;
   const criticalClues = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.isCritical), [question.clues]);
   const auxiliaryClues = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.isAuxiliary), [question.clues]);
@@ -336,6 +337,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     return () => clearTimeout(t);
   }, [phase, foundClues.size, chatEvents.length, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
+  useEffect(() => { if (gameOver) { const t = setTimeout(() => setPhase('solution'), 1800); return () => clearTimeout(t); } }, [gameOver]);
 
   // ── Handlers ──
   const [clueFlyer, setClueFlyer] = useState<{ x: number, y: number, kfId: string } | null>(null);
@@ -375,10 +377,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const onClueHit = useCallback((idx: number, e?: React.MouseEvent) => {
     if (clueLocked || foundClues.has(idx)) return;
     if (e) triggerFlight(e);
+    const clue = question.clues[idx];
+    const reaction = pick(clue.isAuxiliary ? DIALOGUE.auxiliaryClueReactions : DIALOGUE.clueReactions);
     setFoundClues(prev => new Set(prev).add(idx));
-    setChatEvents(prev => [...prev, { type: 'clue', idx }]);
+    setChatEvents(prev => [...prev, { type: 'clue', idx, reaction }]);
     setConsecutiveMisses(0);
-  }, [clueLocked, foundClues, triggerFlight]);
+  }, [clueLocked, foundClues, triggerFlight, question.clues]);
 
   const triggerMissIncrement = useCallback(() => {
     const next = consecutiveMisses + 1;
@@ -477,7 +481,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const current = reasoningClues[reasoningStep];
     if (!current?.reasoning) return;
     if (choiceIdx === current.reasoning.answerIndex) { setReasoningWrong(false); setReasoningMode('pointing'); setEvidenceWrongMsg(null); }
-    else { setReasoningWrong(true); }
+    else { setReasoningWrong(true); setLives(prev => Math.max(0, prev - 1)); }
   }, [reasoningClues, reasoningStep]);
 
   const onEvidencePoint = useCallback((clueIdx: number) => {
@@ -489,7 +493,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   const onSelectAnswer = useCallback((letter: string) => {
     if (letter === question.answer) { setAnsweredCorrectly(true); setTimeout(() => setPhase('solution'), GAME.answerAdvanceDelay); }
-    else { setWrongAttempts(prev => [...prev, letter]); }
+    else { setWrongAttempts(prev => [...prev, letter]); setLives(prev => Math.max(0, prev - 1)); }
   }, [question.answer]);
 
   // ── Stem rendering ──
@@ -513,7 +517,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   const D = DetectiveBubble;
   const S = StudentBubble;
-  const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length, auxFoundCount, auxiliaryClues.length));
+  const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length, auxFoundCount, auxiliaryClues.length, lives <= 0));
 
   return (
     <div className="h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col overflow-hidden">
@@ -629,13 +633,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
           if (event.type === 'clue') {
             const clue = question.clues[event.idx];
             const isAux = clue.isAuxiliary;
+            const hasTeaser = !!clue.teaser;
             return (
               <div key={`chat-${i}`} className="space-y-3">
                 <S>我覺得「{clue.text}」很可疑。</S>
                 <TypedDetective delay="medium">
-                  {pick(isAux ? DIALOGUE.auxiliaryClueReactions : DIALOGUE.clueReactions)}
+                  {event.reaction}
                   <span className={`font-medium ${isAux ? 'text-cyan-700 dark:text-cyan-300' : 'text-amber-700 dark:text-amber-300'}`}>「{clue.text}」</span>
-                  {' — '}{clue.why}
+                  {' — '}{hasTeaser ? clue.teaser : clue.why}
+                  {hasTeaser && <><br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{isAux ? DIALOGUE.auxiliaryNotebookCTA : DIALOGUE.clueNotebookCTA}</span></>}
                 </TypedDetective>
               </div>
             );
@@ -649,7 +655,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
           return null;
         })}
 
-        {phase === 'clue' && clueLocked && foundClues.size < totalClues && <D>{DIALOGUE.clueLocked}</D>}
+        {phase === 'clue' && clueLocked && !gameOver && foundClues.size < totalClues && <D>{DIALOGUE.clueLocked}</D>}
+        {gameOver && <D>{DIALOGUE.gameOverTakeover}</D>}
 
         {(phase === 'reasoning' || phase === 'answer' || phase === 'solution') && reasoningClues.length > 0 && (
           <>
@@ -669,7 +676,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
                     </div>
                   )}
                   {isActive && reasoningMode === 'choosing' && reasoningWrong && (
-                    <TypedDetective delay="short"><span className="text-red-500 dark:text-red-400">{DIALOGUE.reasoningWrongPrefix}</span>{r.wrong}</TypedDetective>
+                    <>
+                      <TypedDetective delay="short"><span className="text-red-500 dark:text-red-400">{DIALOGUE.reasoningWrongPrefix}</span>{r.wrong}</TypedDetective>
+                      {reasoningClues[reasoningStep]?.teaser && (
+                        <TypedDetective delay="medium">{DIALOGUE.reasoningWrongNotebookHint}</TypedDetective>
+                      )}
+                    </>
                   )}
                   {isActive && reasoningMode === 'pointing' && (
                     <>
@@ -742,6 +754,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
         {phase === 'solution' && (
           <>
+            {lives <= 0 && (
+              <div className="text-xs font-bold text-red-500 dark:text-red-400 text-center tracking-wider py-1">{DIALOGUE.solutionGameOver}</div>
+            )}
             <D>
               {DIALOGUE.solutionConceptLabel}
               <span className="inline-block mt-2 px-2.5 py-0.5 text-sm rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 font-medium">{question.concept.unit}</span>
@@ -771,10 +786,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 <ul className="mt-1 space-y-1">{question.clues.map((c, i) => (!foundClues.has(i) && !c.isAuxiliary) ? <li key={i} className="text-sm text-slate-500 dark:text-white/40">•「{c.text}」— {c.why}</li> : null)}</ul>
               </D>
             )}
-            {auxiliaryClues.length > 0 && auxFoundCount < auxiliaryClues.length && foundClues.size >= totalClues - auxiliaryClues.length && (
+            {!gameOver && auxiliaryClues.length > 0 && auxFoundCount < auxiliaryClues.length && foundClues.size >= totalClues - auxiliaryClues.length && (
               <D><span className="text-cyan-600 dark:text-cyan-400 text-sm italic">{DIALOGUE.solutionAuxiliaryMissed}</span></D>
             )}
-            {auxiliaryClues.length > 0 && auxFoundCount === auxiliaryClues.length && (
+            {!gameOver && auxiliaryClues.length > 0 && auxFoundCount === auxiliaryClues.length && (
               <D><span className="text-emerald-600 dark:text-emerald-400 text-sm">{DIALOGUE.solutionAuxiliaryFound}</span></D>
             )}
             <div className="rounded-xl p-4 flex items-center gap-4 text-sm bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800/20 my-2">
@@ -794,7 +809,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
 
         {/* FAB — 浮動在聊天區右下角，推理按鈕 or 結案返回 */}
-        {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
+        {phase === 'clue' && !gameOver && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
           <div className="sticky bottom-4 flex justify-center px-4 pointer-events-none">
             <button
               onClick={enterReasoning}
@@ -997,7 +1012,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             </div>
 
             {/* 底部捷徑：開始推理 */}
-            {phase === 'clue' && (allCriticalFound || clueLocked) && (
+            {phase === 'clue' && !gameOver && (allCriticalFound || clueLocked) && (
               <div className="shrink-0 px-6 py-3 flex justify-center">
                 <button
                   onClick={() => { closeNotebook(); setTimeout(enterReasoning, 280); }}

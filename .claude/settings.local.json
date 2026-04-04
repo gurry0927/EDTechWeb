@@ -6,7 +6,10 @@
       "Bash(gh issue:*)",
       "Bash(brew list:*)",
       "Read(//opt/homebrew/bin/**)",
-      "Bash(node -e ':*)"
+      "Bash(node -e ':*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)"
     ]
   }
 }

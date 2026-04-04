@@ -54,12 +54,18 @@ export const DIALOGUE = {
     '調查機會消耗了，要謹慎選擇。',
     '這不是我們要找的線索。',
   ],
+  // teaser 有填：顯示 teaser（話說一半）+ 引導去筆記本
+  // teaser 沒填：顯示原本的 clueReactions（向後相容）
   clueReactions: ['有道理。', '說得沒錯。', '好眼力。', '這很關鍵。'],
+  clueNotebookCTA: '📓 詳細分析已記入偵探筆記本。',
   auxiliaryClueReactions: [
-    '好眼力！這條線索不是主線，但能幫我們深入理解案情——收進筆記本。',
-    '有意思。這個細節揭示了更多背景，值得深入追查。',
-    '這條線索另有玄機，等一下我們再回來看。',
+    '好眼力！這條線索另有玄機——',
+    '有意思，這個細節能說明更多——',
+    '值得深入追查——',
   ],
+  auxiliaryNotebookCTA: '📓 已收進偵探筆記本，去看看嫌疑犯的情況有沒有變化。',
+  // 推理選錯時，引導去筆記本複查
+  reasoningWrongNotebookHint: '再去筆記本確認一下線索的分析，也許能找到方向。',
   clueLocked: '調查機會用完了。帶著目前的線索繼續推理吧。',
   clueHintMore: '還有關鍵線索沒找到，繼續調查吧。',
 
@@ -100,6 +106,10 @@ export const DIALOGUE = {
   answerCorrect: '🎉 破案了！',
   answerCorrectSuffix: '完全正確。',
 
+  // 偵探接管（血歸零）
+  gameOverTakeover: '調查機會耗盡。這次就由我來替你整理案情吧。',
+  solutionGameOver: '⚠️ 偵探代為結案',
+
   // 結案報告
   solutionConceptLabel: '這題考的是：',
   solutionExtendLabel: '💡 延伸思考：',
@@ -137,9 +147,10 @@ export const DIALOGUE = {
  *        auxFound=找到輔助線索數, auxTotal=輔助線索總數
  */
 export const ACHIEVEMENTS = [
-  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number) => clues === total && misses === 0 && wrongs === 0 && auxFound === auxTotal, label: '完美偵探 🏆', color: 'text-amber-600 dark:text-amber-300' },
-  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number) => clues === total && misses === 0 && wrongs === 0 && auxTotal > 0 && auxFound < auxTotal, label: '優秀偵探 🔍', color: 'text-cyan-600 dark:text-cyan-300' },
-  { check: (clues: number, total: number) => clues >= total * 0.75, label: '觀察敏銳', color: 'text-emerald-600 dark:text-emerald-300' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues === total && misses === 0 && wrongs === 0 && auxFound === auxTotal, label: '完美偵探 🏆', color: 'text-amber-600 dark:text-amber-300' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues === total && misses === 0 && wrongs === 0 && auxTotal > 0 && auxFound < auxTotal, label: '優秀偵探 🔍', color: 'text-cyan-600 dark:text-cyan-300' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues >= total * 0.75, label: '觀察敏銳', color: 'text-emerald-600 dark:text-emerald-300' },
+  { check: (_c: number, _t: number, _m: number, _w: number, _a: number, _at: number, gameOver: boolean) => gameOver, label: '偵探接管結案', color: 'text-red-400 dark:text-red-400' },
   { check: () => true, label: '下次再仔細看看', color: 'text-slate-400 dark:text-white/40' },
 ];
 
