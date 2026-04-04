@@ -633,7 +633,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                         <span className="text-xs text-slate-400 dark:text-white/30">{foundClues.size}/{totalClues}</span>
                       <button
                         disabled={scanOnCooldown}
-                        onClick={() => { setActiveScanning(true); if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); } if (!hasEverTapped) resetIdleTimer(true); }}
+                        onClick={() => { setActiveScanning(true); setHasEverTapped(true); setIdleShimmer(false); if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); } }}
                         className={`shrink-0 ml-2 text-sm flex items-center justify-center w-7 h-7 rounded-full border transition-all
                           ${scanOnCooldown
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
@@ -650,13 +650,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
               }
               <div className="stem-scroll-fade stem-only">
                 <div className="max-h-[25dvh] sm:max-h-none overflow-y-auto pb-6 sm:pb-0">
-                  <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                  <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                     {renderSegs(stemSegs, onSegTap)}
                   </p>
                   {question.figure && (
                     <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3">
                       <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
-                      <div className={`mt-1 text-base ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                      <div className={`mt-1 text-base ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                         <p className="text-slate-700 dark:text-white/80 leading-relaxed">
                           {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
                         </p>
