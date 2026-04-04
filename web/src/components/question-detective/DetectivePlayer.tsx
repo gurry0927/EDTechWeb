@@ -453,6 +453,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [hasEverTapped, startIdleTimer]);
 
   const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); }, []);
+  // 共用推理按鈕樣式：footer（小）與筆記本（大）同色同形，尺寸透過 padding 區分
+  const reasoningBtnBase = 'rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 border border-cyan-400/30 shadow-[0_0_15px_rgba(8,145,178,0.35)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center';
 
   const onReasoningChoice = useCallback((choiceIdx: number) => {
     const current = reasoningClues[reasoningStep];
@@ -740,7 +742,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
         <div className="px-4 py-2.5 flex items-center justify-between gap-3">
           <div className="flex justify-start min-w-0">
             {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
-              <button onClick={enterReasoning} className="h-9 text-[10px] sm:text-[13px] px-4 rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_15px_rgba(8,145,178,0.35)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center border border-cyan-400/30">
+              <button onClick={enterReasoning} className={`${reasoningBtnBase} h-9 text-[10px] sm:text-[13px] px-4`}>
                 {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
               </button>
             )}
@@ -947,7 +949,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
               <div className="shrink-0 px-6 py-3 flex justify-center">
                 <button
                   onClick={() => { closeNotebook(); setTimeout(enterReasoning, 280); }}
-                  className="px-8 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all active:scale-95"
+                  className={`${reasoningBtnBase} text-sm px-8 py-2.5`}
                 >
                   {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
                 </button>
