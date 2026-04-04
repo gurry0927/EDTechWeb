@@ -9,6 +9,7 @@ export const GAME = {
   scrollDelay: 300,
   reasoningAdvanceDelay: 600,
   answerAdvanceDelay: 800,
+  toastDuration: 4000,
 
   // [NEW] 掃描器（放大鏡模式）
   // scanActiveDuration：按下掃描鈕後，掃描高亮持續幾毫秒
@@ -106,6 +107,17 @@ export const DIALOGUE = {
 
   // [NEW] 偵探筆記本 UI 台詞
   notebookTitle: '偵探筆記本',
+  notebookSubtitle: '這是我專門記錄關鍵細節的地方。只要在證詞中捕捉到可疑字詞，它們就會出現在這；集齊後，我就能鎖定嫌疑人了。',
+  evidencePhotoReactions: [
+    '別盯著照片看啦，真相隱含在『案件證詞』裡喔！',
+    '照片只是參考。關掉筆記本，回主畫面找線索吧。',
+    '證物已封存。請回到主畫面分析證詞內容。',
+  ],
+  insufficientEvidenceReactions: [
+    '冷靜點！證據還不夠，回『案件證詞』再找找吧。',
+    '別急著抓人！去主畫面證詞中揪出更多馬腳吧。',
+    '指控還太早。請關掉筆記本，仔細比對證詞內容。',
+  ],
   notebookCluesSection: '已收集的線索',
   notebookHintsSection: '偵探提示',
   notebookEmpty: '還沒有找到任何線索',

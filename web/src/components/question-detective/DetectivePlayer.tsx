@@ -193,9 +193,19 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [hasEverTapped, setHasEverTapped] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 有互動時用：清掉 shimmer，重新倒數 8 秒
   const resetIdleTimer = useCallback((withToast = false) => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     setIdleShimmer(false);
+    idleTimerRef.current = setTimeout(() => {
+      setIdleShimmer(true);
+      if (withToast) showPersistToast('👆 點擊上方証詞中可疑的字詞！');
+    }, 8000);
+  }, [showPersistToast]);
+
+  // 筆記本關閉後用：不清 shimmer（若已啟動則繼續），只重啟計時器
+  const startIdleTimer = useCallback((withToast = false) => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     idleTimerRef.current = setTimeout(() => {
       setIdleShimmer(true);
       if (withToast) showPersistToast('👆 點擊上方証詞中可疑的字詞！');
@@ -224,7 +234,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setHeaderH(el.offsetHeight);
     return () => ro.disconnect();
   }, []);
-  useEffect(() => { if (!toast || toastPersist) return; const t = setTimeout(() => setToast(null), 2500); return () => clearTimeout(t); }, [toast, toastPersist]);
+  useEffect(() => { if (!toast || toastPersist) return; const t = setTimeout(() => setToast(null), GAME.toastDuration); return () => clearTimeout(t); }, [toast, toastPersist]);
 
   // #17: 進入指認證物階段時自動關閉筆記本，讓使用者回到題幹操作
   useEffect(() => {
@@ -422,18 +432,25 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [hasEverTapped, resetIdleTimer, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding]);
 
   const openNotebook = useCallback(() => {
+    // 暫停 idle 計時器 + 隱藏 toast（筆記本蓋住題幹，提示會誤導）
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    setToast(null);
+    setToastPersist(false);
     setIsClosing(false);
     setIsNotebookOpen(true);
     setHasOpenedNotebook(true);
     setNotebookSeenCount(chatEvents.length);
-    if (!hasEverTapped) resetIdleTimer(true);
-  }, [chatEvents.length, hasEverTapped, resetIdleTimer]);
+  }, [chatEvents.length]);
 
   const closeNotebook = useCallback(() => {
     setIsClosing(true);
-    setTimeout(() => { setIsNotebookOpen(false); setIsClosing(false); }, 260);
-    if (!hasEverTapped) resetIdleTimer(true);
-  }, [hasEverTapped, resetIdleTimer]);
+    setTimeout(() => {
+      setIsNotebookOpen(false);
+      setIsClosing(false);
+      // 重啟計時器但不清 shimmer（若已啟動則繼續顯示）
+      if (!hasEverTapped) startIdleTimer(true);
+    }, 260);
+  }, [hasEverTapped, startIdleTimer]);
 
   const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); }, []);
 
@@ -778,14 +795,19 @@ export function DetectivePlayer({ question, onBack }: Props) {
             {/* 筆記本內容（可捲動） */}
             <div className="notebook-paper overflow-y-auto flex-1" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
               <div className="max-w-xl mx-auto px-6 pt-5 pb-2">
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="font-bold text-xl text-slate-700 dark:text-white/80 flex items-center gap-2">
-                    <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
-                  </h2>
-                  <button onClick={closeNotebook}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70">
-                    ✕
-                  </button>
+                <div className="mb-5">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-bold text-xl text-slate-700 dark:text-white/80 flex items-center gap-2">
+                      <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
+                    </h2>
+                    <button onClick={closeNotebook}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70">
+                      ✕
+                    </button>
+                  </div>
+                  <p className="mt-1.5 text-sm leading-relaxed italic text-slate-400 dark:text-white/30">
+                     {DIALOGUE.notebookSubtitle}
+                   </p>
                 </div>
 
                 <div className="space-y-6">
@@ -797,7 +819,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                           <img
                             src={question.figureImage}
                             alt="案件附圖"
-                            onClick={() => showToast("請勿直接接觸證物，請仔細閱讀題幹文字進行調查")}
+                            onClick={() => showToast(pick(DIALOGUE.evidencePhotoReactions))}
                             className="w-full max-w-[200px] mix-blend-darken dark:mix-blend-normal rounded-sm"
                           />
                         </div>
@@ -833,7 +855,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                               <li key={i}
                                 onClick={() => {
                                   if (canIdentify) return;
-                                  if (criticalFoundCount < totalCritical) showToast('證據不足，無法指認嫌疑犯，請繼續掃描題幹！');
+                                  if (criticalFoundCount < totalCritical) showToast(pick(DIALOGUE.insufficientEvidenceReactions));
                                   else showToast('請先完成推理分析，再指認嫌疑犯！');
                                 }}
                                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm transition-all duration-500 ${

@@ -279,7 +279,7 @@ body {
   78%  { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-4px); }
 }
-.toast-anim { animation: toast-life 2.2s ease-out forwards; }
+.toast-anim { animation: toast-life 3.8s ease-out forwards; }
 
 /* Toast 淡入後常駐（不淡出），由 JS 手動清除 */
 @keyframes toast-enter {
