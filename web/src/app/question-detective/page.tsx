@@ -35,7 +35,7 @@ export default function QuestionDetectivePage() {
   }
 
   return (
-    <div className="min-h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col">
+    <div className="min-h-[100dvh] bg-stone-100 dark:bg-zinc-900 text-slate-800 dark:text-white flex flex-col">
       {/* Header */}
       <header className="shrink-0 case-file px-5 py-4">
         <div className="max-w-2xl mx-auto">
