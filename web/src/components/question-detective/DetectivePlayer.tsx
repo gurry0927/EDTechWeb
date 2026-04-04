@@ -631,7 +631,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 )
               }
               <div className="stem-scroll-fade">
-                <div className="max-h-[35dvh] sm:max-h-none overflow-y-auto pb-6 sm:pb-0">
+                <div className="max-h-[25dvh] sm:max-h-none overflow-y-auto pb-6 sm:pb-0">
                   <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                     {renderSegs(stemSegs, onSegTap)}
                   </p>
