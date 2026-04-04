@@ -520,9 +520,14 @@ const { data: questions } = await supabase
 
 ### 其他欄位原則
 
-**`reasoning.correct` / `reasoning.wrong`**
-- 答對回應可以補充延伸知識，讓學生感覺「收穫」
-- 答錯引導給方向，不直接說答案
+**`reasoning`（推理小題）**
+
+推理小題和筆記本的 `why` 是一組的：`why` 提供分析，`reasoning` 考驗學生有沒有真的看懂。
+
+- `prompt` 必須圍繞該線索的核心意義，讓「看完 `why`」的學生能有線索作答
+- `wrong` 應引導學生回去翻筆記本，例如「再去筆記本確認一下這條線索的分析」
+- `correct` 可以補充延伸知識，讓學生感覺「值得」
+- ❌ 不要出與線索無關的題目——推理小題的存在是為了確認學生理解了 `why`，而不是額外考知識點
 
 **`solution.commonMistakes`**
 - 這是**唯一可以**分析各選項的地方
