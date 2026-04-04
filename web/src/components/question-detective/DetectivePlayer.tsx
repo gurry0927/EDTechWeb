@@ -741,7 +741,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <span className="text-xs text-slate-300 dark:text-white/20 truncate">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
           <div className="flex justify-center">
             {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
-              <button onClick={enterReasoning} className="text-[10px] sm:text-xs px-3 py-1 rounded-full font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm transition-all active:scale-95 whitespace-nowrap">
+              <button onClick={enterReasoning} className="h-8 text-[10px] sm:text-xs px-4 rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_0_12px_rgba(8,145,178,0.3)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center border border-cyan-400/30">
                 {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
               </button>
             )}
