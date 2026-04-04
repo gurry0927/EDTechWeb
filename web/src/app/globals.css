@@ -206,21 +206,27 @@ body {
 .dark .case-file-header-label { color: rgba(194,85,58,0.85); }
 .dark .case-file-header-rule { opacity: 0.2; }
 
-/* 題幹滾動提示 — 手機限定，桌面隱藏 */
+/* 滾動提示：呼吸式青色漸層 — 題幹（手機）＋筆記本（全裝置）共用 */
 .stem-scroll-fade { position: relative; }
 .stem-scroll-fade::after {
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 2rem;
-  background: linear-gradient(to top, var(--det-paper), transparent);
+  background: linear-gradient(to top, rgba(6,182,212,0.18), transparent);
   pointer-events: none;
+  animation: scroll-breathe 2.2s ease-in-out infinite;
 }
 .dark .stem-scroll-fade::after {
-  background: linear-gradient(to top, var(--det-paper-dark), transparent);
+  background: linear-gradient(to top, rgba(6,182,212,0.13), transparent);
+}
+@keyframes scroll-breathe {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1;   }
 }
 @media (min-width: 640px) {
-  .stem-scroll-fade::after { display: none; }
+  /* 題幹在桌面無 max-height，不需要提示；筆記本仍保留 */
+  .stem-scroll-fade.stem-only::after { display: none; }
 }
 
 /* Chat area: 胡桃木桌面 */
