@@ -304,21 +304,45 @@ console.log(stem.indexOf("十八至十九世紀")); // → 37
 
 ### 新增一道題目（常用流程）
 
-1. **建立 JSON**：在 `web/src/data/detective-questions/` 新增 `{年份}-{科目}-{題號}.json`
-2. **放附圖**：圖片放到 `web/public/images/detective/`
-3. **註冊題目**：在 `web/src/data/detective-questions/index.ts` 加一行
+> 完整 JSON 範例請參考 `src/data/detective-questions/114-history-20.json`
+
+**總共只需要改兩個檔案：**
+
+**步驟 1**：在 `web/src/data/detective-questions/` 建立新 JSON
+
+命名規則：`{年份}-{科目縮寫}-{題號}.json`，如 `114-history-31.json`
+
+**步驟 2**：在 `web/src/data/detective-questions/index.ts` 加兩行
 
 ```typescript
-import q114hXX from './114-history-XX.json';
+import q114hXX from './114-history-XX.json';  // ← 加這行 import
 
 export const ALL_QUESTIONS: DetectiveQuestion[] = [
   q114h20,
   q114h31,
-  q114hXX,  // ← 加這裡
+  q114hXX,  // ← 加這行
 ] as DetectiveQuestion[];
 ```
 
-4. `git push origin main` → Vercel 自動部署
+**步驟 3**：`git push origin main` → Vercel 自動部署，新題目立即上線
+
+> ⚠️ 光是把 JSON 放進資料夾是不夠的，一定要在 `index.ts` 補上 import 和陣列項目，否則網站讀不到這道題。
+
+---
+
+### 分類是如何運作的
+
+列表頁的「按科目」和「按年份」分組**完全自動**，由 JSON 欄位決定：
+
+| 列表頁功能 | 讀取的 JSON 欄位 |
+|-----------|----------------|
+| 按科目分組 | `subject`（如 `"社會"`） |
+| 按年份分組 | `source` 開頭的年份（如 `"114年會考..."` → `114年`） |
+| 細分標籤（歷史/地理） | `subSubject` |
+| 年級標籤（一上/二下） | `gradeLevel` |
+| 難度點點 | `difficulty` |
+
+新增題目只要在 JSON 裡把這些欄位填正確，列表頁會自動歸類，不需要額外設定。
 
 ### 修改偵探台詞或遊戲參數
 
