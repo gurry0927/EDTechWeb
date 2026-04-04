@@ -6,8 +6,10 @@ import type { DetectiveQuestion } from '@/components/question-detective/types';
 
 import q114h20 from './114-history-20.json';
 import q114h31 from './114-history-31.json';
+import q114sg1 from './114-social-geography-1.json';
 
 export const ALL_QUESTIONS: DetectiveQuestion[] = [
   q114h20,
   q114h31,
+  q114sg1,
 ] as DetectiveQuestion[];
