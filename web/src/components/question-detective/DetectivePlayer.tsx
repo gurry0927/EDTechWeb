@@ -735,26 +735,23 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </main>
 
-      {/* Fixed bottom bar */}
+      {/* Fixed bottom bar — 最多 2 列：推理按鈕(條件) + 底列(hashtags + 掃描/回題庫) */}
       <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: 'var(--det-paper)', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
-        {phase === 'clue' && foundClues.size > 0 && (
-          <div className="px-4 py-2.5 flex justify-center">
-            {allCriticalFound || clueLocked ? (
-              <button onClick={enterReasoning} className="px-6 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all">
-                {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
-              </button>
-            ) : (
-              <span className="text-sm text-slate-400 dark:text-white/35">{DIALOGUE.clueHintMore}</span>
-            )}
+        {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
+          <div className="px-4 pt-1.5 pb-1 flex justify-center">
+            <button onClick={enterReasoning} className="px-4 py-1.5 rounded-full text-sm font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm transition-all active:scale-95">
+              {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
+            </button>
           </div>
         )}
 
-        {phase === 'clue' && !clueLocked && (
-          <div className="px-4 pb-1 flex justify-end">
+        <div className="px-4 py-1.5 flex items-center justify-between gap-2">
+          <span className="text-xs text-slate-300 dark:text-white/20 truncate">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
+          {phase === 'clue' && !clueLocked && (
             <button
               disabled={scanOnCooldown}
               onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
-              className={`text-xs flex items-center gap-1 px-3 py-1 rounded-full border transition-all
+              className={`text-xs flex items-center gap-1 px-3 py-1 rounded-full border transition-all shrink-0
                 ${scanOnCooldown
                   ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
                   : 'border-cyan-300 dark:border-cyan-700/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
@@ -762,12 +759,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
             >
               🔍 {scanOnCooldown ? DIALOGUE.scanCooldownMsg : '掃描模式'}
             </button>
-          </div>
-        )}
-
-        <div className="px-4 py-1.5 flex items-center justify-between">
-          <span className="text-xs text-slate-300 dark:text-white/20">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
-          {phase === 'solution' && <button onClick={onBack} className="text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70">回到題庫</button>}
+          )}
+          {phase === 'solution' && <button onClick={onBack} className="text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70 shrink-0">回到題庫</button>}
         </div>
       </footer>
 
