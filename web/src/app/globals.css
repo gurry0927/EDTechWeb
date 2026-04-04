@@ -305,6 +305,10 @@ body {
     var(--det-line) 27px, var(--det-line) 28px
   );
   box-shadow: 0 8px 28px var(--det-shadow), 0 1px 0 rgba(140,120,80,0.08);
+  /* Allow SVG displacement filter on paper-tear-top to extend visually
+     while still preventing content from overflowing the container */
+  overflow: clip;
+  padding-top: 6px;
 }
 
 .dark .notebook-paper {

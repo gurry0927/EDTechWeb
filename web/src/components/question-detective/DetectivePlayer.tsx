@@ -789,7 +789,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             onClick={closeNotebook}
           />
           <div
-            className={`notebook-paper fixed inset-x-0 mx-auto z-50 w-full max-w-2xl overflow-hidden flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
+            className={`notebook-paper fixed inset-x-0 mx-auto z-50 w-full max-w-2xl flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
             style={{ top: '2dvh', height: '80dvh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
           >
             {/* 頂部撕裂紙邊（自帶 var(--det-paper) 背景，不受父層透明影響） */}
@@ -813,7 +813,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
             {/* 筆記本內容（可捲動），背景透明讓父層橫線穿透 */}
             {/* min-h-0 修正 flex 子元素 min-height:auto 導致 overflow-y:auto 無效的問題 */}
-            <div className="overflow-y-auto flex-1 min-h-0 bg-transparent" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+            <div className="overflow-y-auto flex-1 bg-transparent" style={{ minHeight: 0, paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
               <div className="max-w-xl mx-auto px-6 pt-5 pb-2">
                 <div className="space-y-6">
                   {question.figureImage && (
