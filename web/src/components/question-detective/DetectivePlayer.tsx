@@ -633,7 +633,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                         <span className="text-xs text-slate-400 dark:text-white/30">{foundClues.size}/{totalClues}</span>
                       <button
                         disabled={scanOnCooldown}
-                        onClick={() => { setActiveScanning(true); showToast(foundClues.size === 0 && question.startHint ? question.startHint : DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
+                        onClick={() => { setActiveScanning(true); if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); } if (!hasEverTapped) resetIdleTimer(true); }}
                         className={`shrink-0 ml-2 text-sm flex items-center justify-center w-7 h-7 rounded-full border transition-all
                           ${scanOnCooldown
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
