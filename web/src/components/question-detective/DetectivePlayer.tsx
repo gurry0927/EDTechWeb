@@ -291,7 +291,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // Segments
   const cluesWithIdx = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })), [question.clues]);
 
-  // [MODIFY] stemSegs：把 scaffolding 傳入 buildSegs
+  // stemSegs：把 scaffolding 傳入 buildSegs
   // scaffoldingWithIdx 過濾 startIndex >= 0（在 mainStem 中的鷹架區域）
   // startIndex === -1 的鷹架區域留給 figureSegs 處理（下方）
   const scaffoldingWithIdx = useMemo(
@@ -299,8 +299,21 @@ export function DetectivePlayer({ question, onBack }: Props) {
     [question.scaffolding]
   );
   const stemScaffolding = useMemo(() => scaffoldingWithIdx.filter(s => s.startIndex >= 0), [scaffoldingWithIdx]);
-  // [MODIFY] 傳入第三個參數 stemScaffolding
-  const stemSegs = useMemo(() => buildSegs(question.mainStem, cluesWithIdx.filter(c => c.startIndex >= 0), stemScaffolding), [question.mainStem, cluesWithIdx, stemScaffolding]);
+  // stemSegs：展開 mainStem 線索的 aliases，讓題幹中出現的同義詞也能被點擊命中
+  const stemSegs = useMemo(() => {
+    const stemClues: { startIndex: number; length: number; idx: number }[] = [];
+    cluesWithIdx.filter(c => c.startIndex >= 0).forEach(c => {
+      stemClues.push({ startIndex: c.startIndex, length: c.length, idx: c.idx });
+      (c.aliases ?? []).forEach(alias => {
+        let pos = question.mainStem.indexOf(alias);
+        while (pos >= 0) {
+          if (pos !== c.startIndex) stemClues.push({ startIndex: pos, length: alias.length, idx: c.idx });
+          pos = question.mainStem.indexOf(alias, pos + alias.length);
+        }
+      });
+    });
+    return buildSegs(question.mainStem, stemClues, stemScaffolding);
+  }, [question.mainStem, cluesWithIdx, stemScaffolding]);
   const figureClues = useMemo(() => cluesWithIdx.filter(c => c.startIndex === -1), [cluesWithIdx]);
   const figureSegs = useMemo(() => {
     if (!question.figure || !figureClues.length) return null;
