@@ -792,13 +792,19 @@ export function DetectivePlayer({ question, onBack }: Props) {
             style={{ top: 0 }}
             onClick={closeNotebook}
           />
+          {/* Outer wrapper — 不設 overflow，讓 paper-tear filter 自由延伸 */}
           <div
-            className={`notebook-paper fixed inset-x-0 mx-auto z-50 w-full max-w-2xl flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
-            style={{ top: '2dvh', height: '80dvh', overflow: 'visible', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
+            className={`fixed inset-x-0 mx-auto z-50 w-full max-w-2xl flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
+            style={{ top: '2dvh', height: '80dvh' }}
           >
-            {/* 頂部撕裂紙邊（自帶 var(--det-paper) 背景，不受父層透明影響） */}
+            {/* 頂部撕裂紙邊 — 在 overflow:clip 容器外，filter 不被裁切 */}
             <div className="paper-tear-top" aria-hidden="true" />
 
+            {/* 筆記本主體 — notebook-paper 自帶 overflow:clip 裁切內容 */}
+            <div
+              className="notebook-paper flex-1 flex flex-col min-h-0"
+              style={{ boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
+            >
             {/* Header — shrink-0，固定不捲動，背景透明讓父層橫線穿透 */}
             <div className="shrink-0 max-w-xl mx-auto w-full px-6 pt-3 pb-3 border-b border-black/5 dark:border-white/5">
               <div className="flex items-center justify-between">
@@ -960,8 +966,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 </button>
               </div>
             )}
+            </div>
 
-            {/* 底部撕裂紙邊（更破爛） */}
+            {/* 底部撕裂紙邊 — 在 overflow:clip 容器外，filter 不被裁切 */}
             <div className="paper-tear-bottom" aria-hidden="true" />
           </div>
         </>
