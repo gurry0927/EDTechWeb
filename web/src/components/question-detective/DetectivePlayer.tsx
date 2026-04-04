@@ -741,8 +741,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <span className="text-xs text-slate-300 dark:text-white/20 truncate">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
           <div className="flex justify-center">
             {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
-              <button onClick={enterReasoning} className="text-xs px-3 py-1 rounded-full font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm transition-all active:scale-95">
-                {allCriticalFound ? '開始推理 →' : '繼續推理 →'}
+              <button onClick={enterReasoning} className="text-[10px] sm:text-xs px-3 py-1 rounded-full font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm transition-all active:scale-95 whitespace-nowrap">
+                {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
               </button>
             )}
           </div>
@@ -751,13 +751,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
               <button
                 disabled={scanOnCooldown}
                 onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
-                className={`text-xs flex items-center gap-1 px-3 py-1 rounded-full border transition-all
+                className={`text-xs flex items-center justify-center w-8 h-8 rounded-full border transition-all
                   ${scanOnCooldown
                     ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
                     : 'border-cyan-300 dark:border-cyan-700/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
                   }`}
+                title={scanOnCooldown ? DIALOGUE.scanCooldownMsg : '掃描模式'}
               >
-                🔍 {scanOnCooldown ? DIALOGUE.scanCooldownMsg : '掃描模式'}
+                🔍
               </button>
             )}
             {phase === 'solution' && <button onClick={onBack} className="text-xs text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70">回到題庫</button>}
