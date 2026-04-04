@@ -206,6 +206,23 @@ body {
 .dark .case-file-header-label { color: rgba(194,85,58,0.85); }
 .dark .case-file-header-rule { opacity: 0.2; }
 
+/* 題幹滾動提示 — 手機限定，桌面隱藏 */
+.stem-scroll-fade { position: relative; }
+.stem-scroll-fade::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2rem;
+  background: linear-gradient(to top, var(--det-paper), transparent);
+  pointer-events: none;
+}
+.dark .stem-scroll-fade::after {
+  background: linear-gradient(to top, var(--det-paper-dark), transparent);
+}
+@media (min-width: 640px) {
+  .stem-scroll-fade::after { display: none; }
+}
+
 /* Chat area: 胡桃木桌面 */
 .detective-paper {
   background-color: #c8b49a;

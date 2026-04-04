@@ -630,20 +630,22 @@ export function DetectivePlayer({ question, onBack }: Props) {
                   </div>
                 )
               }
-              <div>
-                <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
-                  {renderSegs(stemSegs, onSegTap)}
-                </p>
-                {question.figure && (
-                  <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3">
-                    <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
-                    <div className={`mt-1 text-base ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
-                      <p className="text-slate-700 dark:text-white/80 leading-relaxed">
-                        {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
-                      </p>
+              <div className="stem-scroll-fade">
+                <div className="max-h-[35dvh] sm:max-h-none overflow-y-auto pb-6 sm:pb-0">
+                  <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                    {renderSegs(stemSegs, onSegTap)}
+                  </p>
+                  {question.figure && (
+                    <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3">
+                      <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
+                      <div className={`mt-1 text-base ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                        <p className="text-slate-700 dark:text-white/80 leading-relaxed">
+                          {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
