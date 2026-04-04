@@ -126,7 +126,7 @@ JSON → index.ts → [id]/page.tsx (Server Component)
 
 | 欄位 | 必填 | 說明 |
 |------|------|------|
-| `id` | ✅ | **直接決定頁面 URL**，如 `"114-social-history-20"` → `/question-detective/114-social-history-20`。只能用英數字和連字號，不可含中文或空格。建議格式：`{年份}-{科目英文}-{細分英文}-{題號}`，例如 `114-social-history-20`、`113-science-biology-5` |
+| `id` | ✅ | **直接決定頁面 URL**，如 `"114-social-history-20"` → `/question-detective/114-social-history-20`。只能用英數字 and 連字號，不可含中文或空格。建議格式：`{年份}-{科目英文}-{細分英文}-{題號}`，例如 `114-social-history-20`、`113-science-biology-5` |
 | `source` | ✅ | 顯示在列表與遊戲頁標題 |
 | `subject` | ✅ | `'社會'` `'自然'` `'數學'` `'國文'` `'英文'` |
 | `subSubject` | 建議 | 歷史 / 地理 / 公民 / 生物 等，列表頁顯示 |
@@ -236,7 +236,7 @@ console.log(stem.indexOf("十八至十九世紀")); // → 37
     "startIndex": 5,
     "length": 5,
     "type": "noise",
-    "hint": "這只是文件出處，重點不在誰展覽它，而是這個工具用來生產什麼。"
+    "hint": "這只是文件出處，重點不在誰展覽它，壓根不是破案線索項目。"
   }
 ]
 ```
@@ -274,8 +274,6 @@ console.log(stem.indexOf("十八至十九世紀")); // → 37
   "fieldNote": "臺南市新營區至今仍保有清代糖廍遺跡，可見當時製糖規模。"
 }
 ```
-
-`fieldNote` 選填，連結現實場域。客觀陳述，不打廣告。
 
 ---
 
@@ -344,31 +342,6 @@ export const ALL_QUESTIONS: DetectiveQuestion[] = [
 
 新增題目只要在 JSON 裡把這些欄位填正確，列表頁會自動歸類，不需要額外設定。
 
-### 修改偵探台詞或遊戲參數
-
-編輯 `detective-config.ts`：
-
-| 要改的東西 | 對應位置 |
-|-----------|---------|
-| 生命值數量 | `GAME.maxLives` |
-| 連續失誤觸發憐憫的次數 | `GAME.pityScanThreshold` |
-| 掃描動畫持續時間 | `GAME.scanActiveDuration` |
-| 偵探開場白 | `DIALOGUE.intro` / `DIALOGUE.introWithFigure` |
-| 找到線索的隨機回應 | `DIALOGUE.clueReactions` 陣列 |
-| 成就判定邏輯 | `ACHIEVEMENTS` 陣列 |
-
-### 修改視覺風格
-
-編輯 `web/src/app/globals.css` 的 CSS 變數：
-
-```css
-:root {
-  --det-paper: #f4efe4;       /* 紙張底色（淺色模式） */
-  --det-paper-dark: #111119;  /* 紙張底色（深色模式） */
-  --det-accent: #c2553a;      /* 紅色強調線 */
-}
-```
-
 ---
 
 ## 六、未來遷移至 Supabase
@@ -386,7 +359,7 @@ export const ALL_QUESTIONS: DetectiveQuestion[] = [
 
 ```sql
 create table questions (
-  id            text primary key,       -- "114-social-history-20"
+  id            text primary key,
   source        text not null,
   subject       text not null,
   sub_subject   text,
@@ -401,16 +374,16 @@ create table questions (
   case_question text,
   pity_hint     text,
   start_hint    text,
-  clues         jsonb not null,         -- Clue[] 直接存 JSON
-  scaffolding   jsonb,                  -- ScaffoldingRegion[]
-  questions     jsonb not null,         -- SocraticQuestion[]
-  concept       jsonb not null,         -- ConceptAnchor
-  solution      jsonb not null,         -- Solution
+  clues         jsonb not null,
+  scaffolding   jsonb,
+  questions     jsonb not null,
+  concept       jsonb not null,
+  solution      jsonb not null,
   created_at    timestamptz default now()
 );
 ```
 
-> `clues`、`scaffolding`、`questions`、`concept`、`solution` 這幾個結構複雜的欄位直接用 `jsonb` 儲存，不需要拆成子資料表。PostgreSQL 的 jsonb 支援索引和查詢，未來要做統計也沒問題。
+> `clues`、`scaffolding`、`questions`、`concept`、`solution` 直接用 `jsonb` 儲存，不需要拆成子資料表。
 
 **`user_progress` 資料表**（未來加會員時使用）
 
@@ -421,7 +394,7 @@ create table user_progress (
   question_id     text references questions(id) not null,
   completed       boolean default false,
   lives_remaining smallint,
-  clues_found     text[],               -- 找到的線索 text 陣列
+  clues_found     text[],
   wrong_attempts  text[],
   answered_at     timestamptz,
   unique(user_id, question_id)
@@ -430,7 +403,7 @@ create table user_progress (
 
 ### 遷移步驟
 
-**Step 1：匯入現有 JSON 到 Supabase**
+**Step 1：匯入現有 JSON**
 
 ```typescript
 // scripts/seed-questions.ts
@@ -445,46 +418,33 @@ await supabase.from('questions').upsert(
     source: q.source,
     subject: q.subject,
     sub_subject: q.subSubject,
-    // ... 其餘欄位對應
     clues: q.clues,
     scaffolding: q.scaffolding ?? null,
-    // ...
+    // ... 其餘欄位對應
   }))
 );
 ```
 
-**Step 2：改 `[id]/page.tsx`**（Server Component，只改資料來源）
+**Step 2：改 `[id]/page.tsx`**
 
 ```typescript
 // 現在
-import { ALL_QUESTIONS } from '@/data/detective-questions';
 const question = ALL_QUESTIONS.find(q => q.id === id);
 
 // 改成
-import { createClient } from '@/lib/supabase/server';
 const { data: question } = await createClient()
-  .from('questions')
-  .select('*')
-  .eq('id', id)
-  .single();
+  .from('questions').select('*').eq('id', id).single();
 ```
 
-**Step 3：改 `page.tsx`（列表頁）**
+**Step 3：改列表頁 `page.tsx`**
 
 ```typescript
-// 改成從 Supabase 取列表，只撈需要的欄位（不撈完整 clues/solution）
 const { data: questions } = await supabase
   .from('questions')
   .select('id, source, subject, sub_subject, grade_level, difficulty, tags, main_stem');
 ```
 
-**Step 4：`generateStaticParams` 改成動態**
-
-題目來自資料庫後，`generateStaticParams` 可以繼續保留（build 時撈一次），或改成 ISR（`revalidate`）讓新題目不用重新 build。
-
-### `DetectivePlayer.tsx` 完全不需要改
-
-所有改動都在資料層（`page.tsx`）。Player 只吃 `DetectiveQuestion` 型別的 prop，型別結構不變。
+`DetectivePlayer.tsx` 完全不需要改，所有改動都在資料層。
 
 ---
 
@@ -506,7 +466,7 @@ const { data: questions } = await supabase
 
 ```
 ✅ "這個字洩漏了工具的真實用途——翻開筆記本看看。"
-❌ "這個字說明這是製糖工具，糖業集中在南部平原。"  ← why 的內容直接說完了
+❌ "這個字說明這是製糖工具，糖業集中在南部平原。"
 ```
 
 **`why` 寫法**
@@ -515,8 +475,6 @@ const { data: questions } = await supabase
 - ❌ 直接說「所以答案是南部」
 
 > 如果 `teaser` 沒有填，`why` 的完整內容會直接顯示在聊天室，學生就沒有動機去開筆記本。**每條線索都應該填 `teaser`。**
-
----
 
 ### 其他欄位原則
 
@@ -527,8 +485,49 @@ const { data: questions } = await supabase
 - `prompt` 必須圍繞該線索的核心意義，讓「看完 `why`」的學生能有線索作答
 - `wrong` 應引導學生回去翻筆記本，例如「再去筆記本確認一下這條線索的分析」
 - `correct` 可以補充延伸知識，讓學生感覺「值得」
-- ❌ 不要出與線索無關的題目——推理小題的存在是為了確認學生理解了 `why`，而不是額外考知識點
+- ❌ 不要出與線索無關的題目
 
 **`solution.commonMistakes`**
 - 這是**唯一可以**分析各選項的地方
 - 每個錯誤選項說明為什麼不對（排除法）
+
+---
+
+## 八、核心設計範例與模式 (Design Patterns)
+
+為了確保 AI 生成與人工校閱的品質，請嚴格遵守以下範例：
+
+### 1. 偵探開場 (Case Question)：【變數挖掘】模式 (優選)
+
+- **原則**：**禁止破梗**。不可在問題中直接說出答案線索（如：地震、西元1895年），以免跳過資訊檢索。
+- **優選範本**：`「這份証言提到了 {N} 個關鍵的 {特徵/名詞}。請找出它們，並指認具備這些特徵的嫌疑犯！」`
+- **目的**：提供視覺支架，強迫學生掃描文本提取資訊。
+
+### 2. 推理環節 (Reasoning)：【特徵對照】模式
+
+- **核心**：**禁止知識回憶**（Q:定義是什麼？）。必須是**邏輯應用**（Q:選項中誰符合？）。
+- **通用邏輯**：`「既然樣本具備特徵 X，那麼選項中誰也具備特徵 X？」`
+- **選項規範**：`choices` 保持極簡（名詞/實體），**禁止帶括號解釋**。
+- **解析回流**：將學術解釋放在偵探回應（Correct/Wrong）中，讓對話保持自然。
+
+### 3. 線索分級與守門機制 (Clue Tiering)
+
+- **關鍵線索 (isCritical)**：
+  - **原則**：破案主幹，解題「非它不可」的支柱。
+  - **設計**：**必須附帶推理小題**，確保學生在進度推進前已完全理解核心證據。
+- **輔助線索 (isAuxiliary/一般線索)**：
+  - **原則**：增加背景深度或排除干擾。用於獎勵讀題仔細的學生。
+
+### 4. 鷹架系統 (Scaffolding)：【感性指引】模式
+
+- **原則**：區分「引導」與「糾正」。
+- **Context (脈絡區)**：溫暖語句。`「這描述了工具的外形，但我們要找的是用途。再找找！」`
+- **Noise (雜訊區)**：冷靜點醒。`「排名與數字只是表象，別被迷惑了，回來看真正的因果！」`
+
+---
+
+## 九、負面表列 (Anti-Patterns)
+1. **禁止「破梗」**：在開場白或線索 Teaser 中直接講出推理結果。
+2. **禁止「解析出現在推理前」**：不在 Why 中提及選項字母。
+3. **禁止「濫用關鍵標記」**：將過多無關緊要的詞標題為 isCritical，會讓遊戲變瑣碎。
+4. **禁止「解釋性選項」**：在推理三選一中放太長的學術定義。
