@@ -789,31 +789,32 @@ export function DetectivePlayer({ question, onBack }: Props) {
             onClick={closeNotebook}
           />
           <div
-            className={`fixed inset-x-0 mx-auto z-50 w-full max-w-2xl overflow-hidden flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
+            className={`notebook-paper fixed inset-x-0 mx-auto z-50 w-full max-w-2xl overflow-hidden flex flex-col ${isClosing ? 'notebook-slide-out' : 'notebook-slide-in'}`}
             style={{ top: '2dvh', height: '80dvh', boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
           >
-            {/* 頂部撕裂紙邊 */}
+            {/* 頂部撕裂紙邊（自帶 var(--det-paper) 背景，不受父層透明影響） */}
             <div className="paper-tear-top" aria-hidden="true" />
 
-            {/* 筆記本內容（可捲動） */}
-            <div className="notebook-paper overflow-y-auto flex-1" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+            {/* Header — shrink-0，固定不捲動，背景透明讓父層橫線穿透 */}
+            <div className="shrink-0 max-w-xl mx-auto w-full px-6 pt-3 pb-3 border-b border-black/5 dark:border-white/5">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-xl text-slate-700 dark:text-white/80 flex items-center gap-2">
+                  <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
+                </h2>
+                <button onClick={closeNotebook}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70">
+                  ✕
+                </button>
+              </div>
+              <p className="mt-1.5 text-sm leading-relaxed italic text-slate-400 dark:text-white/30">
+                {DIALOGUE.notebookSubtitle}
+              </p>
+            </div>
+
+            {/* 筆記本內容（可捲動），背景透明讓父層橫線穿透 */}
+            {/* min-h-0 修正 flex 子元素 min-height:auto 導致 overflow-y:auto 無效的問題 */}
+            <div className="overflow-y-auto flex-1 min-h-0 bg-transparent" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
               <div className="max-w-xl mx-auto px-6 pt-5 pb-2">
-                <div className="mb-5">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-xl text-slate-700 dark:text-white/80 flex items-center gap-2">
-                      <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
-                    </h2>
-                    <button onClick={closeNotebook}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70">
-                      ✕
-                    </button>
-                  </div>
-                  <p className="mt-1.5 text-sm leading-relaxed italic text-slate-400 dark:text-white/30">
-                    {DIALOGUE.notebookSubtitle}
-                  </p>
-                </div>
-
-
                 <div className="space-y-6">
                   {question.figureImage && (
                     <div className="flex justify-center py-2">
@@ -946,7 +947,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
             {/* 底部捷徑：開始推理 */}
             {phase === 'clue' && (allCriticalFound || clueLocked) && (
-              <div className="shrink-0 px-6 py-3 flex justify-center" style={{ backgroundColor: 'var(--det-paper)' }}>
+              <div className="shrink-0 px-6 py-3 flex justify-center">
                 <button
                   onClick={() => { closeNotebook(); setTimeout(enterReasoning, 280); }}
                   className="px-8 py-2.5 rounded-full text-base font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-md transition-all active:scale-95"

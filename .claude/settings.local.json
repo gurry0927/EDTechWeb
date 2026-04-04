@@ -5,7 +5,8 @@
       "Bash(git remote:*)",
       "Bash(gh issue:*)",
       "Bash(brew list:*)",
-      "Read(//opt/homebrew/bin/**)"
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(node -e ':*)"
     ]
   }
 }
