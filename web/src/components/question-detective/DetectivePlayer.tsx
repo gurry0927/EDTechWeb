@@ -542,9 +542,25 @@ export function DetectivePlayer({ question, onBack }: Props) {
               {isPointingPhase
                 ? <div className="text-sm text-amber-600 dark:text-amber-400 font-medium">{DIALOGUE.reasoningPointingBanner}</div>
                 : (
-                  <div className="case-file-header">
-                    <span className="case-file-header-label">案件証詞</span>
-                    <div className="case-file-header-rule" />
+                  <div className="case-file-header flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="case-file-header-label">案件証詞</span>
+                      <div className="case-file-header-rule flex-1" />
+                    </div>
+                    {phase === 'clue' && !clueLocked && (
+                      <button
+                        disabled={scanOnCooldown}
+                        onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
+                        className={`shrink-0 ml-2 text-base flex items-center justify-center w-8 h-8 rounded-full border transition-all
+                          ${scanOnCooldown
+                            ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
+                            : 'border-cyan-300 dark:border-cyan-700/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
+                          }`}
+                        title={scanOnCooldown ? DIALOGUE.scanCooldownMsg : '掃描模式'}
+                      >
+                        🔍
+                      </button>
+                    )}
                   </div>
                 )
               }
@@ -568,8 +584,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </div>
 
-      {/* Chat */}
-      <main className="flex-1 overflow-y-auto flex flex-col">
+      {/* Chat — position:relative 讓 FAB 能正確 absolute 定位 */}
+      <main className="flex-1 overflow-y-auto flex flex-col relative">
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
@@ -735,40 +751,29 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
         <div ref={chatEndRef} />
         </div>
+
+        {/* FAB — 浮動在聊天區右下角，推理按鈕 or 結案返回 */}
+        {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
+          <div className="sticky bottom-4 flex justify-start px-4 pointer-events-none">
+            <button
+              onClick={enterReasoning}
+              className={`${reasoningBtnBase} pointer-events-auto h-9 text-[10px] sm:text-[13px] px-4 shadow-lg`}
+            >
+              {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
+            </button>
+          </div>
+        )}
+        {phase === 'solution' && (
+          <div className="sticky bottom-4 flex justify-end px-4 pointer-events-none">
+            <button
+              onClick={onBack}
+              className="pointer-events-auto text-xs px-4 py-2 rounded-full bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50 hover:text-slate-700 shadow-sm backdrop-blur-sm transition-all active:scale-95"
+            >
+              回到題庫
+            </button>
+          </div>
+        )}
       </main>
-
-      {/* Fixed bottom bar — 1 列，一左一右分佈 */}
-      <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: 'var(--det-paper)', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
-        <div className="px-4 py-2.5 flex items-center justify-between gap-3">
-          <div className="flex justify-start min-w-0">
-            {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
-              <button onClick={enterReasoning} className={`${reasoningBtnBase} h-9 text-[10px] sm:text-[13px] px-4`}>
-                {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
-              </button>
-            )}
-          </div>
-
-          <div className="flex justify-end shrink-0">
-            {phase === 'clue' && !clueLocked && (
-              <button
-                disabled={scanOnCooldown}
-                onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
-                className={`text-base flex items-center justify-center w-9 h-9 rounded-full border transition-all
-                  ${scanOnCooldown
-                    ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
-                    : 'border-cyan-300 dark:border-cyan-700/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
-                  }`}
-                title={scanOnCooldown ? DIALOGUE.scanCooldownMsg : '掃描模式'}
-              >
-                🔍
-              </button>
-            )}
-            {phase === 'solution' && (
-              <button onClick={onBack} className="text-xs text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70">回到題庫</button>
-            )}
-          </div>
-        </div>
-      </footer>
 
       {/* Toast — fixed z-[60]，永遠在最頂層，不被 notebook backdrop 壓住 */}
       {toast && (
