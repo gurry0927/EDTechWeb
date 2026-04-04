@@ -61,6 +61,8 @@ export interface Clue {
   aliases?: string[];
   /** 是否為必找的關鍵線索，預設 false */
   isCritical?: boolean;
+  /** 是否為輔助線索：不阻擋主線進度，但收集後解鎖額外推理題，結案報告會揭示未收集的輔助線索 */
+  isAuxiliary?: boolean;
   /** 該線索的推理小題（選填，只有需要出題的線索才有） */
   reasoning?: ClueReasoning;
 }

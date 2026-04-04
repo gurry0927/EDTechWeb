@@ -27,6 +27,7 @@ export const GAME = {
 export const DIALOGUE = {
   // 線索階段
   intro: '案件送達！一份証詞送到了偵探社。',
+  introWithFigure: '案件送達！一份証詞送到了偵探社，另附有照片證物。📓 照片已收進右上方的偵探筆記本，記得翻開來看。',
   introHint: '👆 點選上方證詞中你覺得可疑的字詞',
   caseQuestionPrompt: '仔細閱讀上方證詞，點擊你認為證詞中和案件相關的關鍵字詞！',
   clueMiss: '這裡沒什麼線索，再看看別的。',
@@ -54,6 +55,11 @@ export const DIALOGUE = {
     '這不是我們要找的線索。',
   ],
   clueReactions: ['有道理。', '說得沒錯。', '好眼力。', '這很關鍵。'],
+  auxiliaryClueReactions: [
+    '好眼力！這條線索不是主線，但能幫我們深入理解案情——收進筆記本。',
+    '有意思。這個細節揭示了更多背景，值得深入追查。',
+    '這條線索另有玄機，等一下我們再回來看。',
+  ],
   clueLocked: '調查機會用完了。帶著目前的線索繼續推理吧。',
   clueHintMore: '還有關鍵線索沒找到，繼續調查吧。',
 
@@ -100,6 +106,8 @@ export const DIALOGUE = {
   solutionStepsLabel: '📋 完整推理：',
   solutionMistakesLabel: '⚠️ 常見錯誤：',
   solutionMissedLabel: '🔍 你漏掉的線索：',
+  solutionAuxiliaryMissed: '現場其實還留有一條線索未採集…下次試試能否找到全部線索。',
+  solutionAuxiliaryFound: '你連隱藏的背景線索也沒放過——真正的完美結案。',
 
   // 圖片
   figureExpand: '展開附圖',
@@ -124,9 +132,13 @@ export const DIALOGUE = {
   notebookClose: '收合',
 };
 
-/** 成就判定（依序檢查，第一個符合的生效） */
+/** 成就判定（依序檢查，第一個符合的生效）
+ *  參數：clues=找到線索數, total=全部線索數（含輔助）, misses=失誤次數, wrongs=答錯次數,
+ *        auxFound=找到輔助線索數, auxTotal=輔助線索總數
+ */
 export const ACHIEVEMENTS = [
-  { check: (clues: number, total: number, misses: number, wrongs: number) => clues === total && misses === 0 && wrongs === 0, label: '完美偵探 🏆', color: 'text-amber-600 dark:text-amber-300' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number) => clues === total && misses === 0 && wrongs === 0 && auxFound === auxTotal, label: '完美偵探 🏆', color: 'text-amber-600 dark:text-amber-300' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number) => clues === total && misses === 0 && wrongs === 0 && auxTotal > 0 && auxFound < auxTotal, label: '優秀偵探 🔍', color: 'text-cyan-600 dark:text-cyan-300' },
   { check: (clues: number, total: number) => clues >= total * 0.75, label: '觀察敏銳', color: 'text-emerald-600 dark:text-emerald-300' },
   { check: () => true, label: '下次再仔細看看', color: 'text-slate-400 dark:text-white/40' },
 ];

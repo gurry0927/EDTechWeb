@@ -260,8 +260,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const clueLocked = phase === 'clue' && lives <= 0;
   const totalClues = question.clues.length;
   const criticalClues = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.isCritical), [question.clues]);
+  const auxiliaryClues = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.isAuxiliary), [question.clues]);
   const allCriticalFound = criticalClues.every(c => foundClues.has(c.idx));
-  const reasoningClues = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => foundClues.has(c.idx) && c.reasoning), [question.clues, foundClues]);
+  const auxFoundCount = auxiliaryClues.filter(c => foundClues.has(c.idx)).length;
+  // 推理順序：非輔助線索先，輔助線索排後（不阻擋主線，收集到才加入）
+  const reasoningClues = useMemo(() => {
+    const withIdx = question.clues.map((c, i) => ({ ...c, idx: i }));
+    const main = withIdx.filter(c => foundClues.has(c.idx) && c.reasoning && !c.isAuxiliary);
+    const aux = withIdx.filter(c => foundClues.has(c.idx) && c.reasoning && c.isAuxiliary);
+    return [...main, ...aux];
+  }, [question.clues, foundClues]);
   const reasoningDone = phase === 'reasoning' && reasoningStep >= reasoningClues.length;
   const livesLost = GAME.maxLives - lives;
 
@@ -496,7 +504,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   const D = DetectiveBubble;
   const S = StudentBubble;
-  const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length));
+  const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length, auxFoundCount, auxiliaryClues.length));
 
   return (
     <div className="h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col overflow-hidden">
@@ -521,7 +529,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${isTabShaking ? 'animate-tab-shake' : ''}`}
           >
             <span className="text-xs font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
-              線索 {foundClues.size}/{totalClues}
+              偵探筆記本
               {(chatEvents.length > notebookSeenCount || (!!question.figureImage && !hasOpenedNotebook)) && (
                 <span className="relative flex w-2 h-2 shrink-0">
                   <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75" />
@@ -548,6 +556,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
                       <div className="case-file-header-rule flex-1" />
                     </div>
                     {phase === 'clue' && !clueLocked && (
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                        <span className="text-xs text-slate-400 dark:text-white/30">{foundClues.size}/{totalClues}</span>
                       <button
                         disabled={scanOnCooldown}
                         onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
@@ -560,6 +570,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                       >
                         🔍
                       </button>
+                      </div>
                     )}
                   </div>
                 )
@@ -588,7 +599,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       <main className="flex-1 overflow-y-auto flex flex-col relative">
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
-        <D>{DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
+        <D>{question.figureImage ? DIALOGUE.introWithFigure : DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
 
         {question.caseQuestion && (
           <>
@@ -603,12 +614,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
         {chatEvents.map((event, i) => {
           if (event.type === 'clue') {
             const clue = question.clues[event.idx];
+            const isAux = clue.isAuxiliary;
             return (
               <div key={`chat-${i}`} className="space-y-3">
                 <S>我覺得「{clue.text}」很可疑。</S>
                 <TypedDetective delay="medium">
-                  {pick(DIALOGUE.clueReactions)}
-                  <span className="font-medium text-amber-700 dark:text-amber-300">「{clue.text}」</span>
+                  {pick(isAux ? DIALOGUE.auxiliaryClueReactions : DIALOGUE.clueReactions)}
+                  <span className={`font-medium ${isAux ? 'text-cyan-700 dark:text-cyan-300' : 'text-amber-700 dark:text-amber-300'}`}>「{clue.text}」</span>
                   {' — '}{clue.why}
                 </TypedDetective>
               </div>
@@ -730,11 +742,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 <ul className="mt-1 space-y-1">{question.solution.commonMistakes.map((m, i) => <li key={i} className="text-sm text-slate-500 dark:text-white/40">• {m}</li>)}</ul>
               </D>
             ) : null}
-            {foundClues.size < totalClues && (
+            {question.clues.some((c, i) => !foundClues.has(i) && !c.isAuxiliary) && (
               <D>
                 <span className="text-amber-600 dark:text-amber-400 font-medium text-sm">{DIALOGUE.solutionMissedLabel}</span>
-                <ul className="mt-1 space-y-1">{question.clues.map((c, i) => foundClues.has(i) ? null : <li key={i} className="text-sm text-slate-500 dark:text-white/40">•「{c.text}」— {c.why}</li>)}</ul>
+                <ul className="mt-1 space-y-1">{question.clues.map((c, i) => (!foundClues.has(i) && !c.isAuxiliary) ? <li key={i} className="text-sm text-slate-500 dark:text-white/40">•「{c.text}」— {c.why}</li> : null)}</ul>
               </D>
+            )}
+            {auxiliaryClues.length > 0 && auxFoundCount < auxiliaryClues.length && foundClues.size >= totalClues - auxiliaryClues.length && (
+              <D><span className="text-cyan-600 dark:text-cyan-400 text-sm italic">{DIALOGUE.solutionAuxiliaryMissed}</span></D>
+            )}
+            {auxiliaryClues.length > 0 && auxFoundCount === auxiliaryClues.length && (
+              <D><span className="text-emerald-600 dark:text-emerald-400 text-sm">{DIALOGUE.solutionAuxiliaryFound}</span></D>
             )}
             <div className="rounded-xl p-4 flex items-center gap-4 text-sm bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800/20 my-2">
               <div className="text-center"><div className="text-xl font-bold text-amber-600 dark:text-amber-400">{foundClues.size}<span className="text-slate-400 dark:text-white/30 text-sm font-normal">/{totalClues}</span></div><div className="text-slate-400 dark:text-white/30">線索</div></div>
