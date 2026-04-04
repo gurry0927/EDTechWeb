@@ -237,6 +237,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, []);
   useEffect(() => { if (!toast || toastPersist) return; const t = setTimeout(() => setToast(null), GAME.toastDuration); return () => clearTimeout(t); }, [toast, toastPersist]);
 
+  // Q1: 預載筆記本圖片，避免打開時才 fetch
+  useEffect(() => {
+    if (question.figureImage) { const img = new Image(); img.src = question.figureImage; }
+  }, [question.figureImage]);
+
   // #17: 進入指認證物階段時自動關閉筆記本，讓使用者回到題幹操作
   useEffect(() => {
     if (reasoningMode === 'pointing' && isNotebookOpen) closeNotebook();
@@ -955,9 +960,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
                     const criticalFoundCount = criticalClues.filter(c => foundClues.has(c.idx)).length;
                     const reasoningComplete = phase === 'answer' || phase === 'solution';
                     const canIdentify = reasoningComplete;
-                    // blurSteps = totalCritical + 1；最後一步留給推理完成
-                    const blurSteps = totalCritical + 1;
-                    const remainingSteps = Math.max(0, blurSteps - criticalFoundCount - (reasoningComplete ? 1 : 0));
+                    // blurSteps = totalCritical + totalAuxiliary + 1；輔助各貢獻一層，最後一步留給推理完成
+                    const totalAuxiliary = auxiliaryClues.length;
+                    const blurSteps = totalCritical + totalAuxiliary + 1;
+                    const remainingSteps = Math.max(0, blurSteps - criticalFoundCount - auxFoundCount - (reasoningComplete ? 1 : 0));
                     const blurPx = remainingSteps === 0 ? 0 : Math.round((remainingSteps / blurSteps) * 16);
                     return (
                       <div>
@@ -969,7 +975,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                           嫌疑犯名單
                           {canIdentify && <span className="ml-2 text-emerald-500">✓ 可指認</span>}
                         </h3>
-                        <ul className="space-y-1.5">
+                        <ul className="space-y-1">
                           {question.options.map((opt, i) => {
                             const letter = String.fromCharCode(65 + i);
                             return (
@@ -979,7 +985,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                                   if (criticalFoundCount < totalCritical) showToast(pick(DIALOGUE.insufficientEvidenceReactions));
                                   else showToast('請先完成推理分析，再指認嫌疑犯！');
                                 }}
-                                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm transition-all duration-500 ${
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all duration-500 ${
                                   canIdentify
                                     ? 'border-emerald-200/50 dark:border-emerald-600/20 bg-emerald-50/40 dark:bg-emerald-900/10 cursor-default'
                                     : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] cursor-pointer'
