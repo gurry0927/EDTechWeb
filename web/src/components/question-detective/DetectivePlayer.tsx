@@ -164,6 +164,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [notebookSeenCount, setNotebookSeenCount] = useState(0);
   const [hasOpenedNotebook, setHasOpenedNotebook] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
+  const [pointingFlash, setPointingFlash] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [toastKey, setToastKey] = useState(0);
   const [toastPersist, setToastPersist] = useState(false);
@@ -239,6 +240,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // #17: 進入指認證物階段時自動關閉筆記本，讓使用者回到題幹操作
   useEffect(() => {
     if (reasoningMode === 'pointing' && isNotebookOpen) closeNotebook();
+  }, [reasoningMode]);
+
+  // 進入指認階段時，題幹卡片閃一次吸引視線
+  useEffect(() => {
+    if (reasoningMode !== 'pointing') return;
+    setPointingFlash(true);
+    const t = setTimeout(() => setPointingFlash(false), 900);
+    return () => clearTimeout(t);
   }, [reasoningMode]);
 
   useEffect(() => {
@@ -545,10 +554,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
         {/* Case-file 浮卡：左右 padding 露出木紋，底部 pb 露出木紋投影 */}
         <div className="max-w-2xl mx-auto px-4 pb-4">
-          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/50 ring-inset' : ''}`}>
+          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/70 ring-inset' : ''} ${pointingFlash ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.5)]' : ''}`}>
             <div className="px-4 pt-3 pb-4 space-y-2">
               {isPointingPhase
-                ? <div className="text-sm text-amber-600 dark:text-amber-400 font-medium">{DIALOGUE.reasoningPointingBanner}</div>
+                ? (
+                  <div className="flex items-center gap-2">
+                    <span className="animate-bounce inline-block">👇</span>
+                    <span className="case-file-header-label">{DIALOGUE.reasoningPointingBanner}</span>
+                  </div>
+                )
                 : (
                   <div className="case-file-header flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
@@ -596,7 +610,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       </div>
 
       {/* Chat — position:relative 讓 FAB 能正確 absolute 定位 */}
-      <main className="flex-1 overflow-y-auto flex flex-col relative">
+      <main className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{question.figureImage ? DIALOGUE.introWithFigure : DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
@@ -689,6 +703,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
         {phase === 'answer' && !answeredCorrectly && (
           <>
             <D>{DIALOGUE.answerPrompt}</D>
+            {question.figureImage && (
+              <div className="flex gap-2.5 items-start bubble-in">
+                <DetectiveAvatar />
+                <div className="relative bg-white dark:bg-white/90 p-2 pb-3 shadow-lg rounded-sm case-photo" style={{ maxWidth: 220 }}>
+                  <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
+                  <img src={question.figureImage} alt="案件附圖" className="w-full rounded-sm mix-blend-darken dark:mix-blend-normal" />
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-1.5 my-2">
               {question.options.map((opt, i) => {
                 const letter = String.fromCharCode(65 + i);

@@ -83,7 +83,7 @@ export const DIALOGUE = {
   reasoningCorrect: '✓',
   reasoningCorrectMsg: '方向正確！',
   reasoningAskEvidence: '請指出題目中支持這個結論的證據',
-  reasoningPointingBanner: '👆 請在題目中指認支持你推理的證據',
+  reasoningPointingBanner: '請在題目中指認支持你推理的證據',
   wrongEvidence: [
     '嗯⋯這條線索好像跟結論沒有直接關係。',
     '不太對，這個無法佐證你的推理。',
