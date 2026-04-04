@@ -551,10 +551,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
                   {renderSegs(stemSegs, onSegTap)}
                 </p>
                 {question.figure && (
-                  <div className={`mt-2 px-2 py-1.5 rounded text-sm ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
-                    <p className="text-slate-500 dark:text-white/45 leading-relaxed">
-                      {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
-                    </p>
+                  <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3">
+                    <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
+                    <div className={`mt-1 text-base ${showPulse || activeScanning ? 'stem-scan' : ''} ${activeScanning ? 'magnifier-active' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                      <p className="text-slate-700 dark:text-white/80 leading-relaxed">
+                        {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -806,9 +809,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
                     </button>
                   </div>
                   <p className="mt-1.5 text-sm leading-relaxed italic text-slate-400 dark:text-white/30">
-                     {DIALOGUE.notebookSubtitle}
-                   </p>
+                    {DIALOGUE.notebookSubtitle}
+                  </p>
                 </div>
+
 
                 <div className="space-y-6">
                   {question.figureImage && (
