@@ -126,7 +126,7 @@ JSON → index.ts → [id]/page.tsx (Server Component)
 
 | 欄位 | 必填 | 說明 |
 |------|------|------|
-| `id` | ✅ | URL-safe 唯一識別碼，如 `114-social-history-20` |
+| `id` | ✅ | **直接決定頁面 URL**，如 `"114-social-history-20"` → `/question-detective/114-social-history-20`。只能用英數字和連字號，不可含中文或空格。建議格式：`{年份}-{科目英文}-{細分英文}-{題號}`，例如 `114-social-history-20`、`113-science-biology-5` |
 | `source` | ✅ | 顯示在列表與遊戲頁標題 |
 | `subject` | ✅ | `'社會'` `'自然'` `'數學'` `'國文'` `'英文'` |
 | `subSubject` | 建議 | 歷史 / 地理 / 公民 / 生物 等，列表頁顯示 |
