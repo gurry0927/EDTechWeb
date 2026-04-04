@@ -551,7 +551,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                       <button
                         disabled={scanOnCooldown}
                         onClick={() => { setActiveScanning(true); showToast(DIALOGUE.scanActivate); if (!hasEverTapped) resetIdleTimer(true); }}
-                        className={`shrink-0 ml-2 text-base flex items-center justify-center w-8 h-8 rounded-full border transition-all
+                        className={`shrink-0 ml-2 text-sm flex items-center justify-center w-7 h-7 rounded-full border transition-all
                           ${scanOnCooldown
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
                             : 'border-cyan-300 dark:border-cyan-700/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
@@ -754,10 +754,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
         {/* FAB — 浮動在聊天區右下角，推理按鈕 or 結案返回 */}
         {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
-          <div className="sticky bottom-4 flex justify-start px-4 pointer-events-none">
+          <div className="sticky bottom-4 flex justify-center px-4 pointer-events-none">
             <button
               onClick={enterReasoning}
-              className={`${reasoningBtnBase} pointer-events-auto h-9 text-[10px] sm:text-[13px] px-4 shadow-lg`}
+              className={`${reasoningBtnBase} pointer-events-auto h-10 text-sm sm:text-base px-6 shadow-xl`}
             >
               {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
             </button>
@@ -767,7 +767,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <div className="sticky bottom-4 flex justify-end px-4 pointer-events-none">
             <button
               onClick={onBack}
-              className="pointer-events-auto text-xs px-4 py-2 rounded-full bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50 hover:text-slate-700 shadow-sm backdrop-blur-sm transition-all active:scale-95"
+              className="pointer-events-auto h-10 text-sm px-6 rounded-full bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50 hover:text-slate-700 shadow-xl backdrop-blur-sm transition-all active:scale-95"
             >
               回到題庫
             </button>
