@@ -735,16 +735,18 @@ export function DetectivePlayer({ question, onBack }: Props) {
         </div>
       </main>
 
-      {/* Fixed bottom bar — 永遠 1 列：左 hashtags ← → 右側按鈕群 */}
+      {/* Fixed bottom bar — 1 列 3 欄 grid：左 hashtags / 中 推理按鈕(置中) / 右 掃描按鈕 */}
       <footer className="shrink-0 border-t border-amber-200/30 dark:border-white/10" style={{ backgroundColor: 'var(--det-paper)', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
-        <div className="px-4 py-1.5 flex items-center justify-between gap-2">
+        <div className="px-4 py-1.5 grid items-center gap-1" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
           <span className="text-xs text-slate-300 dark:text-white/20 truncate">{question.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex justify-center">
             {phase === 'clue' && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
               <button onClick={enterReasoning} className="text-xs px-3 py-1 rounded-full font-medium bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm transition-all active:scale-95">
                 {allCriticalFound ? '開始推理 →' : '繼續推理 →'}
               </button>
             )}
+          </div>
+          <div className="flex justify-end">
             {phase === 'clue' && !clueLocked && (
               <button
                 disabled={scanOnCooldown}
