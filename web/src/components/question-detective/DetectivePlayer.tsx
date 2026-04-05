@@ -204,6 +204,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // scanOnCooldown = true 時，掃描鈕顯示灰色並禁用，避免連續觸發
   const [activeScanning, setActiveScanning] = useState(false);
   const [scanOnCooldown, setScanOnCooldown] = useState(false);
+  const [stemExpanded, setStemExpanded] = useState(false); // 掃描展開後持續，直到有效互動才收合
   const [scanUsesLeft, setScanUsesLeft] = useState(GAME.scanInitialUses);
   const prevAuxFoundRef = useRef(0);
 
@@ -277,8 +278,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   useEffect(() => {
     if (!activeScanning) return;
+    setStemExpanded(true); // 展開，持續到有效互動
     const offTimer = setTimeout(() => {
-      setActiveScanning(false);
+      setActiveScanning(false); // 只關視覺掃光，展開繼續
       setScanUsesLeft(prev => Math.max(0, prev - 1));
     }, GAME.scanActiveDuration);
     return () => clearTimeout(offTimer);
@@ -459,6 +461,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setFoundClues(prev => new Set(prev).add(idx));
     setChatEvents(prev => [...prev, { type: 'clue', idx, reaction }]);
     setConsecutiveMisses(0);
+    setStemExpanded(false);
   }, [clueLocked, foundClues, triggerFlight, question.clues]);
 
   const triggerMissIncrement = useCallback(() => {
@@ -488,6 +491,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const msg = region.hint || pick(DIALOGUE.contextHitReactions);
     showToast(msg);
     setConsecutiveMisses(0);
+    setStemExpanded(false);
     // 每個 context 區域只加一次泡泡（防止重複點同一處刷屏）
     if (!seenContextRegions.has(regionIdx)) {
       if (e) triggerFlight(e);
@@ -714,7 +718,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 )
               }
               <div className="stem-scroll-fade stem-only">
-                <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${activeScanning ? 'max-h-none' : 'max-h-[25dvh] sm:max-h-none'}`}>
+                <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${stemExpanded ? 'max-h-[55dvh]' : 'max-h-[25dvh] sm:max-h-none'}`}>
                   <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                     {renderSegs(stemSegs, onSegTap)}
                   </p>
@@ -736,7 +740,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       </div>
 
       {/* Chat — position:relative 讓 FAB 能正確 absolute 定位 */}
-      <main className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase || activeScanning ? 'opacity-30 pointer-events-none' : ''}`}>
+      <main className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase || activeScanning || stemExpanded ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{question.figureImage ? DIALOGUE.introWithFigure : DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
