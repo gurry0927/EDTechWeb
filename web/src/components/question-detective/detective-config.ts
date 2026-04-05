@@ -16,6 +16,7 @@ export const GAME = {
   // scanCooldown：掃描鈕冷卻時間（毫秒），防止連續觸發
   scanActiveDuration: 3500,
   scanCooldown: 6000,
+  scanInitialUses: 1,
 
   // [NEW] 憐憫機制：連續失誤幾次後觸發高價值提示
   // pityScanThreshold = 3 → 第 3 次連續失誤時觸發
@@ -81,6 +82,7 @@ export const DIALOGUE = {
   scanActivate: '🔍 掃描模式啟動，注意高亮的區域。',
   scanCooldownMsg: '掃描器冷卻中…',
   scanMissProtected: '掃描中，先別亂動——仔細看清楚再出手。',
+  scanUsedUp: '掃描次數已用完（找到輔助線索可補充）',
   clueReady: '🔎 線索到手，開始推理',
   clueForceAdvance: '帶著現有線索繼續 →',
 

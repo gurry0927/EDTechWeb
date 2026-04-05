@@ -204,6 +204,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // scanOnCooldown = true 時，掃描鈕顯示灰色並禁用，避免連續觸發
   const [activeScanning, setActiveScanning] = useState(false);
   const [scanOnCooldown, setScanOnCooldown] = useState(false);
+  const [scanUsesLeft, setScanUsesLeft] = useState(GAME.scanInitialUses);
+  const prevAuxFoundRef = useRef(0);
 
   const [idleShimmer, setIdleShimmer] = useState(false);
   // 首次點擊後清掉進場 persist toast；後續閒置提示改用 scaffoldPulse
@@ -277,16 +279,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
     if (!activeScanning) return;
     const offTimer = setTimeout(() => {
       setActiveScanning(false);
-      setScanOnCooldown(true);
+      setScanUsesLeft(prev => Math.max(0, prev - 1));
     }, GAME.scanActiveDuration);
     return () => clearTimeout(offTimer);
   }, [activeScanning]);
-
-  useEffect(() => {
-    if (!scanOnCooldown) return;
-    const coolTimer = setTimeout(() => setScanOnCooldown(false), GAME.scanCooldown);
-    return () => clearTimeout(coolTimer);
-  }, [scanOnCooldown]);
 
   // Derived
   const gameOver = lives <= 0 && phase !== 'solution';
@@ -296,6 +292,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const auxiliaryClues = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })).filter(c => c.isAuxiliary), [question.clues]);
   const allCriticalFound = criticalClues.every(c => foundClues.has(c.idx));
   const auxFoundCount = auxiliaryClues.filter(c => foundClues.has(c.idx)).length;
+
+  // 找到新的輔助線索 → 補回 1 次掃描機會
+  useEffect(() => {
+    if (auxFoundCount > prevAuxFoundRef.current) {
+      setScanUsesLeft(prev => prev + 1);
+      showToast('🔍 +1 掃描機會（輔助線索獎勵）');
+    }
+    prevAuxFoundRef.current = auxFoundCount;
+  }, [auxFoundCount]);
   // 推理順序：非輔助線索先，輔助線索排後（不阻擋主線，收集到才加入）
   const reasoningClues = useMemo(() => {
     const withIdx = question.clues.map((c, i) => ({ ...c, idx: i }));
@@ -692,16 +697,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
                       <div className="flex items-center gap-2 shrink-0 ml-2">
                         <span className="text-xs text-slate-400 dark:text-white/30">{foundClues.size}/{totalClues}</span>
                       <button
-                        disabled={scanOnCooldown}
+                        disabled={scanUsesLeft <= 0}
                         onClick={() => { setActiveScanning(true); setHasStartedInteracting(true); setIdleShimmer(false); if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); } }}
-                        className={`shrink-0 ml-2 text-sm flex items-center justify-center w-7 h-7 rounded-full border transition-all
-                          ${scanOnCooldown
+                        className={`shrink-0 ml-2 text-sm flex items-center justify-center gap-0.5 px-2 h-7 rounded-full border transition-all
+                          ${scanUsesLeft <= 0
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
                             : 'border-cyan-300 dark:border-cyan-700/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
                           }`}
-                        title={scanOnCooldown ? DIALOGUE.scanCooldownMsg : '掃描模式'}
+                        title={scanUsesLeft <= 0 ? DIALOGUE.scanUsedUp : '掃描模式'}
                       >
-                        🔍
+                        🔍<span className="text-xs font-bold">{scanUsesLeft}</span>
                       </button>
                       </div>
                     )}
