@@ -700,21 +700,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
       const ranges = isFigure ? currentHighlightRanges.figure : currentHighlightRanges.stem;
       const isInCriticalSentence = scanHighlight && ranges.some(([start, end]) => seg.absStart >= start && seg.absStart < end);
       
-      // 關鍵線索本體：只要在掃描中 (activeScanning)，絕對隱藏底線與特殊提示。
-      const isTargetClue = isClue && !foundClues.has(seg.clueIndex!) && (seg.clueIndex !== null && question.clues[seg.clueIndex].isCritical);
-      
       if (isBouncing) {
         return <span key={i} onClick={(e) => onSegTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
       }
       
       if (isInCriticalSentence) {
         return (
-          <span 
-            key={i} 
-            onClick={(e) => onSegTap(seg, e)} 
-            // V5.2 更新：掃描模式 activeScanning 啟動期間，嚴禁出現任何底線樣式，並移除 active 點擊回饋以防滑動破解
-            className="cursor-pointer highlight-scan"
-          >
+          <span key={i} onClick={(e) => onSegTap(seg, e)} className="cursor-pointer highlight-scan">
             {seg.text}
           </span>
         );
