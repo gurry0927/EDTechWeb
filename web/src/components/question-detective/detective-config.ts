@@ -18,6 +18,8 @@ export const GAME = {
   scanSweepDuration: 3600,  // 播放兩次 (1.8s * 2) 結束後才亮起呼吸高光
   scanCooldown: 12000,
   scanInitialUses: 1,
+  scanNudgeDelay: 15000,    // 15 秒無操作：提示玩家
+  scanAutoExitDelay: 30000, // 30 秒無操作：自動退出掃描模式
 
   // [NEW] 憐憫機制：連續失誤幾次後觸發高價值提示
   // pityScanThreshold = 3 → 第 3 次連續失誤時觸發
@@ -84,6 +86,7 @@ export const DIALOGUE = {
   scanCooldownMsg: '掃描器冷卻中…',
   scanMissProtected: '掃描中，先別亂動——仔細看清楚再出手。',
   scanUsedUp: '掃描次數已用完（找到輔助線索可補充）',
+  scanNudge: '💡 發光的地方藏著線索，試著點點看！',
   clueReady: '🔎 線索到手，開始推理',
   clueForceAdvance: '帶著現有線索繼續 →',
 

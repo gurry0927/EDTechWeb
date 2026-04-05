@@ -251,13 +251,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
     return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
   }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting, isIdleDisabled, resetIdleTimer]);
 
+  // exitScanMode：不管 timer，交給 idle effect 統一判斷
   const exitScanMode = useCallback(() => {
     setActiveScanning(false);
     setScanHighlight(false);
     setIsIdleDisabled(false);
     setStemExpanded(false);
-    startIdleTimer(true);
-  }, [startIdleTimer]);
+  }, []);
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
 
@@ -292,15 +292,27 @@ export function DetectivePlayer({ question, onBack }: Props) {
   useEffect(() => {
     if (!activeScanning) return;
     setStemExpanded(true);
-    setScanHighlight(false); // 掃光進行中，先不亮
+    setScanHighlight(false);
     if (foundClues.size === 0) {
       setTimeout(() => {
         detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
     }
-    // 掃光結束後才亮起呼吸高光 (此處開始無限循環)
+    // 掃光結束後才亮起呼吸高光
     const highlightTimer = setTimeout(() => setScanHighlight(true), GAME.scanSweepDuration);
-    return () => { clearTimeout(highlightTimer); };
+    // 15 秒無操作：提示玩家點擊
+    const nudgeTimer = setTimeout(() => {
+      showToast(DIALOGUE.scanNudge);
+    }, GAME.scanNudgeDelay);
+    // 30 秒無操作：自動退出掃描模式
+    const autoExitTimer = setTimeout(() => {
+      exitScanMode();
+    }, GAME.scanAutoExitDelay);
+    return () => {
+      clearTimeout(highlightTimer);
+      clearTimeout(nudgeTimer);
+      clearTimeout(autoExitTimer);
+    };
   }, [activeScanning, foundClues.size]);
 
   // Derived
