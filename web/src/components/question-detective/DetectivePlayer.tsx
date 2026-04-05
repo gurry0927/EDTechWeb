@@ -607,7 +607,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     };
 
     const stemRanges = targets.filter(c => c.startIndex >= 0).map(c => findRange(question.mainStem, c)).filter(Boolean) as [number, number][];
-    const figureRanges = targets.filter(c => c.startIndex === -1).map(c => {
+    const figureRanges = targets.filter(c => c.startIndex === -1 || (question.figure && c.text && question.figure.includes(c.text))).map(c => {
       const texts = c.aliases?.length ? c.aliases : [c.text];
       return texts.map(t => {
         const startIdx = question.figure?.indexOf(t) ?? -1;
@@ -617,7 +617,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }).flat() as [number, number][];
 
     return { stem: stemRanges, figure: figureRanges };
-  }, [scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
+  }, [activeScanning, scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
 
   const onReasoningChoice = useCallback((choiceIdx: number, e: React.MouseEvent) => {
     const current = reasoningClues[reasoningStep];
@@ -683,7 +683,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       const ranges = isFigure ? currentHighlightRanges.figure : currentHighlightRanges.stem;
       const isInCriticalSentence = scanHighlight && ranges.some(([start, end]) => seg.absStart >= start && seg.absStart < end);
       
-      // 關鍵線索本體：在呼吸範圍內給底線，維持原本的「可視感」但擴大到整句背景
+      // 關鍵線索本體：只要在掃描中 (activeScanning)，絕對隱藏底線與特殊提示。
       const isTargetClue = isClue && !foundClues.has(seg.clueIndex!) && (seg.clueIndex !== null && question.clues[seg.clueIndex].isCritical);
       
       if (isBouncing) {
@@ -695,14 +695,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <span 
             key={i} 
             onClick={(e) => onSegTap(seg, e)} 
-            className={`cursor-pointer highlight-scan ${isTargetClue ? 'border-b-2 border-cyan-400' : ''}`}
+            // V5.2 更新：掃描模式 activeScanning 啟動期間，嚴禁出現任何底線樣式，並移除 active 點擊回饋以防滑動破解
+            className={`cursor-pointer highlight-scan ${isTargetClue && !activeScanning ? 'border-b-2 border-cyan-400' : ''}`}
           >
             {seg.text}
           </span>
         );
       }
       
-      return <span key={i} onClick={(e) => onSegTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
+      // 平時狀態：移除對掃描狀態的依賴，但在掃描時禁用 active 變色類別
+      const activeCls = activeScanning ? '' : 'active:bg-slate-200 dark:active:bg-white/10';
+      return <span key={i} onClick={(e) => onSegTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${activeCls} ${isFound ? clsFound : ''}`}>{seg.text}</span>;
     }
     return <span key={i} className={isFound ? clsFound : ''}>{seg.text}</span>;
   });
