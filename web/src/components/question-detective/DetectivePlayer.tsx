@@ -506,12 +506,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // scaffoldIndex != null → 查 ScaffoldingRegion.type，呼叫 onContextHit 或 onNoiseMiss
   // 兩者皆 null        → onClueMiss（不變）
   const onSegTap = useCallback((seg: Seg, e: React.MouseEvent) => {
-    // 首次點擊 → 隱藏首次進入的 persist toast（之後的提示改為 toast-anim 飛走，不再常駐）
+    // 首次點擊 → 隱藏首次進入的 persist toast
     if (!hasStartedInteracting) {
       setHasStartedInteracting(true);
       setIdleShimmer(false);
       setToast(null);
       setToastPersist(false);
+    }
+    // 掃描模式中：非線索點擊不扣血，只給輕提示
+    if (activeScanning && seg.clueIndex === null) {
+      showToast(DIALOGUE.scanMissProtected);
+      return;
     }
     // 非有效互動點擊（miss）→ 重置閒置計時器，讓 8 秒後能再次觸發跳動
     if (seg.clueIndex === null && seg.scaffoldIndex === null) {
@@ -614,7 +619,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }
     if (phase === 'reasoning') return <span key={i} className={isFound ? clsFound : clsDim}>{seg.text}</span>;
     if (isCluePhase) {
-      const isBouncing = scaffoldPulse && firstContextScaffoldIdx !== null && seg.scaffoldIndex === firstContextScaffoldIdx;
+      const isBouncing = scaffoldPulse && !activeScanning && firstContextScaffoldIdx !== null && seg.scaffoldIndex === firstContextScaffoldIdx;
       if (isBouncing) {
         return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
       }
@@ -704,7 +709,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 )
               }
               <div className="stem-scroll-fade stem-only">
-                <div className="max-h-[25dvh] sm:max-h-none overflow-y-auto pb-6 sm:pb-0">
+                <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${activeScanning ? 'max-h-none' : 'max-h-[25dvh] sm:max-h-none'}`}>
                   <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                     {renderSegs(stemSegs, onSegTap)}
                   </p>
@@ -726,7 +731,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       </div>
 
       {/* Chat — position:relative 讓 FAB 能正確 absolute 定位 */}
-      <main className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase ? 'opacity-30 pointer-events-none' : ''}`}>
+      <main className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase || activeScanning ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{question.figureImage ? DIALOGUE.introWithFigure : DIALOGUE.intro}<br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{DIALOGUE.introHint}</span></D>
