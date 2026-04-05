@@ -151,6 +151,16 @@ export interface DetectiveQuestion {
   /** 保底提示（選填）：連續失誤達閾值時顯示，比 pityCategoryHint 更具題目針對性 */
   pityHint?: string;
 
+  /** AI 預先切分的語意詞段（選填）
+   *  填寫後，buildSegs 會優先使用這份詞段清單，而非執行時自動切碎。
+   *  格式：完整 mainStem 的分割結果，所有元素串接後必須等於 mainStem。
+   *  用途：
+   *    1. 語意詞段比機械切碎更自然，偽裝效果更好
+   *    2. 每個空白詞段有固定的 tokenIndex，可供後端記錄「學生點擊了哪個詞段」
+   *  不填：退回自動切碎（2-4 字規則），行為與舊版相同。
+   */
+  stemTokens?: string[];
+
   /** 筆記本初始提示（選填）：尚未找到任何線索時開啟筆記本顯示的引導語 */
   startHint?: string;
 

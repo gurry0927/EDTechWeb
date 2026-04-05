@@ -107,28 +107,60 @@ interface Seg {
   text: string;
   clueIndex: number | null;
   scaffoldIndex: number | null;
-  absStart: number; // [NEW] 紀錄片段在原始字串中的起始位置
+  absStart: number;    // 片段在原始字串中的起始位置
+  tokenIndex?: number; // 空白詞段的全局序號，用於學生點擊統計；標記區（clue/scaffold）不設此值
 }
 
-// [MODIFY] buildSegs 函式：同時處理 clues 與 scaffolding regions
+// 把非標記文字切成 2-4 字的詞段（雜訊混淆）
+// 規則：標點後斷、虛詞後斷、否則每 3 字斷一次
+// 目的：讓 span 邊界資訊無法用於鎖定線索位置，同時不影響視覺呈現
+function tokenizeBlank(text: string, baseOffset: number): Seg[] {
+  const BREAK_AFTER = new Set('。！？，、；：\n');
+  const FUNC_WORDS = new Set('的了在與且而也都是有被從於至到');
+  const result: Seg[] = [];
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const chunkLen = i - start + 1;
+    const shouldBreak =
+      BREAK_AFTER.has(ch) ||
+      FUNC_WORDS.has(ch) ||
+      chunkLen >= 3;
+    if (shouldBreak || i === text.length - 1) {
+      result.push({ text: text.slice(start, i + 1), clueIndex: null, scaffoldIndex: null, absStart: baseOffset + start });
+      start = i + 1;
+    }
+  }
+  return result;
+}
+
+// 後處理：對所有空白詞段（clueIndex === null && scaffoldIndex === null）
+// 依序賦予 tokenIndex，從指定的起始值開始計數。
+// 回傳：[更新後的 segs, 下一個可用的 tokenIndex]
+function assignTokenIndices(segs: Seg[], startIdx = 0): [Seg[], number] {
+  let idx = startIdx;
+  const result = segs.map(s =>
+    s.clueIndex === null && s.scaffoldIndex === null
+      ? { ...s, tokenIndex: idx++ }
+      : s
+  );
+  return [result, idx];
+}
+
+// buildSegs：同時處理 clues + scaffolding，空白區域可由 stemTokens 覆寫
 //
-// 新參數 scaffolding：來自 question.scaffolding（過濾 startIndex >= 0 的，-1 的由 buildFigureSegs 另行處理）
-// 若 question.scaffolding 未定義，直接傳 [] 即可，行為與舊版相同。
+// 雙模式：
+//   stemTokens 存在 → 把整份 mainStem 視為已切分的詞段陣列，直接對每個詞段
+//                      查表決定其所屬類型（clue / scaffold / blank）。
+//                      前提：所有詞段串接後必須等於 src。
+//   stemTokens 缺省 → 退回機械切碎（tokenizeBlank，2-4 字規則）。
 //
-// 演算法：
-//   1. 合併 clues + scaffolding 為統一的「標記區間」清單，依 startIndex 排序
-//   2. 走訪字串，對每個區間和間隔生成對應 Seg
-//   3. 確保區間不重疊（JSON 格式正確時不應有重疊，可不做防護）
-//
-// 範例：src = "此種工具在十八至十九世紀之間..."
-//   clues = [{ startIndex: 37, length: 7, idx: 1 }]           → "十八至十九世紀"
-//   scaffolding = [{ startIndex: 3, length: 5, idx: 0 }]      → "工具在十"（假設是 context）
-//   輸出 segs: ["此種", {scaffold:0,"工具在十"}, "八", {clue:1,"十八至十九世紀"}, "之間..."]
-//   （注意：上例僅示意，實際座標請以真實 JSON 為準）
+// tokenIndex 賦值由呼叫端（stemSegs / figureSegs）統一做後處理，這裡不處理。
 function buildSegs(
   src: string,
   clues: { startIndex: number; length: number; idx: number }[],
   scaffolding: { startIndex: number; length: number; idx: number }[],
+  stemTokens?: string[],
 ): Seg[] {
   interface Mark { start: number; end: number; clueIdx: number | null; scaffoldIdx: number | null }
   const marks: Mark[] = [
@@ -136,13 +168,33 @@ function buildSegs(
     ...scaffolding.filter(s => s.startIndex >= 0).map(s => ({ start: s.startIndex, end: s.startIndex + s.length, clueIdx: null, scaffoldIdx: s.idx })),
   ].sort((a, b) => a.start - b.start);
 
-  if (!marks.length) return [{ text: src, clueIndex: null, scaffoldIndex: null, absStart: 0 }];
+  // ── 模式一：JSON 詞段覆蓋 ──
+  if (stemTokens?.length) {
+    const segs: Seg[] = [];
+    let charPos = 0;
+    for (const token of stemTokens) {
+      const tokenEnd = charPos + token.length;
+      // 找到完全包含這個詞段的標記區（要求詞段邊界與標記對齊）
+      const mark = marks.find(m => m.start <= charPos && m.end >= tokenEnd);
+      segs.push({
+        text: token,
+        clueIndex: mark?.clueIdx ?? null,
+        scaffoldIndex: mark?.scaffoldIdx ?? null,
+        absStart: charPos,
+      });
+      charPos = tokenEnd;
+    }
+    return segs;
+  }
+
+  // ── 模式二：機械切碎（預設）──
+  if (!marks.length) return tokenizeBlank(src, 0);
 
   const segs: Seg[] = [];
   let cur = 0;
   marks.forEach(m => {
     if (m.start > cur) {
-      segs.push({ text: src.slice(cur, m.start), clueIndex: null, scaffoldIndex: null, absStart: cur });
+      segs.push(...tokenizeBlank(src.slice(cur, m.start), cur));
     }
     if (m.start >= cur) {
       segs.push({ text: src.slice(m.start, m.end), clueIndex: m.clueIdx, scaffoldIndex: m.scaffoldIdx, absStart: m.start });
@@ -150,7 +202,7 @@ function buildSegs(
     }
   });
   if (cur < src.length) {
-    segs.push({ text: src.slice(cur), clueIndex: null, scaffoldIndex: null, absStart: cur });
+    segs.push(...tokenizeBlank(src.slice(cur), cur));
   }
   return segs;
 }
@@ -394,14 +446,23 @@ export function DetectivePlayer({ question, onBack }: Props) {
         }
       });
     });
-    return buildSegs(question.mainStem, stemClues, stemScaffolding);
-  }, [question.mainStem, cluesWithIdx, stemScaffolding]);
+    const raw = buildSegs(question.mainStem, stemClues, stemScaffolding, question.stemTokens);
+    const [indexed] = assignTokenIndices(raw, 0);
+    return indexed;
+  }, [question.mainStem, question.stemTokens, cluesWithIdx, stemScaffolding]);
+
+  // stemBlankCount：stem 中空白詞段的數量，供 figureSegs 接續 tokenIndex 編號
+  const stemBlankCount = useMemo(
+    () => stemSegs.filter(s => s.clueIndex === null && s.scaffoldIndex === null).length,
+    [stemSegs]
+  );
+
   const figureClues = useMemo(() => cluesWithIdx.filter(c => c.startIndex === -1), [cluesWithIdx]);
   const figureSegs = useMemo(() => {
     if (!question.figure || !figureClues.length) return null;
     const figureScaffolding = scaffoldingWithIdx.filter(s => s.startIndex === -1);
     const allMatches: { start: number; end: number; clueIdx: number | null; scaffoldIdx: number | null }[] = [];
-    
+
     figureClues.forEach(fc => {
       const texts = fc.aliases?.length ? fc.aliases : [fc.text];
       texts.forEach(t => {
@@ -421,15 +482,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const segs: Seg[] = [];
     let cur = 0;
     allMatches.forEach(m => {
-      if (m.start > cur) segs.push({ text: question.figure!.slice(cur, m.start), clueIndex: null, scaffoldIndex: null, absStart: cur });
+      if (m.start > cur) segs.push(...tokenizeBlank(question.figure!.slice(cur, m.start), cur));
       if (m.start >= cur) {
         segs.push({ text: question.figure!.slice(m.start, m.end), clueIndex: m.clueIdx, scaffoldIndex: m.scaffoldIdx, absStart: m.start });
         cur = m.end;
       }
     });
-    if (cur < question.figure!.length) segs.push({ text: question.figure!.slice(cur), clueIndex: null, scaffoldIndex: null, absStart: cur });
-    return segs;
-  }, [question.figure, figureClues]);
+    if (cur < question.figure!.length) segs.push(...tokenizeBlank(question.figure!.slice(cur), cur));
+    // tokenIndex 接續 stem 的編號，讓前後端可以唯一識別每個空白詞段
+    const [indexed] = assignTokenIndices(segs, stemBlankCount);
+    return indexed;
+  }, [question.figure, figureClues, stemBlankCount]);
 
   // Auto-scroll & auto-advance
   useEffect(() => {
