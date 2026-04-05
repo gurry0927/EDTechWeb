@@ -189,12 +189,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [activeScanning, setActiveScanning] = useState(false);
   const [scanOnCooldown, setScanOnCooldown] = useState(false);
 
-  // 閒置 shimmer：8 秒未點擊題幹 → 循環掃光；首次點擊後永久關閉
   const [idleShimmer, setIdleShimmer] = useState(false);
-  // [MODIFY] hasEverTapped 移除，由 (foundClues.size === 0 && seenContextRegions.size === 0) 取代永久關閉條件
-  // 但我們仍需要一個「是否曾有過任何點擊」來決定是否顯示首次進入的 persist toast
+  // 首次點擊後清掉進場 persist toast；後續閒置提示改用 scaffoldPulse
   const [hasStartedInteracting, setHasStartedInteracting] = useState(false);
-  // 鷹架跳動：閒置時讓第一個 context 鷹架跳動提示可互動
+  // 閒置 8 秒後讓第一個 context 鷹架跳動，命中後停止
   const [scaffoldPulse, setScaffoldPulse] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -220,14 +218,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // 進場後啟動 idle timer（附 toast）；首次點擊或離開 clue phase 後清除
   useEffect(() => {
     const hasFoundAnything = foundClues.size > 0 || seenContextRegions.size > 0;
-    console.log('[IDLE] setup effect: phase=', phase, 'hasFoundAnything=', hasFoundAnything);
     if (phase !== 'clue' || hasFoundAnything) {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       setIdleShimmer(false);
       return;
     }
     resetIdleTimer(!hasStartedInteracting);
-    return () => { console.log('[IDLE] cleanup: clearing timer'); if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
+    return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
   }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting]);
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
