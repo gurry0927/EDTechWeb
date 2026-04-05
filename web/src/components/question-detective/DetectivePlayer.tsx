@@ -617,7 +617,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }).flat() as [number, number][];
 
     return { stem: stemRanges, figure: figureRanges };
-  }, [activeScanning, scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
+  }, [scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
 
   const onReasoningChoice = useCallback((choiceIdx: number, e: React.MouseEvent) => {
     const current = reasoningClues[reasoningStep];
