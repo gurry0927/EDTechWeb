@@ -702,7 +702,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
                         <span className="text-xs text-slate-400 dark:text-white/30">{foundClues.size}/{totalClues}</span>
                       <button
                         disabled={scanUsesLeft <= 0}
-                        onClick={() => { setActiveScanning(true); setHasStartedInteracting(true); setIdleShimmer(false); if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); } }}
+                        onClick={() => {
+  setActiveScanning(true);
+  setHasStartedInteracting(true);
+  setIdleShimmer(false);
+  setScaffoldPulse(false);
+  if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+  if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); }
+}}
                         className={`shrink-0 ml-2 text-sm flex items-center justify-center gap-0.5 px-2 h-7 rounded-full border transition-all
                           ${scanUsesLeft <= 0
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
