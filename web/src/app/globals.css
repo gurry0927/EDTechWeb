@@ -127,10 +127,9 @@ body {
 }
 
 .highlight-scan {
-  @apply rounded-sm;
+  border-radius: 2px;
   animation: scan-breathing 1.8s ease-in-out infinite;
   transition: background-color 0.4s ease;
-  /* 這裡不直接加 border-b，由 renderSegs 判斷是否為「關鍵字」再給底線 */
 }
 
 /* [FIX] 全局防作弊：禁止選取、禁止彈出手機菜單 */

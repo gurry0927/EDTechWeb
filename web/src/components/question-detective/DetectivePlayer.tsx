@@ -713,7 +713,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             key={i} 
             onClick={(e) => onSegTap(seg, e)} 
             // V5.2 更新：掃描模式 activeScanning 啟動期間，嚴禁出現任何底線樣式，並移除 active 點擊回饋以防滑動破解
-            className={`cursor-pointer highlight-scan ${isTargetClue && !activeScanning ? 'border-b-2 border-cyan-400' : ''}`}
+            className="cursor-pointer highlight-scan"
           >
             {seg.text}
           </span>
