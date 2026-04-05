@@ -17,6 +17,9 @@ node_modules/
 # Misc
 .DS_Store
 *.pem
+*.key
+*.cert
+*.local.json
 
 # Debug
 npm-debug.log*
@@ -24,8 +27,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Local env files
-.env*.local
-.env
+.env*
 
 # Vercel
 .vercel
