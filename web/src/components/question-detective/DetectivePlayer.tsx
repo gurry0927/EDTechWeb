@@ -106,7 +106,8 @@ const RichText = ({ text }: { text: string | undefined }) => {
 interface Seg {
   text: string;
   clueIndex: number | null;
-  scaffoldIndex: number | null; // [NEW] index into question.scaffolding[]；null = 非鷹架區
+  scaffoldIndex: number | null;
+  absStart: number; // [NEW] 紀錄片段在原始字串中的起始位置
 }
 
 // [MODIFY] buildSegs 函式：同時處理 clues 與 scaffolding regions
@@ -135,22 +136,21 @@ function buildSegs(
     ...scaffolding.filter(s => s.startIndex >= 0).map(s => ({ start: s.startIndex, end: s.startIndex + s.length, clueIdx: null, scaffoldIdx: s.idx })),
   ].sort((a, b) => a.start - b.start);
 
-  if (!marks.length) return [{ text: src, clueIndex: null, scaffoldIndex: null }];
+  if (!marks.length) return [{ text: src, clueIndex: null, scaffoldIndex: null, absStart: 0 }];
 
   const segs: Seg[] = [];
   let cur = 0;
   marks.forEach(m => {
     if (m.start > cur) {
-      segs.push({ text: src.slice(cur, m.start), clueIndex: null, scaffoldIndex: null });
+      segs.push({ text: src.slice(cur, m.start), clueIndex: null, scaffoldIndex: null, absStart: cur });
     }
-    // 防止重疊導致的重複切片（基本防護）
     if (m.start >= cur) {
-      segs.push({ text: src.slice(m.start, m.end), clueIndex: m.clueIdx, scaffoldIndex: m.scaffoldIdx });
+      segs.push({ text: src.slice(m.start, m.end), clueIndex: m.clueIdx, scaffoldIndex: m.scaffoldIdx, absStart: m.start });
       cur = m.end;
     }
   });
   if (cur < src.length) {
-    segs.push({ text: src.slice(cur), clueIndex: null, scaffoldIndex: null });
+    segs.push({ text: src.slice(cur), clueIndex: null, scaffoldIndex: null, absStart: cur });
   }
   return segs;
 }
@@ -402,13 +402,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const segs: Seg[] = [];
     let cur = 0;
     allMatches.forEach(m => {
-      if (m.start > cur) segs.push({ text: question.figure!.slice(cur, m.start), clueIndex: null, scaffoldIndex: null });
+      if (m.start > cur) segs.push({ text: question.figure!.slice(cur, m.start), clueIndex: null, scaffoldIndex: null, absStart: cur });
       if (m.start >= cur) {
-        segs.push({ text: question.figure!.slice(m.start, m.end), clueIndex: m.clueIdx, scaffoldIndex: m.scaffoldIdx });
+        segs.push({ text: question.figure!.slice(m.start, m.end), clueIndex: m.clueIdx, scaffoldIndex: m.scaffoldIdx, absStart: m.start });
         cur = m.end;
       }
     });
-    if (cur < question.figure!.length) segs.push({ text: question.figure!.slice(cur), clueIndex: null, scaffoldIndex: null });
+    if (cur < question.figure!.length) segs.push({ text: question.figure!.slice(cur), clueIndex: null, scaffoldIndex: null, absStart: cur });
     return segs;
   }, [question.figure, figureClues]);
 
@@ -589,6 +589,36 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // 共用推理按鈕樣式：footer（小）與筆記本（大）同色同形，尺寸透過 padding 區分
   const reasoningBtnBase = 'rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 border border-cyan-400/30 shadow-[0_0_15px_rgba(8,145,178,0.35)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center';
 
+  // [NEW] 關鍵線索斷句高亮演算法
+  const currentHighlightRanges = useMemo(() => {
+    if (!activeScanning) return { stem: [] as [number, number][], figure: [] as [number, number][] };
+    
+    // 找出所有尚未發現的關鍵線索 (isCritical: true)
+    const targets = criticalClues.filter(c => !foundClues.has(c.idx));
+    const findRange = (src: string, clue: { startIndex: number, length: number }) => {
+      if (clue.startIndex < 0) return null;
+      // 向前找斷句點
+      let start = clue.startIndex;
+      while (start > 0 && !'。！？\n'.includes(src[start - 1])) start--;
+      // 向後找斷句點
+      let end = clue.startIndex + clue.length;
+      while (end < src.length && !'。！？\n'.includes(src[end])) end++;
+      return [start, end] as [number, number];
+    };
+
+    const stemRanges = targets.filter(c => c.startIndex >= 0).map(c => findRange(question.mainStem, c)).filter(Boolean) as [number, number][];
+    const figureRanges = targets.filter(c => c.startIndex === -1).map(c => {
+      const texts = c.aliases?.length ? c.aliases : [c.text];
+      return texts.map(t => {
+        const startIdx = question.figure?.indexOf(t) ?? -1;
+        if (startIdx === -1) return null;
+        return findRange(question.figure!, { startIndex: startIdx, length: t.length });
+      }).filter(Boolean);
+    }).flat() as [number, number][];
+
+    return { stem: stemRanges, figure: figureRanges };
+  }, [scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
+
   const onReasoningChoice = useCallback((choiceIdx: number, e: React.MouseEvent) => {
     const current = reasoningClues[reasoningStep];
     if (!current?.reasoning) return;
@@ -637,9 +667,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const isCluePhase = phase === 'clue' && !clueLocked;
   const isPointingPhase = phase === 'reasoning' && reasoningMode === 'pointing';
 
-  const renderSegs = (segs: Seg[], onTap: (seg: Seg, e: React.MouseEvent) => void) => segs.map((seg, i) => {
+  const renderSegs = (segs: Seg[], isFigure = false) => segs.map((seg, i) => {
     const isClue = seg.clueIndex !== null;
     const isFound = isClue && foundClues.has(seg.clueIndex!);
+    
     if (isPointingPhase) {
       if (isFound) return <span key={i} onClick={(e) => onEvidencePoint(seg.clueIndex!, e)} className={clsPointable}>{seg.text}</span>;
       return <span key={i} className={clsDim}>{seg.text}</span>;
@@ -647,16 +678,31 @@ export function DetectivePlayer({ question, onBack }: Props) {
     if (phase === 'reasoning') return <span key={i} className={isFound ? clsFound : clsDim}>{seg.text}</span>;
     if (isCluePhase) {
       const isBouncing = scaffoldPulse && !activeScanning && firstContextScaffoldIdx !== null && seg.scaffoldIndex === firstContextScaffoldIdx;
-      const isContextScaffold = seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'context';
-      const isHighlighted = scanHighlight && (seg.clueIndex !== null || isContextScaffold);
-
+      
+      // [V5.1 核心邏輯] 僅針對關鍵句子範圍呼吸，排除輔助線索與鷹架
+      const ranges = isFigure ? currentHighlightRanges.figure : currentHighlightRanges.stem;
+      const isInCriticalSentence = scanHighlight && ranges.some(([start, end]) => seg.absStart >= start && seg.absStart < end);
+      
+      // 關鍵線索本體：在呼吸範圍內給底線，維持原本的「可視感」但擴大到整句背景
+      const isTargetClue = isClue && !foundClues.has(seg.clueIndex!) && (seg.clueIndex !== null && question.clues[seg.clueIndex].isCritical);
+      
       if (isBouncing) {
-        return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
+        return <span key={i} onClick={(e) => onSegTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
       }
-      if (isHighlighted) {
-        return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer highlight-scan">{seg.text}</span>;
+      
+      if (isInCriticalSentence) {
+        return (
+          <span 
+            key={i} 
+            onClick={(e) => onSegTap(seg, e)} 
+            className={`cursor-pointer highlight-scan ${isTargetClue ? 'border-b-2 border-cyan-400' : ''}`}
+          >
+            {seg.text}
+          </span>
+        );
       }
-      return <span key={i} onClick={(e) => onTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
+      
+      return <span key={i} onClick={(e) => onSegTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
     }
     return <span key={i} className={isFound ? clsFound : ''}>{seg.text}</span>;
   });
@@ -752,14 +798,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
               <div className="stem-scroll-fade stem-only" ref={stemContainerRef}>
                 <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${stemExpanded ? 'max-h-[55dvh]' : 'max-h-[25dvh] sm:max-h-none'}`}>
                   <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${activeScanning ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
-                    {renderSegs(stemSegs, onSegTap)}
+                    {renderSegs(stemSegs)}
                   </p>
                   {question.figure && (
                     <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3" ref={detailSectionRef}>
                       <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
                       <div className={`mt-1 text-base ${activeScanning ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                         <p className="text-slate-700 dark:text-white/80 leading-relaxed">
-                          {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
+                          {figureSegs ? renderSegs(figureSegs, true) : question.figure}
                         </p>
                       </div>
                     </div>

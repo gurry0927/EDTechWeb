@@ -14,9 +14,9 @@ export const GAME = {
   // [NEW] 掃描器（放大鏡模式）
   // scanActiveDuration：按下掃描鈕後，掃描高亮持續幾毫秒
   // scanCooldown：掃描鈕冷卻時間（毫秒），防止連續觸發
-  scanActiveDuration: 3500,
-  scanSweepDuration: 1200,  // 掃光結束後才亮起呼吸高光
-  scanCooldown: 6000,
+  scanActiveDuration: 11600,
+  scanSweepDuration: 3600,  // 播放兩次 (1.8s * 2) 結束後才亮起呼吸高光
+  scanCooldown: 12000,
   scanInitialUses: 1,
 
   // [NEW] 憐憫機制：連續失誤幾次後觸發高價值提示

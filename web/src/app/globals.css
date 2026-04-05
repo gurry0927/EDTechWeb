@@ -120,22 +120,26 @@ body {
   border-bottom-color: rgba(251, 191, 36, 0.4);
 }
 
-/* 掃描模式高光：線索與有效鷹架在掃描期間顯示青色呼吸光暈 */
+/* [NEW] 掃描呼吸特效 - 用於掃描模式下「關鍵句子」的全句高亮 */
 @keyframes scan-breathing {
-  0%, 100% { box-shadow: 0 0 4px rgba(34, 211, 238, 0.3); }
-  50%       { box-shadow: 0 0 12px rgba(34, 211, 238, 0.7); }
+  0%, 100% { background-color: rgba(34, 211, 238, 0.05); box-shadow: 0 0 4px rgba(34, 211, 238, 0.1); }
+  50% { background-color: rgba(34, 211, 238, 0.15); box-shadow: 0 0 12px rgba(34, 211, 238, 0.3); }
 }
 
 .highlight-scan {
-  display: inline-block;
-  background-color: rgba(207, 250, 254, 0.5);
-  border-bottom: 2px solid rgb(34, 211, 238);
-  border-radius: 2px;
-  padding: 0 2px;
-  animation: scan-breathing 1.5s ease-in-out infinite;
+  @apply rounded-sm;
+  animation: scan-breathing 1.8s ease-in-out infinite;
+  transition: background-color 0.4s ease;
+  /* 這裡不直接加 border-b，由 renderSegs 判斷是否為「關鍵字」再給底線 */
 }
-.dark .highlight-scan {
-  background-color: rgba(8, 145, 178, 0.2);
+
+/* [FIX] 全局防作弊：禁止選取、禁止彈出手機菜單 */
+.case-file {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; /* iOS 禁止選單 */
 }
 
 /* Clue flight & Tab pop effects */
