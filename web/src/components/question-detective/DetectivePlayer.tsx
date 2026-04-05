@@ -191,7 +191,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   // 閒置 shimmer：8 秒未點擊題幹 → 循環掃光；首次點擊後永久關閉
   const [idleShimmer, setIdleShimmer] = useState(false);
-  const [hasEverTapped, setHasEverTapped] = useState(false);
+  // [MODIFY] hasEverTapped 移除，由 (foundClues.size === 0 && seenContextRegions.size === 0) 取代永久關閉條件
+  // 但我們仍需要一個「是否曾有過任何點擊」來決定是否顯示首次進入的 persist toast
+  const [hasStartedInteracting, setHasStartedInteracting] = useState(false);
+  // 鷹架跳動：閒置時讓第一個 context 鷹架跳動提示可互動
+  const [scaffoldPulse, setScaffoldPulse] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 有互動時用：清掉 shimmer，重新倒數 8 秒
@@ -215,15 +219,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   // 進場後啟動 idle timer（附 toast）；首次點擊或離開 clue phase 後清除
   useEffect(() => {
-    if (phase !== 'clue' || hasEverTapped) {
+    const hasFoundAnything = foundClues.size > 0 || seenContextRegions.size > 0;
+    console.log('[IDLE] setup effect: phase=', phase, 'hasFoundAnything=', hasFoundAnything);
+    if (phase !== 'clue' || hasFoundAnything) {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       setIdleShimmer(false);
       return;
     }
-    resetIdleTimer(true);
-    return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
-  }, [phase, hasEverTapped]);
-
+    resetIdleTimer(!hasStartedInteracting);
+    return () => { console.log('[IDLE] cleanup: clearing timer'); if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
+  }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting]);
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
 
@@ -299,6 +304,31 @@ export function DetectivePlayer({ question, onBack }: Props) {
     [question.scaffolding]
   );
   const stemScaffolding = useMemo(() => scaffoldingWithIdx.filter(s => s.startIndex >= 0), [scaffoldingWithIdx]);
+  // 第一個 context 型鷹架的 idx（用於閒置跳動提示）
+  const firstContextScaffoldIdx = useMemo(
+    () => {
+      const first = stemScaffolding.find(s => question.scaffolding?.[s.idx]?.type === 'context');
+      return first?.idx ?? null;
+    },
+    [stemScaffolding, question.scaffolding]
+  );
+
+  // idleShimmer 觸發時：若有 context 鷹架且尚無任何有效互動，改為跳動鷹架（取代全文掃光）
+  useEffect(() => {
+    if (!idleShimmer) return;
+    if (firstContextScaffoldIdx !== null && foundClues.size === 0 && seenContextRegions.size === 0) {
+      setIdleShimmer(false);
+      setScaffoldPulse(true);
+    }
+  }, [idleShimmer, firstContextScaffoldIdx, foundClues.size, seenContextRegions.size]);
+
+  // 有效互動後（命中線索或 context 鷹架）→ 停止跳動
+  useEffect(() => {
+    if (scaffoldPulse && (foundClues.size > 0 || seenContextRegions.size > 0)) {
+      setScaffoldPulse(false);
+    }
+  }, [scaffoldPulse, foundClues.size, seenContextRegions.size]);
+
   // stemSegs：展開 mainStem 線索的 aliases，讓題幹中出現的同義詞也能被點擊命中
   const stemSegs = useMemo(() => {
     const stemClues: { startIndex: number; length: number; idx: number }[] = [];
@@ -463,13 +493,18 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // scaffoldIndex != null → 查 ScaffoldingRegion.type，呼叫 onContextHit 或 onNoiseMiss
   // 兩者皆 null        → onClueMiss（不變）
   const onSegTap = useCallback((seg: Seg, e: React.MouseEvent) => {
-    // 首次點擊 → 永久停止 shimmer + persist toast
-    if (!hasEverTapped) {
-      setHasEverTapped(true);
+    // 首次點擊 → 隱藏首次進入的 persist toast（之後的提示改為 toast-anim 飛走，不再常駐）
+    if (!hasStartedInteracting) {
+      setHasStartedInteracting(true);
       setIdleShimmer(false);
       setToast(null);
       setToastPersist(false);
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    }
+    // 非有效互動點擊（miss）→ 重置閒置計時器，讓 8 秒後能再次觸發跳動
+    if (seg.clueIndex === null && seg.scaffoldIndex === null) {
+      resetIdleTimer(false);
+    } else if (seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'noise') {
+      resetIdleTimer(false);
     }
 
     if (seg.clueIndex !== null) {
@@ -481,7 +516,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     } else {
       onClueMiss(e);
     }
-  }, [hasEverTapped, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding]);
+  }, [hasStartedInteracting, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding, resetIdleTimer]);
 
   const openNotebook = useCallback(() => {
     // 暫停 idle 計時器 + 隱藏 toast（筆記本蓋住題幹，提示會誤導）
@@ -500,9 +535,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
       setIsNotebookOpen(false);
       setIsClosing(false);
       // 重啟計時器但不清 shimmer（若已啟動則繼續顯示）
-      if (!hasEverTapped) startIdleTimer(true);
+      // 重啟計時器，若尚未有有效互動則 8 秒後繼續跳動
+      if (foundClues.size === 0 && seenContextRegions.size === 0) startIdleTimer(true);
     }, 260);
-  }, [hasEverTapped, startIdleTimer]);
+  }, [foundClues.size, seenContextRegions.size, startIdleTimer]);
 
   const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); }, []);
   // 共用推理按鈕樣式：footer（小）與筆記本（大）同色同形，尺寸透過 padding 區分
@@ -564,7 +600,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
       return <span key={i} className={clsDim}>{seg.text}</span>;
     }
     if (phase === 'reasoning') return <span key={i} className={isFound ? clsFound : clsDim}>{seg.text}</span>;
-    if (isCluePhase) return <span key={i} onClick={(e) => onTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
+    if (isCluePhase) {
+      const isBouncing = scaffoldPulse && firstContextScaffoldIdx !== null && seg.scaffoldIndex === firstContextScaffoldIdx;
+      if (isBouncing) {
+        return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
+      }
+      return <span key={i} onClick={(e) => onTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
+    }
     return <span key={i} className={isFound ? clsFound : ''}>{seg.text}</span>;
   });
 
@@ -633,7 +675,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                         <span className="text-xs text-slate-400 dark:text-white/30">{foundClues.size}/{totalClues}</span>
                       <button
                         disabled={scanOnCooldown}
-                        onClick={() => { setActiveScanning(true); setHasEverTapped(true); setIdleShimmer(false); if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); } }}
+                        onClick={() => { setActiveScanning(true); setHasStartedInteracting(true); setIdleShimmer(false); if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); } }}
                         className={`shrink-0 ml-2 text-sm flex items-center justify-center w-7 h-7 rounded-full border transition-all
                           ${scanOnCooldown
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
