@@ -80,6 +80,22 @@ const LivesDisplay = ({ lives }: { lives: number }) => (
   </div>
 );
 
+// 簡單的 Markdown 粗體解析器 (**粗體文字**)
+const RichText = ({ text }: { text: string | undefined }) => {
+  if (!text) return null;
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <span key={i} className="font-bold text-amber-700 dark:text-amber-300">{part.slice(2, -2)}</span>;
+        }
+        return part;
+      })}
+    </>
+  );
+};
+
 // ── Segment building ──
 
 // [MODIFY] Seg 型別擴充：加入 scaffoldIndex 欄位
@@ -719,7 +735,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <>
             <TypedDetective delay="medium">
               <span className="font-medium text-amber-700 dark:text-amber-300">📌 本案問題：</span><br/>
-              {question.caseQuestion}
+              <RichText text={question.caseQuestion} />
             </TypedDetective>
             <TypedDetective delay="long">{DIALOGUE.caseQuestionPrompt}</TypedDetective>
           </>
@@ -736,17 +752,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
                 <TypedDetective delay="medium">
                   {event.reaction}
                   <span className={`font-medium ${isAux ? 'text-cyan-700 dark:text-cyan-300' : 'text-amber-700 dark:text-amber-300'}`}>「{clue.text}」</span>
-                  {' — '}{hasTeaser ? clue.teaser : clue.why}
+                  {' — '}{hasTeaser ? <RichText text={clue.teaser} /> : <RichText text={clue.why} />}
                   {hasTeaser && <><br/><span className="text-cyan-600 dark:text-cyan-400 text-sm">{isAux ? DIALOGUE.auxiliaryNotebookCTA : DIALOGUE.clueNotebookCTA}</span></>}
                 </TypedDetective>
               </div>
             );
           }
           if (event.type === 'context') {
-            return <ContextBubble key={`chat-${i}`}>{event.hint}</ContextBubble>;
+            return <ContextBubble key={`chat-${i}`}><RichText text={event.hint} /></ContextBubble>;
           }
           if (event.type === 'pity') {
-            return <PityBubble key={`chat-${i}`}>{event.hint}</PityBubble>;
+            return <PityBubble key={`chat-${i}`}><RichText text={event.hint} /></PityBubble>;
           }
           return null;
         })}
@@ -784,7 +800,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                   )}
                   {isActive && reasoningMode === 'choosing' && reasoningWrong && (
                     <>
-                      <TypedDetective delay="short"><span className="text-red-500 dark:text-red-400">{DIALOGUE.reasoningWrongPrefix}</span>{r.wrong}</TypedDetective>
+                      <TypedDetective delay="short"><span className="text-red-500 dark:text-red-400">{DIALOGUE.reasoningWrongPrefix}</span><RichText text={r.wrong} /></TypedDetective>
                       {reasoningClues[reasoningStep]?.teaser && (
                         <TypedDetective delay="medium">{DIALOGUE.reasoningWrongNotebookHint}</TypedDetective>
                       )}
@@ -804,7 +820,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                       <S>我認為是「{r.choices[r.answerIndex]}」</S>
                       <D><span className="text-emerald-600 dark:text-emerald-400">{DIALOGUE.reasoningCorrect}</span> {DIALOGUE.reasoningCorrectMsg}請指出證據。</D>
                       <S>我指認「<span className="font-medium text-amber-700 dark:text-amber-300">{rc.text}</span>」作為證據。</S>
-                      <D><span className="text-emerald-600 dark:text-emerald-400">{DIALOGUE.evidenceSuccess}</span>{r.correct}</D>
+                      <D><span className="text-emerald-600 dark:text-emerald-400">{DIALOGUE.evidenceSuccess}</span><RichText text={r.correct} /></D>
                     </>
                   )}
                 </div>
@@ -942,7 +958,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       {toast && (
         <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4" style={{ top: headerH + 10 }}>
           <div key={toastKey} className={`${toastPersist ? 'toast-persist' : 'toast-anim'} px-4 py-2 rounded-xl text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-800 dark:text-black border border-amber-300 dark:border-transparent`}>
-            {toast}
+            <RichText text={toast ?? undefined} />
           </div>
         </div>
       )}
@@ -1086,7 +1102,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                                 {clue.text}
                               </span>
                               <span className="text-slate-500 dark:text-white/50 pl-4 border-l-2 border-slate-100 dark:border-white/5 ml-0.5 py-1">
-                                {clue.why}
+                                <RichText text={clue.why} />
                               </span>
                             </li>
                           );
