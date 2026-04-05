@@ -249,7 +249,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }
     resetIdleTimer(!hasStartedInteracting);
     return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
-  }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting, isIdleDisabled]);
+  }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting, isIdleDisabled, resetIdleTimer]);
+
+  const exitScanMode = useCallback(() => {
+    setActiveScanning(false);
+    setScanHighlight(false);
+    setIsIdleDisabled(false);
+    setStemExpanded(false);
+    startIdleTimer(true);
+  }, [startIdleTimer]);
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
 
@@ -290,13 +298,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
         detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
     }
-    // 掃光結束後才亮起呼吸高光
+    // 掃光結束後才亮起呼吸高光 (此處開始無限循環)
     const highlightTimer = setTimeout(() => setScanHighlight(true), GAME.scanSweepDuration);
-    const offTimer = setTimeout(() => {
-      setActiveScanning(false);
-      setScanUsesLeft(prev => Math.max(0, prev - 1));
-    }, GAME.scanActiveDuration);
-    return () => { clearTimeout(highlightTimer); clearTimeout(offTimer); };
+    return () => { clearTimeout(highlightTimer); };
   }, [activeScanning, foundClues.size]);
 
   // Derived
@@ -474,9 +478,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setFoundClues(prev => new Set(prev).add(idx));
     setChatEvents(prev => [...prev, { type: 'clue', idx, reaction }]);
     setConsecutiveMisses(0);
-    setStemExpanded(false);
-    setScanHighlight(false);
-  }, [clueLocked, foundClues, triggerFlight, question.clues]);
+    exitScanMode();
+  }, [clueLocked, foundClues, triggerFlight, question.clues, exitScanMode]);
 
   const triggerMissIncrement = useCallback(() => {
     const next = consecutiveMisses + 1;
@@ -505,15 +508,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const msg = region.hint || pick(DIALOGUE.contextHitReactions);
     showToast(msg);
     setConsecutiveMisses(0);
-    setStemExpanded(false);
-    setScanHighlight(false);
+    exitScanMode();
     // 每個 context 區域只加一次泡泡（防止重複點同一處刷屏）
     if (!seenContextRegions.has(regionIdx)) {
       if (e) triggerFlight(e);
       setChatEvents(prev => [...prev, { type: 'context', hint: msg, text: region.text }]);
       setSeenContextRegions(prev => new Set(prev).add(regionIdx));
     }
-  }, [question.scaffolding, seenContextRegions, triggerFlight]);
+  }, [question.scaffolding, seenContextRegions, triggerFlight, exitScanMode]);
 
   const onNoiseMiss = useCallback((regionIdx: number, e?: React.MouseEvent) => {
     if (clueLocked || activeScanning || stemExpanded) return;
@@ -773,17 +775,18 @@ export function DetectivePlayer({ question, onBack }: Props) {
                     {phase === 'clue' && !clueLocked && (
                       <div className="flex items-center gap-2 shrink-0 ml-2">
                         <span className="text-xs text-slate-400 dark:text-white/30">{foundClues.size}/{totalClues}</span>
-                      <button
-                        disabled={scanUsesLeft <= 0}
-                        onClick={() => {
-  setActiveScanning(true);
-  setIsIdleDisabled(true); // [FIX] 永久切斷閒置提示計時器
-  setHasStartedInteracting(true);
-  setIdleShimmer(false);
-  setScaffoldPulse(false);
-  if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-  if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); }
-}}
+                        <button
+                          disabled={scanUsesLeft <= 0}
+                          onClick={() => {
+                            setScanUsesLeft(prev => Math.max(0, prev - 1));
+                            setActiveScanning(true);
+                            setIsIdleDisabled(true); 
+                            setHasStartedInteracting(true);
+                            setIdleShimmer(false);
+                            setScaffoldPulse(false);
+                            if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+                            if (foundClues.size === 0 && question.startHint) { showPersistToast(question.startHint); } else { showToast(DIALOGUE.scanActivate); }
+                          }}
                         className={`shrink-0 ml-2 text-sm flex items-center justify-center gap-0.5 px-2 h-7 rounded-full border transition-all
                           ${scanUsesLeft <= 0
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
