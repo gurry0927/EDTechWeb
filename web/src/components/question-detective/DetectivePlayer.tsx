@@ -88,7 +88,7 @@ const RichText = ({ text }: { text: string | undefined }) => {
     <>
       {parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
-          return <span key={i} className="font-bold text-amber-700 dark:text-amber-300">{part.slice(2, -2)}</span>;
+          return <span key={i} className="font-bold text-amber-900 dark:text-amber-200">{part.slice(2, -2)}</span>;
         }
         return part;
       })}
@@ -957,7 +957,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       {/* Toast — fixed z-[60]，永遠在最頂層，不被 notebook backdrop 壓住 */}
       {toast && (
         <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4" style={{ top: headerH + 10 }}>
-          <div key={toastKey} className={`${toastPersist ? 'toast-persist' : 'toast-anim'} px-4 py-2 rounded-xl text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-800 dark:text-black border border-amber-300 dark:border-transparent`}>
+          <div key={toastKey} className={`${toastPersist ? 'toast-persist' : 'toast-anim'} px-4 py-2 rounded-xl text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-700 dark:text-black border border-amber-300 dark:border-transparent`}>
             <RichText text={toast ?? undefined} />
           </div>
         </div>
