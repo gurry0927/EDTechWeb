@@ -78,14 +78,16 @@
       "startIndex": -1,
       "length": 5,
       "why": "「州知事」是日治時期的地方首長職稱。清代叫『知府』，戰後叫『縣長』。又一個時代標記。",
-      "isCritical": false
+      "isCritical": false,
+      "isAuxiliary": true
     },
     {
       "text": "理蕃",
       "startIndex": -1,
       "length": 2,
       "why": "「理蕃」是日治時期專有的官式用語，指管理原住民事務。清代的說法是『開山撫番』——注意，選項裡就有這個詞。",
-      "isCritical": false
+      "isCritical": false,
+      "isAuxiliary": true
     }
   ],
 

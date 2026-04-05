@@ -757,7 +757,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                   {question.figure && (
                     <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3" ref={detailSectionRef}>
                       <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
-                      <div className={`mt-1 text-base ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                      <div className={`mt-1 text-base ${activeScanning ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                         <p className="text-slate-700 dark:text-white/80 leading-relaxed">
                           {figureSegs ? renderSegs(figureSegs, onSegTap) : question.figure}
                         </p>
