@@ -487,7 +487,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [consecutiveMisses, question.pityHint, question.tags]);
 
   const onClueMiss = useCallback((e?: React.MouseEvent) => {
-    if (clueLocked || activeScanning) return; // [LOCK] 掃描中不允許扣血
+    if (clueLocked || activeScanning || stemExpanded) return;
     const msg = pick((DIALOGUE as any).clueMissReactions || [DIALOGUE.clueMiss]);
     setLives(prev => prev - 1);
     triggerWrongFeedback(e);
@@ -511,7 +511,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [question.scaffolding, seenContextRegions, triggerFlight]);
 
   const onNoiseMiss = useCallback((regionIdx: number, e?: React.MouseEvent) => {
-    if (clueLocked || activeScanning) return; // [LOCK] 掃描中不允許扣血
+    if (clueLocked || activeScanning || stemExpanded) return;
     const region = question.scaffolding?.[regionIdx];
     const msg = region?.hint || pick(DIALOGUE.noiseHitReactions);
     setLives(prev => Math.max(0, prev - 1));
@@ -532,16 +532,18 @@ export function DetectivePlayer({ question, onBack }: Props) {
       setToast(null);
       setToastPersist(false);
     }
-    // 掃描模式中：非線索點擊不扣血，只給輕提示
-    if (activeScanning && seg.clueIndex === null) {
+    // 掃描展開期間：非線索點擊不扣血，只給輕提示
+    if ((activeScanning || stemExpanded) && seg.clueIndex === null) {
       showToast(DIALOGUE.scanMissProtected);
       return;
     }
-    // 非有效互動點擊（miss）→ 重置閒置計時器，讓 8 秒後能再次觸發跳動
-    if (seg.clueIndex === null && seg.scaffoldIndex === null) {
-      resetIdleTimer(false);
-    } else if (seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'noise') {
-      resetIdleTimer(false);
+    // 非有效互動點擊（miss）→ 重置閒置計時器（已永久禁用則跳過）
+    if (!isIdleDisabled) {
+      if (seg.clueIndex === null && seg.scaffoldIndex === null) {
+        resetIdleTimer(false);
+      } else if (seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'noise') {
+        resetIdleTimer(false);
+      }
     }
 
     if (seg.clueIndex !== null) {
@@ -553,7 +555,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     } else {
       onClueMiss(e);
     }
-  }, [activeScanning, hasStartedInteracting, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding, resetIdleTimer]);
+  }, [activeScanning, stemExpanded, isIdleDisabled, hasStartedInteracting, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding, resetIdleTimer]);
 
   const openNotebook = useCallback(() => {
     // 暫停 idle 計時器 + 隱藏 toast（筆記本蓋住題幹，提示會誤導）

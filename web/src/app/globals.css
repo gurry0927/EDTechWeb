@@ -120,16 +120,22 @@ body {
   border-bottom-color: rgba(251, 191, 36, 0.4);
 }
 
-/* [NEW] 掃描呼吸特效 - 用於掃描模式下的目標線索 */
+/* 掃描模式高光：線索與有效鷹架在掃描期間顯示青色呼吸光暈 */
 @keyframes scan-breathing {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 5px rgba(34, 211, 238, 0.2); }
-  50% { transform: scale(1.05); box-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
+  0%, 100% { box-shadow: 0 0 4px rgba(34, 211, 238, 0.3); }
+  50%       { box-shadow: 0 0 12px rgba(34, 211, 238, 0.7); }
 }
 
 .highlight-scan {
-  @apply bg-cyan-100/50 dark:bg-cyan-500/20 border-b-2 border-cyan-400 dark:border-cyan-400 rounded-sm px-0.5;
+  display: inline-block;
+  background-color: rgba(207, 250, 254, 0.5);
+  border-bottom: 2px solid rgb(34, 211, 238);
+  border-radius: 2px;
+  padding: 0 2px;
   animation: scan-breathing 1.5s ease-in-out infinite;
-  transition: all 0.3s ease;
+}
+.dark .highlight-scan {
+  background-color: rgba(8, 145, 178, 0.2);
 }
 
 /* Clue flight & Tab pop effects */
