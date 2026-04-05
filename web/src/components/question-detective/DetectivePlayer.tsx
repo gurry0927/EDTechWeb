@@ -252,11 +252,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting, isIdleDisabled, resetIdleTimer]);
 
   // exitScanMode：不管 timer，交給 idle effect 統一判斷
+  // persist toast（如 startHint）一併清除，避免找到線索後浮示殘留
   const exitScanMode = useCallback(() => {
     setActiveScanning(false);
     setScanHighlight(false);
     setIsIdleDisabled(false);
     setStemExpanded(false);
+    setToast(null);
+    setToastPersist(false);
   }, []);
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
