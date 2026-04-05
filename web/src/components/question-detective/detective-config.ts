@@ -15,6 +15,7 @@ export const GAME = {
   // scanActiveDuration：按下掃描鈕後，掃描高亮持續幾毫秒
   // scanCooldown：掃描鈕冷卻時間（毫秒），防止連續觸發
   scanActiveDuration: 3500,
+  scanSweepDuration: 1200,  // 掃光結束後才亮起呼吸高光
   scanCooldown: 6000,
   scanInitialUses: 1,
 

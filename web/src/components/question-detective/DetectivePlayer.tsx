@@ -204,7 +204,8 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // scanOnCooldown = true 時，掃描鈕顯示灰色並禁用，避免連續觸發
   const [activeScanning, setActiveScanning] = useState(false);
   const [scanOnCooldown, setScanOnCooldown] = useState(false);
-  const [stemExpanded, setStemExpanded] = useState(false); // 掃描展開後持續，直到有效互動才收合
+  const [stemExpanded, setStemExpanded] = useState(false);
+  const [scanHighlight, setScanHighlight] = useState(false); // 掃光結束後才亮，持續到 stemExpanded 關閉
   const [scanUsesLeft, setScanUsesLeft] = useState(GAME.scanInitialUses);
   const prevAuxFoundRef = useRef(0);
 
@@ -282,18 +283,20 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   useEffect(() => {
     if (!activeScanning) return;
-    setStemExpanded(true); 
-    // [NEW] 自動捲動：如果還沒找到線索，視線對準証物細節
+    setStemExpanded(true);
+    setScanHighlight(false); // 掃光進行中，先不亮
     if (foundClues.size === 0) {
       setTimeout(() => {
         detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
     }
+    // 掃光結束後才亮起呼吸高光
+    const highlightTimer = setTimeout(() => setScanHighlight(true), GAME.scanSweepDuration);
     const offTimer = setTimeout(() => {
       setActiveScanning(false);
       setScanUsesLeft(prev => Math.max(0, prev - 1));
     }, GAME.scanActiveDuration);
-    return () => clearTimeout(offTimer);
+    return () => { clearTimeout(highlightTimer); clearTimeout(offTimer); };
   }, [activeScanning, foundClues.size]);
 
   // Derived
@@ -472,6 +475,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setChatEvents(prev => [...prev, { type: 'clue', idx, reaction }]);
     setConsecutiveMisses(0);
     setStemExpanded(false);
+    setScanHighlight(false);
   }, [clueLocked, foundClues, triggerFlight, question.clues]);
 
   const triggerMissIncrement = useCallback(() => {
@@ -502,6 +506,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     showToast(msg);
     setConsecutiveMisses(0);
     setStemExpanded(false);
+    setScanHighlight(false);
     // 每個 context 區域只加一次泡泡（防止重複點同一處刷屏）
     if (!seenContextRegions.has(regionIdx)) {
       if (e) triggerFlight(e);
@@ -532,8 +537,9 @@ export function DetectivePlayer({ question, onBack }: Props) {
       setToast(null);
       setToastPersist(false);
     }
-    // 掃描展開期間：非線索點擊不扣血，只給輕提示
-    if ((activeScanning || stemExpanded) && seg.clueIndex === null) {
+    // 掃描展開期間：線索和 context 鷹架可正常互動；noise 和空白只給提示不扣血
+    const isContextScaffold = seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'context';
+    if ((activeScanning || stemExpanded) && seg.clueIndex === null && !isContextScaffold) {
       showToast(DIALOGUE.scanMissProtected);
       return;
     }
@@ -641,13 +647,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
     if (phase === 'reasoning') return <span key={i} className={isFound ? clsFound : clsDim}>{seg.text}</span>;
     if (isCluePhase) {
       const isBouncing = scaffoldPulse && !activeScanning && firstContextScaffoldIdx !== null && seg.scaffoldIndex === firstContextScaffoldIdx;
-      // [NEW] 掃描呼吸特效
-      const isScanning = activeScanning && (seg.clueIndex !== null || (seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'context'));
-      
+      const isContextScaffold = seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'context';
+      const isHighlighted = scanHighlight && (seg.clueIndex !== null || isContextScaffold);
+
       if (isBouncing) {
         return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
       }
-      if (isScanning) {
+      if (isHighlighted) {
         return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer highlight-scan">{seg.text}</span>;
       }
       return <span key={i} onClick={(e) => onTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
