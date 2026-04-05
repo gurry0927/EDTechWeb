@@ -120,6 +120,18 @@ body {
   border-bottom-color: rgba(251, 191, 36, 0.4);
 }
 
+/* [NEW] 掃描呼吸特效 - 用於掃描模式下的目標線索 */
+@keyframes scan-breathing {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 5px rgba(34, 211, 238, 0.2); }
+  50% { transform: scale(1.05); box-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
+}
+
+.highlight-scan {
+  @apply bg-cyan-100/50 dark:bg-cyan-500/20 border-b-2 border-cyan-400 dark:border-cyan-400 rounded-sm px-0.5;
+  animation: scan-breathing 1.5s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
 /* Clue flight & Tab pop effects */
 /* 拋物線軌跡 keyframes 由 JS 動態注入（避免 var() 在 @keyframes 的瀏覽器相容問題） */
 /* 卡比彈跳：輕巧版 */

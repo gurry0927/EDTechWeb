@@ -212,8 +212,11 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // 首次點擊後清掉進場 persist toast；後續閒置提示改用 scaffoldPulse
   const [hasStartedInteracting, setHasStartedInteracting] = useState(false);
   // 閒置 8 秒後讓第一個 context 鷹架跳動，命中後停止
+  const [isIdleDisabled, setIsIdleDisabled] = useState(false);
   const [scaffoldPulse, setScaffoldPulse] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stemContainerRef = useRef<HTMLDivElement>(null);
+  const detailSectionRef = useRef<HTMLDivElement>(null);
 
   // 有互動時用：清掉 shimmer，重新倒數 8 秒
   const resetIdleTimer = useCallback((withToast = false) => {
@@ -237,14 +240,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // 進場後啟動 idle timer（附 toast）；首次點擊或離開 clue phase 後清除
   useEffect(() => {
     const hasFoundAnything = foundClues.size > 0 || seenContextRegions.size > 0;
-    if (phase !== 'clue' || hasFoundAnything) {
+    if (phase !== 'clue' || hasFoundAnything || isIdleDisabled) {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       setIdleShimmer(false);
+      setScaffoldPulse(false);
       return;
     }
     resetIdleTimer(!hasStartedInteracting);
     return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
-  }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting]);
+  }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting, isIdleDisabled]);
 
   useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
 
@@ -278,13 +282,19 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   useEffect(() => {
     if (!activeScanning) return;
-    setStemExpanded(true); // 展開，持續到有效互動
+    setStemExpanded(true); 
+    // [NEW] 自動捲動：如果還沒找到線索，視線對準証物細節
+    if (foundClues.size === 0) {
+      setTimeout(() => {
+        detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
     const offTimer = setTimeout(() => {
-      setActiveScanning(false); // 只關視覺掃光，展開繼續
+      setActiveScanning(false);
       setScanUsesLeft(prev => Math.max(0, prev - 1));
     }, GAME.scanActiveDuration);
     return () => clearTimeout(offTimer);
-  }, [activeScanning]);
+  }, [activeScanning, foundClues.size]);
 
   // Derived
   const gameOver = lives <= 0 && phase !== 'solution';
@@ -477,13 +487,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [consecutiveMisses, question.pityHint, question.tags]);
 
   const onClueMiss = useCallback((e?: React.MouseEvent) => {
-    if (clueLocked) return;
+    if (clueLocked || activeScanning) return; // [LOCK] 掃描中不允許扣血
     const msg = pick((DIALOGUE as any).clueMissReactions || [DIALOGUE.clueMiss]);
     setLives(prev => prev - 1);
     triggerWrongFeedback(e);
     showToast(msg);
     triggerMissIncrement();
-  }, [clueLocked, triggerMissIncrement, triggerWrongFeedback]);
+  }, [clueLocked, activeScanning, triggerMissIncrement, triggerWrongFeedback]);
 
   const onContextHit = useCallback((regionIdx: number, e?: React.MouseEvent) => {
     const region = question.scaffolding?.[regionIdx];
@@ -501,14 +511,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
   }, [question.scaffolding, seenContextRegions, triggerFlight]);
 
   const onNoiseMiss = useCallback((regionIdx: number, e?: React.MouseEvent) => {
-    if (clueLocked) return;
+    if (clueLocked || activeScanning) return; // [LOCK] 掃描中不允許扣血
     const region = question.scaffolding?.[regionIdx];
     const msg = region?.hint || pick(DIALOGUE.noiseHitReactions);
     setLives(prev => Math.max(0, prev - 1));
     triggerWrongFeedback(e);
     showToast(msg);
     triggerMissIncrement();
-  }, [clueLocked, question.scaffolding, triggerMissIncrement, triggerWrongFeedback]);
+  }, [clueLocked, activeScanning, question.scaffolding, triggerMissIncrement, triggerWrongFeedback]);
 
   // [MODIFY] onSegTap：三層分歧邏輯（原本只有兩層：clue / miss）
   // clueIndex != null  → onClueHit（不變）
@@ -543,7 +553,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     } else {
       onClueMiss(e);
     }
-  }, [hasStartedInteracting, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding, resetIdleTimer]);
+  }, [activeScanning, hasStartedInteracting, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding, resetIdleTimer]);
 
   const openNotebook = useCallback(() => {
     // 暫停 idle 計時器 + 隱藏 toast（筆記本蓋住題幹，提示會誤導）
@@ -629,8 +639,14 @@ export function DetectivePlayer({ question, onBack }: Props) {
     if (phase === 'reasoning') return <span key={i} className={isFound ? clsFound : clsDim}>{seg.text}</span>;
     if (isCluePhase) {
       const isBouncing = scaffoldPulse && !activeScanning && firstContextScaffoldIdx !== null && seg.scaffoldIndex === firstContextScaffoldIdx;
+      // [NEW] 掃描呼吸特效
+      const isScanning = activeScanning && (seg.clueIndex !== null || (seg.scaffoldIndex !== null && question.scaffolding?.[seg.scaffoldIndex]?.type === 'context'));
+      
       if (isBouncing) {
         return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
+      }
+      if (isScanning) {
+        return <span key={i} onClick={(e) => onTap(seg, e)} className="cursor-pointer highlight-scan">{seg.text}</span>;
       }
       return <span key={i} onClick={(e) => onTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${isFound ? clsFound : 'active:bg-slate-200 dark:active:bg-white/10'}`}>{seg.text}</span>;
     }
@@ -704,6 +720,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
                         disabled={scanUsesLeft <= 0}
                         onClick={() => {
   setActiveScanning(true);
+  setIsIdleDisabled(true); // [FIX] 永久切斷閒置提示計時器
   setHasStartedInteracting(true);
   setIdleShimmer(false);
   setScaffoldPulse(false);
@@ -724,13 +741,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
                   </div>
                 )
               }
-              <div className="stem-scroll-fade stem-only">
+              <div className="stem-scroll-fade stem-only" ref={stemContainerRef}>
                 <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${stemExpanded ? 'max-h-[55dvh]' : 'max-h-[25dvh] sm:max-h-none'}`}>
-                  <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                  <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${activeScanning ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                     {renderSegs(stemSegs, onSegTap)}
                   </p>
                   {question.figure && (
-                    <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3">
+                    <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3" ref={detailSectionRef}>
                       <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
                       <div className={`mt-1 text-base ${showPulse ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
                         <p className="text-slate-700 dark:text-white/80 leading-relaxed">
