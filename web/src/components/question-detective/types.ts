@@ -29,8 +29,9 @@ export interface ScaffoldingRegion {
   length: number;
   /** 'context' = 脈絡區（不扣血）；'noise' = 雜訊區（扣 1 血） */
   type: 'context' | 'noise';
-  /** 點擊後偵探的回應（context 給方向、noise 給冷場） */
   hint: string;
+  /** 同義詞/相關詞，點到任一個都算選中這組鷹架（選填） */
+  aliases?: string[];
 }
 
 /** 線索附帶的推理小題（方案二：每個線索各自出題） */

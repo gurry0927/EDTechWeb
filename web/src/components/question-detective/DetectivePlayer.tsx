@@ -444,10 +444,23 @@ export function DetectivePlayer({ question, onBack }: Props) {
         }
       });
     });
-    const raw = buildSegs(question.mainStem, stemClues, stemScaffolding, question.stemTokens);
+
+    const stemScaffold: { startIndex: number; length: number; idx: number }[] = [];
+    scaffoldingWithIdx.filter(s => s.startIndex >= 0).forEach(s => {
+      stemScaffold.push({ startIndex: s.startIndex, length: s.length, idx: s.idx });
+      (question.scaffolding?.[s.idx]?.aliases ?? []).forEach(alias => {
+        let pos = question.mainStem.indexOf(alias);
+        while (pos >= 0) {
+          if (pos !== s.startIndex) stemScaffold.push({ startIndex: pos, length: alias.length, idx: s.idx });
+          pos = question.mainStem.indexOf(alias, pos + alias.length);
+        }
+      });
+    });
+
+    const raw = buildSegs(question.mainStem, stemClues, stemScaffold, question.stemTokens);
     const [indexed] = assignTokenIndices(raw, 0);
     return indexed;
-  }, [question.mainStem, question.stemTokens, cluesWithIdx, stemScaffolding]);
+  }, [question.mainStem, question.stemTokens, cluesWithIdx, scaffoldingWithIdx, question.scaffolding]);
 
   // stemBlankCount：stem 中空白詞段的數量，供 figureSegs 接續 tokenIndex 編號
   const stemBlankCount = useMemo(
@@ -470,8 +483,12 @@ export function DetectivePlayer({ question, onBack }: Props) {
     });
 
     figureScaffolding.forEach(fs => {
-      const start = question.figure!.indexOf(fs.text);
-      if (start >= 0) allMatches.push({ start, end: start + fs.text.length, clueIdx: null, scaffoldIdx: fs.idx });
+      const sRef = question.scaffolding?.[fs.idx];
+      const texts = sRef?.aliases?.length ? sRef.aliases : [fs.text];
+      texts.forEach(t => {
+        const start = question.figure!.indexOf(t);
+        if (start >= 0) allMatches.push({ start, end: start + t.length, clueIdx: null, scaffoldIdx: fs.idx });
+      });
     });
 
     allMatches.sort((a, b) => a.start - b.start);
