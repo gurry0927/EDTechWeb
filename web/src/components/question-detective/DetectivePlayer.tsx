@@ -231,7 +231,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
   const [notebookSeenCount, setNotebookSeenCount] = useState(0);
   const [hasOpenedNotebook, setHasOpenedNotebook] = useState(false);
-  const [showPulse, setShowPulse] = useState(true);
+
   const [pointingFlash, setPointingFlash] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [toastKey, setToastKey] = useState(0);
@@ -255,7 +255,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // 按下掃描鈕後 GAME.scanActiveDuration ms 自動關閉
   // scanOnCooldown = true 時，掃描鈕顯示灰色並禁用，避免連續觸發
   const [activeScanning, setActiveScanning] = useState(false);
-  const [scanOnCooldown, setScanOnCooldown] = useState(false);
+
   const [stemExpanded, setStemExpanded] = useState(false);
   const [scanHighlight, setScanHighlight] = useState(false); // 掃光結束後才亮，持續到 stemExpanded 關閉
   const [scanUsesLeft, setScanUsesLeft] = useState(GAME.scanInitialUses);
@@ -313,8 +313,6 @@ export function DetectivePlayer({ question, onBack }: Props) {
     setToast(null);
     setToastPersist(false);
   }, []);
-
-  useEffect(() => { const t = setTimeout(() => setShowPulse(false), GAME.scanDuration); return () => clearTimeout(t); }, []);
 
   useEffect(() => {
     const el = headerRef.current;
@@ -873,13 +871,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
               }
               <div className="stem-scroll-fade stem-only" ref={stemContainerRef}>
                 <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${stemExpanded ? 'max-h-[55dvh]' : 'max-h-[25dvh] sm:max-h-none'}`}>
-                  <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${activeScanning ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                  <p className={`text-base leading-relaxed text-slate-700 dark:text-white/85 whitespace-pre-line ${activeScanning ? 'stem-scan' : ''}`}>
                     {renderSegs(stemSegs)}
                   </p>
                   {question.figure && (
                     <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3" ref={detailSectionRef}>
                       <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
-                      <div className={`mt-1 text-base ${activeScanning ? 'stem-scan' : ''} ${idleShimmer ? 'stem-idle-shimmer' : ''}`}>
+                      <div className={`mt-1 text-base ${activeScanning ? 'stem-scan' : ''}`}>
                         <p className="text-slate-700 dark:text-white/80 leading-relaxed">
                           {figureSegs ? renderSegs(figureSegs, true) : question.figure}
                         </p>
