@@ -4,12 +4,14 @@
 
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 
+import q114h08 from './114-social-history-08.json';
 import q114h20 from './114-social-history-20.json';
 import q114h31 from './114-social-history-31.json';
 import q114sg1 from './114-social-geography-1.json';
 import q114sg2 from './114-social-geography-02.json';
 
 export const ALL_QUESTIONS: DetectiveQuestion[] = [
+  q114h08,
   q114h20,
   q114h31,
   q114sg1,
