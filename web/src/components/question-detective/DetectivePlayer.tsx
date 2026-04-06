@@ -460,7 +460,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const raw = buildSegs(question.mainStem, stemClues, stemScaffold, question.stemTokens);
     const [indexed] = assignTokenIndices(raw, 0);
     return indexed;
-  }, [question.mainStem, question.stemTokens, cluesWithIdx, scaffoldingWithIdx, question.scaffolding]);
+  }, [question.mainStem, question.stemTokens, cluesWithIdx, scaffoldingWithIdx]);
 
   // stemBlankCount：stem 中空白詞段的數量，供 figureSegs 接續 tokenIndex 編號
   const stemBlankCount = useMemo(
