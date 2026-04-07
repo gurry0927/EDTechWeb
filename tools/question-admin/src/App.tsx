@@ -5,7 +5,7 @@ import { StemVisualizer } from './components/StemVisualizer';
 import { useApiKeys } from './hooks/useApiKeys';
 import { useQuestion } from './hooks/useQuestion';
 import { callWithRotation, ApiError } from './api';
-import { buildTokenizePrompt, validateTokens } from './tokenize';
+import { buildTokenizePrompt, buildFigureTokenizePrompt, validateTokens } from './tokenize';
 
 export default function App() {
   const apiKeys = useApiKeys();
@@ -20,30 +20,47 @@ export default function App() {
     if (!apiKeys.orderedKeys.length) { setStatus('✗ 請先設定 API Key'); return; }
 
     setIsRunning(true);
-    setStatus('呼叫 AI…');
     setLastSwitchMsg('');
 
-    try {
-      const prompt = buildTokenizePrompt(q.question);
-      const { result, usedKeyIndex } = await callWithRotation(
-        apiKeys.orderedKeys,
-        prompt,
-        (from, to) => setLastSwitchMsg(`⚡ ${from} 限速，切換至 ${to}`),
-      );
+    const onSwitch = (from: string, to: string) => setLastSwitchMsg(`⚡ ${from} 限速，切換至 ${to}`);
 
-      // 若輪替到後面的 key，更新 activeId 讓下次從這裡開始
-      if (usedKeyIndex > 0) {
-        apiKeys.selectKey(apiKeys.orderedKeys[usedKeyIndex].id);
+    try {
+      // ── 題幹切分 ──
+      setStatus('題幹切分中…');
+      const stemPrompt = buildTokenizePrompt(q.question);
+      const stemRes = await callWithRotation(apiKeys.orderedKeys, stemPrompt, onSwitch);
+
+      if (stemRes.usedKeyIndex > 0) {
+        apiKeys.selectKey(apiKeys.orderedKeys[stemRes.usedKeyIndex].id);
       }
 
-      const validation = validateTokens(result, q.question.mainStem);
-      if (!validation.ok) {
-        setStatus(`✗ 驗證失敗：${validation.reason}`);
+      const stemVal = validateTokens(stemRes.result, q.question.mainStem);
+      if (!stemVal.ok) {
+        setStatus(`✗ 題幹驗證失敗：${stemVal.reason}`);
         return;
       }
+      q.updateTokens(stemVal.tokens);
 
-      q.updateTokens(validation.tokens);
-      setStatus(`✓ 完成，共 ${validation.tokens.length} 個詞段`);
+      // ── 證物細節切分（若有 figure）──
+      const figurePrompt = buildFigureTokenizePrompt(q.question);
+      if (figurePrompt) {
+        setStatus('證物細節切分中…');
+        const figRes = await callWithRotation(apiKeys.orderedKeys, figurePrompt, onSwitch);
+
+        if (figRes.usedKeyIndex > 0) {
+          apiKeys.selectKey(apiKeys.orderedKeys[figRes.usedKeyIndex].id);
+        }
+
+        const figVal = validateTokens(figRes.result, q.question.figure!);
+        if (!figVal.ok) {
+          setStatus(`✓ 題幹 ${stemVal.tokens.length} 段｜✗ 證物細節驗證失敗：${figVal.reason}`);
+          return;
+        }
+        q.updateFigureTokens(figVal.tokens);
+        setStatus(`✓ 題幹 ${stemVal.tokens.length} 段｜證物細節 ${figVal.tokens.length} 段`);
+      } else {
+        setStatus(`✓ 題幹 ${stemVal.tokens.length} 段（無證物細節）`);
+      }
     } catch (e) {
       const msg = e instanceof ApiError ? `${e.message}（HTTP ${e.status}）` : e instanceof Error ? e.message : '未知錯誤';
       setStatus(`✗ ${msg}`);
@@ -52,11 +69,18 @@ export default function App() {
     }
   }
 
-  function handleMerge(a: number, b: number) {
+  function handleMergeStem(a: number, b: number) {
     if (!q.question?.stemTokens) return;
     const tokens = [...q.question.stemTokens];
     tokens.splice(a, 2, tokens[a] + tokens[b]);
     q.updateTokens(tokens);
+  }
+
+  function handleMergeFigure(a: number, b: number) {
+    if (!q.question?.figureTokens) return;
+    const tokens = [...q.question.figureTokens];
+    tokens.splice(a, 2, tokens[a] + tokens[b]);
+    q.updateFigureTokens(tokens);
   }
 
   return (
@@ -96,7 +120,7 @@ export default function App() {
           </div>
           <div className="flex-1 overflow-auto bg-white">
             {q.question
-              ? <StemVisualizer question={q.question} onMerge={handleMerge} />
+              ? <StemVisualizer question={q.question} onMergeStem={handleMergeStem} onMergeFigure={handleMergeFigure} />
               : <div className="flex items-center justify-center h-full text-slate-400 text-sm">載入一個題目 JSON 開始</div>
             }
           </div>

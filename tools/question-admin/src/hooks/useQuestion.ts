@@ -42,6 +42,11 @@ export function useQuestion() {
     updateQuestion({ ...question, stemTokens: tokens });
   }, [question, updateQuestion]);
 
+  const updateFigureTokens = useCallback((tokens: string[]) => {
+    if (!question) return;
+    updateQuestion({ ...question, figureTokens: tokens });
+  }, [question, updateQuestion]);
+
   const loadFile = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = e => applyJson(e.target?.result as string ?? '');
@@ -59,5 +64,5 @@ export function useQuestion() {
     URL.revokeObjectURL(url);
   }, [question]);
 
-  return { question, jsonText, jsonError, applyJson, updateQuestion, updateTokens, loadFile, exportJson };
+  return { question, jsonText, jsonError, applyJson, updateQuestion, updateTokens, updateFigureTokens, loadFile, exportJson };
 }

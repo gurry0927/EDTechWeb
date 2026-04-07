@@ -7,16 +7,19 @@ interface SegInfo {
   segIndex: number;
 }
 
-function buildSegInfos(q: DetectiveQuestion, tokens: string[]): SegInfo[] {
-  // 建立標記查找表
+function buildSegInfos(
+  q: DetectiveQuestion,
+  tokens: string[],
+  location: 'stem' | 'figure',
+): SegInfo[] {
   interface Mark { start: number; end: number; kind: 'clue' | 'context' | 'noise' }
   const marks: Mark[] = [];
 
   for (const c of q.clues) {
-    if (c.startIndex >= 0) marks.push({ start: c.startIndex, end: c.startIndex + c.length, kind: 'clue' });
+    if (c.location === location) marks.push({ start: c.startIndex, end: c.startIndex + c.length, kind: 'clue' });
   }
   for (const s of q.scaffolding ?? []) {
-    if (s.startIndex >= 0) marks.push({ start: s.startIndex, end: s.startIndex + s.length, kind: s.type === 'context' ? 'context' : 'noise' });
+    if (s.location === location) marks.push({ start: s.startIndex, end: s.startIndex + s.length, kind: s.type === 'context' ? 'context' : 'noise' });
   }
 
   let charPos = 0;
@@ -47,28 +50,44 @@ const KIND_LABEL: Record<SegInfo['kind'], string> = {
 
 interface Props {
   question: DetectiveQuestion;
-  onMerge: (a: number, b: number) => void;
+  onMergeStem: (a: number, b: number) => void;
+  onMergeFigure: (a: number, b: number) => void;
 }
 
-export function StemVisualizer({ question, onMerge }: Props) {
-  const tokens = question.stemTokens;
-
-  if (!tokens) {
-    return (
-      <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-        尚未執行 AI 切分，或手動在 JSON 中加入 stemTokens
-      </div>
-    );
-  }
-
-  const segs = buildSegInfos(question, tokens);
+export function StemVisualizer({ question, onMergeStem, onMergeFigure }: Props) {
+  const stemTokens = question.stemTokens;
+  const figureTokens = question.figureTokens;
+  const hasFigure = !!question.figure;
 
   return (
     <div className="h-full overflow-auto p-4 space-y-6">
+      {/* ── 題幹詞段 ── */}
       <div>
         <div className="text-xs font-semibold text-slate-400 tracking-widest uppercase mb-2">題幹詞段</div>
-        <TokenRow segs={segs} onMerge={onMerge} />
+        {stemTokens ? (
+          <>
+            <TokenRow segs={buildSegInfos(question, stemTokens, 'stem')} onMerge={onMergeStem} />
+            <ValidationBadge tokens={stemTokens} source={question.mainStem} label="mainStem" />
+          </>
+        ) : (
+          <EmptyState text="尚未執行 AI 切分，或手動在 JSON 中加入 stemTokens" />
+        )}
       </div>
+
+      {/* ── 證物細節詞段 ── */}
+      {hasFigure && (
+        <div>
+          <div className="text-xs font-semibold text-slate-400 tracking-widest uppercase mb-2">證物細節詞段</div>
+          {figureTokens ? (
+            <>
+              <TokenRow segs={buildSegInfos(question, figureTokens, 'figure')} onMerge={onMergeFigure} />
+              <ValidationBadge tokens={figureTokens} source={question.figure!} label="figure" />
+            </>
+          ) : (
+            <EmptyState text="尚未執行 AI 切分，或手動在 JSON 中加入 figureTokens" />
+          )}
+        </div>
+      )}
 
       {/* 圖例 */}
       <div className="flex gap-3 flex-wrap text-xs">
@@ -78,15 +97,23 @@ export function StemVisualizer({ question, onMerge }: Props) {
           </span>
         ))}
       </div>
+    </div>
+  );
+}
 
-      {/* 驗證 */}
-      <div className="text-xs font-mono text-slate-500 break-all border-t border-slate-200 pt-3">
-        <span className="font-semibold text-slate-400">串接驗證：</span>
-        {tokens.join('') === question.mainStem
-          ? <span className="text-emerald-600 ml-1">✓ 與 mainStem 吻合</span>
-          : <span className="text-red-500 ml-1">✗ 不吻合！請重新執行或手動修正</span>
-        }
-      </div>
+function EmptyState({ text }: { text: string }) {
+  return <div className="text-slate-400 text-sm py-2">{text}</div>;
+}
+
+function ValidationBadge({ tokens, source, label }: { tokens: string[]; source: string; label: string }) {
+  const valid = tokens.join('') === source;
+  return (
+    <div className="text-xs font-mono text-slate-500 mt-2">
+      <span className="font-semibold text-slate-400">串接驗證（{label}）：</span>
+      {valid
+        ? <span className="text-emerald-600 ml-1">✓ 吻合</span>
+        : <span className="text-red-500 ml-1">✗ 不吻合！請重新執行或手動修正</span>
+      }
     </div>
   );
 }

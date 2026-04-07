@@ -2,10 +2,12 @@
 
 export interface ScaffoldingRegion {
   text: string;
+  location: 'stem' | 'figure';
   startIndex: number;
   length: number;
   type: 'context' | 'noise';
   hint: string;
+  aliases?: string[];
 }
 
 export interface ClueReasoning {
@@ -18,6 +20,7 @@ export interface ClueReasoning {
 
 export interface Clue {
   text: string;
+  location: 'stem' | 'figure';
   startIndex: number;
   length: number;
   teaser?: string;
@@ -67,6 +70,7 @@ export interface DetectiveQuestion {
   pityHint?: string;
   startHint?: string;
   stemTokens?: string[];
+  figureTokens?: string[];
 }
 
 // ── API Key 管理 ──
