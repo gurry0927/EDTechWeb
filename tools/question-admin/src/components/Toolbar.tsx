@@ -12,6 +12,8 @@ interface Props {
   onLoadFile: (file: File) => void;
   onExport: () => void;
   onRunTokenize: () => void;
+  onSave: () => void;
+  saving: boolean;
   isRunning: boolean;
   status: string;
   lastSwitchMsg: string;
@@ -21,7 +23,7 @@ const PROVIDER_LABEL: Record<Provider, string> = { gemini: 'Gemini', openai: 'Op
 
 export function Toolbar({
   keys, activeId, onSelectKey, onAddKey, onRemoveKey,
-  onLoadFile, onExport, onRunTokenize, isRunning, status, lastSwitchMsg,
+  onLoadFile, onExport, onRunTokenize, onSave, saving, isRunning, status, lastSwitchMsg,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showKeyManager, setShowKeyManager] = useState(false);
@@ -120,6 +122,13 @@ export function Toolbar({
       </button>
       <button onClick={onExport} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors">
         匯出 JSON
+      </button>
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 rounded font-medium transition-colors"
+      >
+        {saving ? '儲存中…' : '儲存到 DB'}
       </button>
 
       {/* Key 管理浮層 */}

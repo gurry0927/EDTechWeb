@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
     "@types/d3-array": "^3.2.2",
     "@types/d3-geo": "^3.1.0",
     "d3-array": "^3.2.4",

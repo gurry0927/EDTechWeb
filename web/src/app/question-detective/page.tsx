@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
-
+import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
 import { ALL_QUESTIONS } from '@/data/detective-questions';
 
 // Extract year from source string like "114年會考-社會-第20題"
-function getYear(q: DetectiveQuestion): string {
+function getYear(q: Pick<DetectiveQuestion, 'source'>): string {
   const m = q.source.match(/^(\d+)年/);
   return m ? `${m[1]}年` : '其他';
 }
@@ -17,16 +17,26 @@ type GroupBy = 'subject' | 'year';
 export default function QuestionDetectivePage() {
   const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
+  const [dbQuestions, setDbQuestions] = useState<PublicQuestion[] | null>(null);
+
+  useEffect(() => {
+    fetchPublicQuestions().then(qs => {
+      if (qs.length > 0) setDbQuestions(qs);
+    });
+  }, []);
+
+  // DB 有資料用 DB，否則 fallback 靜態檔案
+  const questions = dbQuestions ?? ALL_QUESTIONS;
 
   const grouped = useMemo(() => {
-    const map = new Map<string, DetectiveQuestion[]>();
-    ALL_QUESTIONS.forEach(q => {
+    const map = new Map<string, typeof questions>();
+    questions.forEach(q => {
       const key = groupBy === 'subject' ? q.subject : getYear(q);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(q);
     });
     return Array.from(map.entries());
-  }, [groupBy]);
+  }, [questions, groupBy]);
 
   return (
     <div className="min-h-[100dvh] bg-stone-100 dark:bg-zinc-900 text-slate-800 dark:text-white flex flex-col">
@@ -46,6 +56,9 @@ export default function QuestionDetectivePage() {
           <p className="text-sm text-slate-500 dark:text-white/40 mt-1.5 leading-relaxed">
             每份檔案都藏著未解的謎團。選一份，開始調查。
           </p>
+          <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${dbQuestions ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+            {dbQuestions ? `DB (${dbQuestions.length})` : `Static (${ALL_QUESTIONS.length})`}
+          </span>
         </div>
       </header>
 
@@ -66,7 +79,7 @@ export default function QuestionDetectivePage() {
       {/* Case files */}
       <main className="flex-1 px-5 pb-8 pt-6 max-w-2xl mx-auto w-full">
         <div className="space-y-6">
-          {grouped.map(([group, questions]) => (
+          {grouped.map(([group, groupQuestions]) => (
             <div key={group}>
               {/* Group header — folder label */}
               <div className="flex items-center gap-3 mb-3">
@@ -74,12 +87,12 @@ export default function QuestionDetectivePage() {
                   {group}
                 </span>
                 <div className="flex-1 h-px bg-amber-800/10 dark:bg-amber-400/10" />
-                <span className="text-xs text-slate-400 dark:text-white/25">{questions.length} 件</span>
+                <span className="text-xs text-slate-400 dark:text-white/25">{groupQuestions.length} 件</span>
               </div>
 
               {/* Question cards */}
               <div className="space-y-2">
-                {questions.map(q => (
+                {groupQuestions.map(q => (
                   <button key={q.id} onClick={() => router.push(`/question-detective/${q.id}`)}
                     className="w-full text-left rounded-lg p-4 case-file hover:shadow-md transition-all group">
                     <div className="flex items-start gap-3">
@@ -106,7 +119,6 @@ export default function QuestionDetectivePage() {
                           {q.gradeLevel && <span className="px-2 py-0.5 text-[10px] rounded-full text-amber-800/40 dark:text-amber-400/30 border border-amber-800/10 dark:border-amber-400/10">{q.gradeLevel}</span>}
                         </div>
                       </div>
-                      {/* TODO: 有帳號系統後加上「未解/已破案」狀態標籤 */}
                       <svg className="w-5 h-5 text-slate-300 dark:text-white/20 group-hover:text-slate-400 dark:group-hover:text-white/40 transition-colors shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
