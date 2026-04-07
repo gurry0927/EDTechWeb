@@ -147,32 +147,33 @@ function assignTokenIndices(segs: Seg[], startIdx = 0): [Seg[], number] {
   return [result, idx];
 }
 
-// buildSegs：同時處理 clues + scaffolding，空白區域可由 stemTokens 覆寫
+// buildSegs：同時處理 clues + scaffolding，空白區域可由 tokens 覆寫
 //
 // 雙模式：
-//   stemTokens 存在 → 把整份 mainStem 視為已切分的詞段陣列，直接對每個詞段
-//                      查表決定其所屬類型（clue / scaffold / blank）。
-//                      前提：所有詞段串接後必須等於 src。
-//   stemTokens 缺省 → 退回機械切碎（tokenizeBlank，2-4 字規則）。
+//   tokens 存在 → 把整份 src 視為已切分的詞段陣列，直接對每個詞段
+//                  查表決定其所屬類型（clue / scaffold / blank）。
+//                  前提：所有詞段串接後必須等於 src。
+//   tokens 缺省 → 退回機械切碎（tokenizeBlank，2-4 字規則）。
 //
+// 呼叫端須確保傳入的 clues / scaffolding 的 startIndex 已對應 src 內的正確位置。
 // tokenIndex 賦值由呼叫端（stemSegs / figureSegs）統一做後處理，這裡不處理。
 function buildSegs(
   src: string,
   clues: { startIndex: number; length: number; idx: number }[],
   scaffolding: { startIndex: number; length: number; idx: number }[],
-  stemTokens?: string[],
+  tokens?: string[],
 ): Seg[] {
   interface Mark { start: number; end: number; clueIdx: number | null; scaffoldIdx: number | null }
   const marks: Mark[] = [
-    ...clues.filter(c => c.startIndex >= 0).map(c => ({ start: c.startIndex, end: c.startIndex + c.length, clueIdx: c.idx, scaffoldIdx: null })),
-    ...scaffolding.filter(s => s.startIndex >= 0).map(s => ({ start: s.startIndex, end: s.startIndex + s.length, clueIdx: null, scaffoldIdx: s.idx })),
+    ...clues.map(c => ({ start: c.startIndex, end: c.startIndex + c.length, clueIdx: c.idx, scaffoldIdx: null })),
+    ...scaffolding.map(s => ({ start: s.startIndex, end: s.startIndex + s.length, clueIdx: null, scaffoldIdx: s.idx })),
   ].sort((a, b) => a.start - b.start);
 
   // ── 模式一：JSON 詞段覆蓋 ──
-  if (stemTokens?.length) {
+  if (tokens?.length) {
     const segs: Seg[] = [];
     let charPos = 0;
-    for (const token of stemTokens) {
+    for (const token of tokens) {
       const tokenEnd = charPos + token.length;
       // 找到完全包含這個詞段的標記區（要求詞段邊界與標記對齊）
       const mark = marks.find(m => m.start <= charPos && m.end >= tokenEnd);
@@ -470,44 +471,38 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   const figureClues = useMemo(() => cluesWithIdx.filter(c => c.startIndex === -1), [cluesWithIdx]);
   const figureSegs = useMemo(() => {
-    if (!question.figure || !figureClues.length) return null;
+    if (!question.figure) return null;
     const figureScaffolding = scaffoldingWithIdx.filter(s => s.startIndex === -1);
-    const allMatches: { start: number; end: number; clueIdx: number | null; scaffoldIdx: number | null }[] = [];
+    if (!figureClues.length && !figureScaffolding.length) return null;
 
+    // 將 figure 中的 clue / scaffolding 解析為 buildSegs 需要的 {startIndex, length, idx} 格式
+    // 使用 indexOf 在 figure 文字中定位（與舊邏輯相同），但結果統一交給 buildSegs 處理
+    const resolvedClues: { startIndex: number; length: number; idx: number }[] = [];
     figureClues.forEach(fc => {
       const texts = fc.aliases?.length ? fc.aliases : [fc.text];
       texts.forEach(t => {
         const start = question.figure!.indexOf(t);
-        if (start >= 0) allMatches.push({ start, end: start + t.length, clueIdx: fc.idx, scaffoldIdx: null });
+        if (start >= 0) resolvedClues.push({ startIndex: start, length: t.length, idx: fc.idx });
       });
     });
 
+    const resolvedScaffold: { startIndex: number; length: number; idx: number }[] = [];
     figureScaffolding.forEach(fs => {
       const sRef = question.scaffolding?.[fs.idx];
       const texts = sRef?.aliases?.length ? sRef.aliases : [fs.text];
       texts.forEach(t => {
         const start = question.figure!.indexOf(t);
-        if (start >= 0) allMatches.push({ start, end: start + t.length, clueIdx: null, scaffoldIdx: fs.idx });
+        if (start >= 0) resolvedScaffold.push({ startIndex: start, length: t.length, idx: fs.idx });
       });
     });
 
-    allMatches.sort((a, b) => a.start - b.start);
-    if (!allMatches.length) return null;
+    if (!resolvedClues.length && !resolvedScaffold.length) return null;
 
-    const segs: Seg[] = [];
-    let cur = 0;
-    allMatches.forEach(m => {
-      if (m.start > cur) segs.push(...tokenizeBlank(question.figure!.slice(cur, m.start), cur));
-      if (m.start >= cur) {
-        segs.push({ text: question.figure!.slice(m.start, m.end), clueIndex: m.clueIdx, scaffoldIndex: m.scaffoldIdx, absStart: m.start });
-        cur = m.end;
-      }
-    });
-    if (cur < question.figure!.length) segs.push(...tokenizeBlank(question.figure!.slice(cur), cur));
+    const raw = buildSegs(question.figure, resolvedClues, resolvedScaffold);
     // tokenIndex 接續 stem 的編號，讓前後端可以唯一識別每個空白詞段
-    const [indexed] = assignTokenIndices(segs, stemBlankCount);
+    const [indexed] = assignTokenIndices(raw, stemBlankCount);
     return indexed;
-  }, [question.figure, figureClues, stemBlankCount]);
+  }, [question.figure, question.scaffolding, figureClues, scaffoldingWithIdx, stemBlankCount]);
 
   // Auto-scroll & auto-advance
   useEffect(() => {
@@ -712,7 +707,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }).flat() as [number, number][];
 
     return { stem: stemRanges, figure: figureRanges };
-  }, [scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
+  }, [activeScanning, scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
 
   const onReasoningChoice = useCallback((choiceIdx: number, e: React.MouseEvent) => {
     const current = reasoningClues[reasoningStep];
