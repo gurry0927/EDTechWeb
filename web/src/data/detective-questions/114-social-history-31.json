@@ -29,38 +29,42 @@
       "startIndex": 3,
       "length": 4,
       "type": "context",
-      "hint": "這是故事發生的地點，位於屏東，也是排灣族與魯凱族的聖山。"
+      "hint": "這是故事發生的地點，位於屏東，也是排灣族與魯凱族的聖山。",
+      "location": "stem"
     },
     {
       "text": "莎綺",
       "startIndex": 0,
       "length": 2,
       "type": "noise",
-      "hint": "這只是題目的主角名字，對破案沒有直接幫助。"
+      "hint": "這只是題目的主角名字，對破案沒有直接幫助。",
+      "location": "stem"
     },
     {
       "text": "高雄州",
-      "startIndex": -1,
+      "startIndex": 105,
       "length": 3,
       "aliases": [
         "高雄州",
         "高雄州知事"
       ],
       "type": "context",
-      "hint": "這是某個特定時代的行政區劃。當時的「州」相當於現在的縣市等級，而這個州涵蓋了今天的 高雄 與 屏東。"
+      "hint": "這是某個特定時代的行政區劃。當時的「州」相當於現在的縣市等級，而這個州涵蓋了今天的 高雄 與 屏東。",
+      "location": "figure"
     },
     {
       "text": "大武祠",
-      "startIndex": -1,
+      "startIndex": 6,
       "length": 3,
       "type": "context",
-      "hint": "這是紀念碑所在的遺址名稱。"
+      "hint": "這是紀念碑所在的遺址名稱。",
+      "location": "figure"
     }
   ],
   "clues": [
     {
       "text": "高砂族",
-      "startIndex": -1,
+      "startIndex": 24,
       "length": 3,
       "why": "「高砂族」——這是一個由政權官方定義的稱呼。追溯原住民稱呼的演變，「番」、「高砂」、「山地同胞」，每一個詞都代表了一個時代。",
       "isCritical": true,
@@ -74,11 +78,12 @@
         "answerIndex": 1,
         "correct": "沒錯！「高砂」是日本對台灣的古稱，日治時期以此命名台灣原住民為「高砂族」。時代特徵鎖定了。",
         "wrong": "注意：每個時代對原住民有不同的稱呼。清代稱「番」，戰後稱「山地同胞」，「高砂族」是哪個時代獨有的官方稱法？"
-      }
+      },
+      "location": "figure"
     },
     {
       "text": "南洋戰場",
-      "startIndex": -1,
+      "startIndex": 38,
       "length": 4,
       "why": "「南洋」指的是東南亞。這是一個跨出台灣本島、需要大規模動員的軍事行動。究竟是哪場戰爭，會將戰線拉到遙遠的新幾內亞或菲律賓？",
       "isCritical": true,
@@ -91,21 +96,24 @@
         "answerIndex": 1,
         "correct": "正確！日俄戰爭戰場在東北亞的滿洲。南洋戰場（東南亞）指向的是太平洋戰爭時期。",
         "wrong": "想想地理：日俄戰爭的戰場在東北亞（滿洲）。而碑文提到的「南洋」在偏南方的東南亞，那是哪場戰爭的特徵？"
-      }
+      },
+      "location": "figure"
     },
     {
       "text": "義勇隊",
-      "startIndex": -1,
+      "startIndex": 31,
       "length": 3,
       "why": "雖然「義勇部隊」在不同時期都出現過（如清末抗日義勇軍），但這裡搭配「高砂族」組成的義勇隊，反映了該時代特有的武裝徵召形式。",
-      "isAuxiliary": true
+      "isAuxiliary": true,
+      "location": "figure"
     },
     {
       "text": "理蕃",
-      "startIndex": -1,
+      "startIndex": 109,
       "length": 2,
       "why": "這個詞標示了管理原住民事務的正式稱呼。不同於清代的「開山撫番」，這個詞彙更能體現出當時行政機關的現代化與嚴密風格。",
-      "isAuxiliary": true
+      "isAuxiliary": true,
+      "location": "figure"
     }
   ],
   "questions": [

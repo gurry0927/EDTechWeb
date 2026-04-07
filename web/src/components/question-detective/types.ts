@@ -23,7 +23,9 @@
 export interface ScaffoldingRegion {
   /** 要標記的原文片段 */
   text: string;
-  /** 起始位置（字元索引），-1 = 在 figure 中 */
+  /** 所在位置：'stem' = 主題幹、'figure' = 附圖題幹 */
+  location: 'stem' | 'figure';
+  /** 在 location 對應文字中的起始位置（字元索引，永遠 >= 0） */
   startIndex: number;
   /** 片段長度 */
   length: number;
@@ -52,7 +54,9 @@ export interface ClueReasoning {
 export interface Clue {
   /** 要標記的原文片段 */
   text: string;
-  /** 該片段在 mainStem 中的起始位置（字元索引），-1 = 在 figure 中 */
+  /** 所在位置：'stem' = 主題幹、'figure' = 附圖題幹 */
+  location: 'stem' | 'figure';
+  /** 在 location 對應文字中的起始位置（字元索引，永遠 >= 0） */
   startIndex: number;
   /** 片段長度 */
   length: number;
@@ -161,6 +165,13 @@ export interface DetectiveQuestion {
    *  不填：退回自動切碎（2-4 字規則），行為與舊版相同。
    */
   stemTokens?: string[];
+
+  /** AI 預先切分的附圖語意詞段（選填）
+   *  與 stemTokens 相同機制，但作用於 figure 文字。
+   *  格式：完整 figure 的分割結果，所有元素串接後必須等於 figure。
+   *  不填：退回自動切碎（2-4 字規則），行為與舊版相同。
+   */
+  figureTokens?: string[];
 
   /** 筆記本初始提示（選填）：尚未找到任何線索時開啟筆記本顯示的引導語 */
   startHint?: string;

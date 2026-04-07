@@ -400,13 +400,13 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const cluesWithIdx = useMemo(() => question.clues.map((c, i) => ({ ...c, idx: i })), [question.clues]);
 
   // stemSegs：把 scaffolding 傳入 buildSegs
-  // scaffoldingWithIdx 過濾 startIndex >= 0（在 mainStem 中的鷹架區域）
-  // startIndex === -1 的鷹架區域留給 figureSegs 處理（下方）
+  // scaffoldingWithIdx 過濾 location === 'stem'（在 mainStem 中的鷹架區域）
+  // location === 'figure' 的鷹架區域留給 figureSegs 處理（下方）
   const scaffoldingWithIdx = useMemo(
     () => (question.scaffolding ?? []).map((s, i) => ({ ...s, idx: i })),
     [question.scaffolding]
   );
-  const stemScaffolding = useMemo(() => scaffoldingWithIdx.filter(s => s.startIndex >= 0), [scaffoldingWithIdx]);
+  const stemScaffolding = useMemo(() => scaffoldingWithIdx.filter(s => s.location === 'stem'), [scaffoldingWithIdx]);
   // 第一個 context 型鷹架的 idx（用於閒置跳動提示）
   const firstContextScaffoldIdx = useMemo(
     () => {
@@ -435,7 +435,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // stemSegs：展開 mainStem 線索的 aliases，讓題幹中出現的同義詞也能被點擊命中
   const stemSegs = useMemo(() => {
     const stemClues: { startIndex: number; length: number; idx: number }[] = [];
-    cluesWithIdx.filter(c => c.startIndex >= 0).forEach(c => {
+    cluesWithIdx.filter(c => c.location === 'stem').forEach(c => {
       stemClues.push({ startIndex: c.startIndex, length: c.length, idx: c.idx });
       (c.aliases ?? []).forEach(alias => {
         let pos = question.mainStem.indexOf(alias);
@@ -447,7 +447,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     });
 
     const stemScaffold: { startIndex: number; length: number; idx: number }[] = [];
-    scaffoldingWithIdx.filter(s => s.startIndex >= 0).forEach(s => {
+    scaffoldingWithIdx.filter(s => s.location === 'stem').forEach(s => {
       stemScaffold.push({ startIndex: s.startIndex, length: s.length, idx: s.idx });
       (question.scaffolding?.[s.idx]?.aliases ?? []).forEach(alias => {
         let pos = question.mainStem.indexOf(alias);
@@ -469,40 +469,44 @@ export function DetectivePlayer({ question, onBack }: Props) {
     [stemSegs]
   );
 
-  const figureClues = useMemo(() => cluesWithIdx.filter(c => c.startIndex === -1), [cluesWithIdx]);
+  const figureClues = useMemo(() => cluesWithIdx.filter(c => c.location === 'figure'), [cluesWithIdx]);
   const figureSegs = useMemo(() => {
     if (!question.figure) return null;
-    const figureScaffolding = scaffoldingWithIdx.filter(s => s.startIndex === -1);
+    const figureScaffolding = scaffoldingWithIdx.filter(s => s.location === 'figure');
     if (!figureClues.length && !figureScaffolding.length) return null;
 
-    // 將 figure 中的 clue / scaffolding 解析為 buildSegs 需要的 {startIndex, length, idx} 格式
-    // 使用 indexOf 在 figure 文字中定位（與舊邏輯相同），但結果統一交給 buildSegs 處理
+    // figure clue/scaffolding 現在都有真實 startIndex（由 JSON 提供），直接使用
+    // aliases 仍需 indexOf 定位（它們不在 JSON 中預存位置）
     const resolvedClues: { startIndex: number; length: number; idx: number }[] = [];
     figureClues.forEach(fc => {
-      const texts = fc.aliases?.length ? fc.aliases : [fc.text];
-      texts.forEach(t => {
-        const start = question.figure!.indexOf(t);
-        if (start >= 0) resolvedClues.push({ startIndex: start, length: t.length, idx: fc.idx });
+      // 主文字：直接使用 JSON 中的 startIndex
+      resolvedClues.push({ startIndex: fc.startIndex, length: fc.length, idx: fc.idx });
+      // aliases：仍需 runtime 定位
+      (fc.aliases ?? []).forEach(alias => {
+        const start = question.figure!.indexOf(alias);
+        if (start >= 0) resolvedClues.push({ startIndex: start, length: alias.length, idx: fc.idx });
       });
     });
 
     const resolvedScaffold: { startIndex: number; length: number; idx: number }[] = [];
     figureScaffolding.forEach(fs => {
+      // 主文字：直接使用 JSON 中的 startIndex
+      resolvedScaffold.push({ startIndex: fs.startIndex, length: fs.length, idx: fs.idx });
+      // aliases：仍需 runtime 定位
       const sRef = question.scaffolding?.[fs.idx];
-      const texts = sRef?.aliases?.length ? sRef.aliases : [fs.text];
-      texts.forEach(t => {
-        const start = question.figure!.indexOf(t);
-        if (start >= 0) resolvedScaffold.push({ startIndex: start, length: t.length, idx: fs.idx });
+      (sRef?.aliases ?? []).forEach(alias => {
+        const start = question.figure!.indexOf(alias);
+        if (start >= 0) resolvedScaffold.push({ startIndex: start, length: alias.length, idx: fs.idx });
       });
     });
 
     if (!resolvedClues.length && !resolvedScaffold.length) return null;
 
-    const raw = buildSegs(question.figure, resolvedClues, resolvedScaffold);
+    const raw = buildSegs(question.figure, resolvedClues, resolvedScaffold, question.figureTokens);
     // tokenIndex 接續 stem 的編號，讓前後端可以唯一識別每個空白詞段
     const [indexed] = assignTokenIndices(raw, stemBlankCount);
     return indexed;
-  }, [question.figure, question.scaffolding, figureClues, scaffoldingWithIdx, stemBlankCount]);
+  }, [question.figure, question.figureTokens, question.scaffolding, figureClues, scaffoldingWithIdx, stemBlankCount]);
 
   // Auto-scroll & auto-advance
   useEffect(() => {
@@ -686,7 +690,6 @@ export function DetectivePlayer({ question, onBack }: Props) {
     // 找出所有尚未發現的關鍵線索 (isCritical: true)
     const targets = criticalClues.filter(c => !foundClues.has(c.idx));
     const findRange = (src: string, clue: { startIndex: number, length: number }) => {
-      if (clue.startIndex < 0) return null;
       // 向前找斷句點
       let start = clue.startIndex;
       while (start > 0 && !'。！？\n'.includes(src[start - 1])) start--;
@@ -696,15 +699,10 @@ export function DetectivePlayer({ question, onBack }: Props) {
       return [start, end] as [number, number];
     };
 
-    const stemRanges = targets.filter(c => c.startIndex >= 0).map(c => findRange(question.mainStem, c)).filter(Boolean) as [number, number][];
-    const figureRanges = targets.filter(c => c.startIndex === -1 || (question.figure && c.text && question.figure.includes(c.text))).map(c => {
-      const texts = c.aliases?.length ? c.aliases : [c.text];
-      return texts.map(t => {
-        const startIdx = question.figure?.indexOf(t) ?? -1;
-        if (startIdx === -1) return null;
-        return findRange(question.figure!, { startIndex: startIdx, length: t.length });
-      }).filter(Boolean);
-    }).flat() as [number, number][];
+    const stemRanges = targets.filter(c => c.location === 'stem').map(c => findRange(question.mainStem, c));
+    const figureRanges = question.figure
+      ? targets.filter(c => c.location === 'figure').map(c => findRange(question.figure!, c))
+      : [];
 
     return { stem: stemRanges, figure: figureRanges };
   }, [activeScanning, scanHighlight, criticalClues, foundClues, question.mainStem, question.figure]);
