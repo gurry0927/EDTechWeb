@@ -4,7 +4,7 @@
 /** 遊戲參數 */
 export const GAME = {
   maxLives: 5,
-  typingDelay: { short: 500, medium: 800, long: 1200 } as const,
+  typingDelay: { short: 500, medium: 800, long: 1200, intro: 3000 } as const,
   scanDuration: 4000,
   scrollDelay: 300,
   reasoningAdvanceDelay: 600,

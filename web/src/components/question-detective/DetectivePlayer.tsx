@@ -64,7 +64,7 @@ const PityBubble = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-function TypedDetective({ children, delay = 'medium' }: { children: React.ReactNode; delay?: 'short' | 'medium' | 'long' }) {
+function TypedDetective({ children, delay = 'medium' }: { children: React.ReactNode; delay?: 'short' | 'medium' | 'long' | 'intro' }) {
   const [typing, setTyping] = useState(true);
   const ms = GAME.typingDelay[delay];
   useEffect(() => { const t = setTimeout(() => setTyping(false), ms); return () => clearTimeout(t); }, [ms]);
@@ -909,7 +909,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
         {question.caseQuestion && (
           <>
-            <TypedDetective delay="medium">
+            <TypedDetective delay="intro">
               <span className="font-medium text-amber-700 dark:text-amber-300">📌 本案問題：</span><br/>
               <RichText text={question.caseQuestion} />
             </TypedDetective>
