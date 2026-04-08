@@ -905,7 +905,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                           }}
                         className={`shrink-0 ml-2 text-sm flex items-center justify-center gap-0.5 px-2 h-7 rounded-full border transition-all
                           ${scanUsesLeft <= 0
-                            ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
+                            ? 'border-dt-border text-dt-text-muted cursor-not-allowed'
                             : 'dt-btn-scan shadow-sm active:scale-95'
                           }`}
                         title={scanUsesLeft <= 0 ? DIALOGUE.scanUsedUp : '掃描模式'}
@@ -923,10 +923,10 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                     {renderSegs(stemSegs)}
                   </p>
                   {question.figure && (
-                    <div className="mt-5 border-l-2 border-red-800/25 dark:border-red-400/20 pl-3" ref={detailSectionRef}>
-                      <span className="text-xs font-bold tracking-widest text-red-800/50 dark:text-red-400/40 select-none uppercase">証物細節</span>
+                    <div className="mt-5 border-l-2 border-dt-accent/25 pl-3" ref={detailSectionRef}>
+                      <span className="text-xs font-bold tracking-widest text-dt-accent/50 select-none uppercase">証物細節</span>
                       <div className={`mt-1 text-base ${activeScanning ? 'stem-scan' : ''}`}>
-                        <p className="text-slate-700 dark:text-white/80 leading-relaxed">
+                        <p className="text-dt-text leading-relaxed">
                           {figureSegs ? renderSegs(figureSegs, true) : question.figure}
                         </p>
                       </div>
@@ -1197,8 +1197,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
 
             {/* 筆記本主體 — notebook-paper 自帶 overflow:clip 裁切內容 */}
             <div
-              className="notebook-paper flex-1 flex flex-col min-h-0"
-              style={{ boxShadow: '6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1)' }}
+              className="notebook-paper flex-1 flex flex-col min-h-0 dt-notebook-shadow"
             >
             {/* Header — shrink-0，固定不捲動，背景透明讓父層橫線穿透 */}
             <div className="shrink-0 max-w-xl mx-auto w-full px-6 pt-3 pb-3 border-b border-black/5 dark:border-white/5">
