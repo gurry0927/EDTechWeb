@@ -17,6 +17,8 @@ interface Props {
   isRunning: boolean;
   status: string;
   lastSwitchMsg: string;
+  isJsonOpen: boolean;
+  onToggleJson: () => void;
 }
 
 const PROVIDER_LABEL: Record<Provider, string> = { gemini: 'Gemini', openai: 'OpenAI' };
@@ -24,6 +26,7 @@ const PROVIDER_LABEL: Record<Provider, string> = { gemini: 'Gemini', openai: 'Op
 export function Toolbar({
   keys, activeId, onSelectKey, onAddKey, onRemoveKey,
   onLoadFile, onExport, onRunTokenize, onSave, saving, isRunning, status, lastSwitchMsg,
+  isJsonOpen, onToggleJson
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showKeyManager, setShowKeyManager] = useState(false);
@@ -110,6 +113,16 @@ export function Toolbar({
       <div className="flex-1" />
 
       {/* 載入 / 匯出 */}
+      <button 
+        onClick={onToggleJson}
+        className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 font-medium
+          ${isJsonOpen ? 'bg-indigo-500 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-200'}`}
+      >
+        <span>📄</span> JSON {isJsonOpen ? '已開啟' : '預覽'}
+      </button>
+
+      <div className="w-px h-5 bg-slate-700" />
+
       <input
         ref={fileRef}
         type="file"
@@ -117,10 +130,10 @@ export function Toolbar({
         className="hidden"
         onChange={e => { const f = e.target.files?.[0]; if (f) onLoadFile(f); e.target.value = ''; }}
       />
-      <button onClick={() => fileRef.current?.click()} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors">
+      <button onClick={() => fileRef.current?.click()} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors text-slate-200">
         載入 JSON
       </button>
-      <button onClick={onExport} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors">
+      <button onClick={onExport} className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors text-slate-200">
         匯出 JSON
       </button>
       <button
@@ -130,6 +143,7 @@ export function Toolbar({
       >
         {saving ? '儲存中…' : '儲存到 DB'}
       </button>
+
 
       {/* Key 管理浮層 */}
       {showKeyManager && (

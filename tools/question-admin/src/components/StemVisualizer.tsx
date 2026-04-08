@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import type { DetectiveQuestion } from '../types';
+import type { DetectiveQuestion, ApiKey } from '../types';
 import { TextMarker, type MarkActions } from './TextMarker';
+import { MetadataEditor } from './MetadataEditor';
+import { ClueDetailEditor } from './ClueDetailEditor';
 
 type SegKind = 'critical' | 'auxiliary' | 'context' | 'noise' | 'blank';
 
@@ -11,6 +13,7 @@ interface SegInfo {
   segIndex: number;
 }
 
+// ... existing helper functions (findAllOccurrences, buildSegInfos)
 function findAllOccurrences(haystack: string, needle: string): number[] {
   const positions: number[] = [];
   let from = 0;
@@ -101,93 +104,137 @@ const KIND_LABEL: Record<SegKind, string> = {
 
 interface Props {
   question: DetectiveQuestion;
+  activeTab: 'setup' | 'marking' | 'design' | 'tokenize';
   onMergeStem: (a: number, b: number) => void;
   onMergeFigure: (a: number, b: number) => void;
   onSplitStem: (segIndex: number, charOffset: number) => void;
   onSplitFigure: (segIndex: number, charOffset: number) => void;
   markActions: MarkActions;
+  updateQuestion: (updates: Partial<DetectiveQuestion>) => void;
+  apiKeys: ApiKey[];
+  onExtractClues: () => void;
+  isExtracting: boolean;
 }
 
-export function StemVisualizer({ question, onMergeStem, onMergeFigure, onSplitStem, onSplitFigure, markActions }: Props) {
+export function StemVisualizer({
+  question, activeTab, onMergeStem, onMergeFigure, onSplitStem, onSplitFigure, markActions,
+  updateQuestion, apiKeys, onExtractClues, isExtracting
+}: Props) {
   const stemTokens = question.stemTokens;
   const figureTokens = question.figureTokens;
   const hasFigure = !!question.figure;
 
-  return (
-    <div className="h-full overflow-auto p-4 space-y-6">
-      {/* ── 題幹 ── */}
-      <section className="space-y-3">
-        <div className="text-xs font-semibold text-slate-400 tracking-widest uppercase">題幹</div>
-        <TextMarker
-          text={question.mainStem}
-          location="stem"
-          clues={question.clues}
-          scaffolding={question.scaffolding ?? []}
-          actions={markActions}
-        />
-        {stemTokens ? (
-          <>
-            <div className="text-[11px] text-slate-400 mt-1">詞段切分</div>
-            <TokenRow segs={buildSegInfos(question, stemTokens, 'stem')} onMerge={onMergeStem} onSplit={onSplitStem} />
-            <ValidationBadge tokens={stemTokens} source={question.mainStem} label="mainStem" />
-          </>
-        ) : (
-          <div className="text-slate-400 text-xs">尚未切分 — 先標記線索/鷹架，再執行 AI 切分</div>
-        )}
-      </section>
+  if (activeTab === 'setup') {
+    return <MetadataEditor question={question} updateQuestion={updateQuestion} />;
+  }
 
-      {/* ── 證物細節 ── */}
-      {hasFigure && (
-        <section className="space-y-3">
-          <div className="text-xs font-semibold text-slate-400 tracking-widest uppercase">證物細節</div>
+  if (activeTab === 'design') {
+    return <ClueDetailEditor question={question} updateQuestion={updateQuestion} apiKeys={apiKeys} />;
+  }
+
+  if (activeTab === 'tokenize') {
+    return (
+      <div className="p-6 space-y-8 max-w-4xl mx-auto">
+        <section className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 flex items-start gap-3">
+            <span className="text-lg">💡</span>
+            <div>
+              <p className="font-bold">詞段切分提示</p>
+              <p className="mt-1 opacity-80">這是遊戲中掃描器掃出的區塊。AI 通常能處理得很好，但如果它切斷了關鍵字，請手動點擊 ⊕ 合併。標記區域（藍/黃/紅）會自動保持連貫。</p>
+            </div>
+          </div>
+
+          <div className="space-y-6 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">題幹詞段 (mainStem)</label>
+              {stemTokens ? (
+                <TokenRow segs={buildSegInfos(question, stemTokens, 'stem')} onMerge={onMergeStem} onSplit={onSplitStem} />
+              ) : (
+                <div className="text-slate-400 text-sm italic py-4">尚未執行切分...</div>
+              )}
+            </div>
+
+            {hasFigure && (
+              <div className="space-y-3 pt-6 border-t border-slate-100">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">證物細節詞段 (figure)</label>
+                {figureTokens ? (
+                  <TokenRow segs={buildSegInfos(question, figureTokens, 'figure')} onMerge={onMergeFigure} onSplit={onSplitFigure} />
+                ) : (
+                  <div className="text-slate-400 text-sm italic py-4">尚未執行切分...</div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // Default: Marking Tab
+  return (
+    <div className="h-full overflow-auto p-6 space-y-8 max-w-5xl mx-auto">
+      {/* AI 提取線索 */}
+      <div className="flex items-center gap-4 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+        <button
+          onClick={onExtractClues}
+          disabled={isExtracting || !question.mainStem}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg text-sm font-bold transition-colors shrink-0"
+        >
+          {isExtracting ? '⏳ 提取中…' : '🤖 AI 自動提取線索'}
+        </button>
+        <p className="text-xs text-indigo-700 opacity-80">
+          AI 會從題幹中識別 2 個關鍵線索、2 個輔助線索。<br />
+          <span className="font-bold text-red-500">注意：會覆蓋現有標記。</span>也可忽略此步驟直接拖選文字手動標記。
+        </p>
+      </div>
+
+      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">題幹原文</label>
+            <div className="flex gap-2 text-[10px] text-slate-400 italic">
+              <span>滑鼠拖選文字即可標記</span>
+            </div>
+          </div>
           <TextMarker
-            text={question.figure!}
-            location="figure"
+            text={question.mainStem}
+            location="stem"
             clues={question.clues}
             scaffolding={question.scaffolding ?? []}
             actions={markActions}
           />
-          {figureTokens ? (
-            <>
-              <div className="text-[11px] text-slate-400 mt-1">詞段切分</div>
-              <TokenRow segs={buildSegInfos(question, figureTokens, 'figure')} onMerge={onMergeFigure} onSplit={onSplitFigure} />
-              <ValidationBadge tokens={figureTokens} source={question.figure!} label="figure" />
-            </>
-          ) : (
-            <div className="text-slate-400 text-xs">尚未切分</div>
-          )}
-        </section>
-      )}
+        </div>
 
-      {/* 圖例 + 操作說明 */}
-      <div className="space-y-2 border-t border-slate-200 pt-3">
-        <div className="flex gap-3 flex-wrap text-xs">
-          {(['critical', 'auxiliary', 'context', 'noise', 'blank'] as const).map(k => (
-            <span key={k} className={`px-2 py-0.5 rounded ${KIND_STYLE[k]}`}>
-              {k === 'blank' ? '空白 #n' : KIND_LABEL[k]}
-            </span>
+        {hasFigure && (
+          <div className="space-y-2 pt-6 border-t border-slate-100">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">證物細節原文</label>
+            <TextMarker
+              text={question.figure!}
+              location="figure"
+              clues={question.clues}
+              scaffolding={question.scaffolding ?? []}
+              actions={markActions}
+            />
+          </div>
+        )}
+      </section>
+
+      {/* 圖例說明 */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+        <div className="flex gap-4">
+          {(['critical', 'auxiliary', 'context', 'noise'] as const).map(k => (
+            <div key={k} className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded-full ${KIND_STYLE[k].split(' ')[0]}`} />
+              <span className="text-xs font-medium text-slate-600">{KIND_LABEL[k]}</span>
+            </div>
           ))}
         </div>
-        <div className="text-[11px] text-slate-400">
-          拖選原文 → 建立標記 ・ 點擊空白詞段 ✂ 拆分 ・ 相鄰空白 ⊕ 合併
-        </div>
+        <p className="text-[10px] text-slate-400">標記完成後，請前往「內容設計」階段撰寫線索筆記。</p>
       </div>
     </div>
   );
 }
 
-function ValidationBadge({ tokens, source, label }: { tokens: string[]; source: string; label: string }) {
-  const valid = tokens.join('') === source;
-  return (
-    <div className="text-xs font-mono text-slate-500 mt-1">
-      <span className="font-semibold text-slate-400">串接驗證（{label}）：</span>
-      {valid
-        ? <span className="text-emerald-600 ml-1">✓ 吻合</span>
-        : <span className="text-red-500 ml-1">✗ 不吻合！請重新執行或手動修正</span>
-      }
-    </div>
-  );
-}
 
 interface TokenRowProps {
   segs: SegInfo[];

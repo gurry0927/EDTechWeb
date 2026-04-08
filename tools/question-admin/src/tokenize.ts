@@ -164,6 +164,74 @@ function repairTokens(tokens: string[], original: string): string[] | null {
   return repaired;
 }
 
+// ── AI 自動提取線索 ──
+
+export function buildClueExtractPrompt(question: DetectiveQuestion): string {
+  const hasFigure = !!question.figure;
+  return `你是一位專業的偵探遊戲教育設計師。請分析以下試題，從「題幹」${hasFigure ? '與「證物細節」' : ''}中找出 4 個最重要的標記文字片段：
+- 2 個「關鍵線索」(isCritical: true)：直接指向或能排除選項、點出核心知識的字詞
+- 2 個「輔助線索」(isCritical: false)：補充背景、建立情境、幫助推理的字詞
+
+題幹：
+"""${question.mainStem}"""
+${hasFigure ? `\n證物細節：\n"""${question.figure}"""\n` : ''}
+選項：
+${question.options.map((o, i) => `(${String.fromCharCode(65 + i)}) ${o}`).join('\n')}
+正確答案：(${question.answer})
+
+規則（嚴格遵守）：
+1. text 必須是原文中的連續字串，不可新增或修改任何字元
+2. startIndex：text 在來源文字（題幹或證物細節）中的起始字元索引（從 0 開始）
+3. length：text 的字元數（length === text.length）
+4. location："stem"（題幹）或 "figure"（證物細節）
+5. 優先選擇 2–8 字的短語，避免選超長句子
+
+只回傳 JSON 陣列，不要任何解釋文字：
+[
+  { "text": "...", "location": "stem", "startIndex": 0, "length": 5, "isCritical": true },
+  { "text": "...", "location": "stem", "startIndex": 12, "length": 4, "isCritical": true },
+  { "text": "...", "location": "stem", "startIndex": 30, "length": 6, "isCritical": false },
+  { "text": "...", "location": "stem", "startIndex": 45, "length": 3, "isCritical": false }
+]`;
+}
+
+export type ClueExtractResult =
+  | { ok: true; clues: import('./types').Clue[] }
+  | { ok: false; reason: string };
+
+export function validateExtractedClues(raw: string, question: DetectiveQuestion): ClueExtractResult {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (match) {
+      try { parsed = JSON.parse(match[1]); } catch { /* fall through */ }
+    }
+  }
+
+  if (!Array.isArray(parsed)) return { ok: false, reason: '回傳值不是陣列' };
+
+  const clues: import('./types').Clue[] = [];
+  for (let i = 0; i < parsed.length; i++) {
+    const item = parsed[i] as Record<string, unknown>;
+    const { text, location, startIndex, length, isCritical } = item;
+
+    if (typeof text !== 'string' || !text) return { ok: false, reason: `第 ${i + 1} 項 text 無效` };
+    if (location !== 'stem' && location !== 'figure') return { ok: false, reason: `第 ${i + 1} 項 location 必須是 "stem" 或 "figure"` };
+    if (typeof startIndex !== 'number' || typeof length !== 'number') return { ok: false, reason: `第 ${i + 1} 項缺少 startIndex 或 length` };
+
+    const src = location === 'stem' ? question.mainStem : question.figure ?? '';
+    const actual = src.slice(startIndex, startIndex + length);
+    if (actual !== text) return { ok: false, reason: `第 ${i + 1} 項索引不符：期望「${text}」，實際「${actual}」` };
+
+    clues.push({ text, location, startIndex, length, isCritical: !!isCritical, why: '' });
+  }
+
+  if (clues.length === 0) return { ok: false, reason: '沒有提取到任何線索' };
+  return { ok: true, clues };
+}
+
 // 驗證回傳的 tokens 是否合法（通用：stem / figure 皆可）
 export type ValidationResult =
   | { ok: true; tokens: string[] }

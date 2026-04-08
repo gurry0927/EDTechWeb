@@ -87,10 +87,14 @@ export function useQuestion() {
   }, [question, setActive, fetchList]);
 
   // ── 本地更新（不自動存 DB，需手動 save）──
-  const updateQuestion = useCallback((next: DetectiveQuestion) => {
-    setQuestion(next);
-    setJsonText(JSON.stringify(next, null, 2));
-    setJsonError(null);
+  const updateQuestion = useCallback((updates: Partial<DetectiveQuestion>) => {
+    setQuestion(prev => {
+      if (!prev) return null;
+      const next = { ...prev, ...updates };
+      setJsonText(JSON.stringify(next, null, 2));
+      setJsonError(null);
+      return next;
+    });
   }, []);
 
   const applyJson = useCallback((text: string) => {
@@ -106,48 +110,88 @@ export function useQuestion() {
 
   // ── 便捷 mutators ──
   const updateTokens = useCallback((tokens: string[]) => {
-    if (!question) return;
-    updateQuestion({ ...question, stemTokens: tokens });
-  }, [question, updateQuestion]);
+    updateQuestion({ stemTokens: tokens });
+  }, [updateQuestion]);
 
   const updateFigureTokens = useCallback((tokens: string[]) => {
-    if (!question) return;
-    updateQuestion({ ...question, figureTokens: tokens });
-  }, [question, updateQuestion]);
+    updateQuestion({ figureTokens: tokens });
+  }, [updateQuestion]);
 
   const addClue = useCallback((clue: Clue) => {
-    if (!question) return;
-    updateQuestion({ ...question, clues: [...question.clues, clue] });
-  }, [question, updateQuestion]);
+    setQuestion(prev => {
+      if (!prev) return null;
+      const next = { ...prev, clues: [...prev.clues, clue] };
+      setJsonText(JSON.stringify(next, null, 2));
+      return next;
+    });
+  }, []);
 
   const updateClue = useCallback((index: number, clue: Clue) => {
-    if (!question) return;
-    const clues = [...question.clues];
-    clues[index] = clue;
-    updateQuestion({ ...question, clues });
-  }, [question, updateQuestion]);
+    setQuestion(prev => {
+      if (!prev) return null;
+      const clues = [...prev.clues];
+      clues[index] = clue;
+      const next = { ...prev, clues };
+      setJsonText(JSON.stringify(next, null, 2));
+      return next;
+    });
+  }, []);
 
   const removeClue = useCallback((index: number) => {
-    if (!question) return;
-    updateQuestion({ ...question, clues: question.clues.filter((_, i) => i !== index) });
-  }, [question, updateQuestion]);
+    setQuestion(prev => {
+      if (!prev) return null;
+      const next = { ...prev, clues: prev.clues.filter((_, i) => i !== index) };
+      setJsonText(JSON.stringify(next, null, 2));
+      return next;
+    });
+  }, []);
 
   const addScaffolding = useCallback((s: ScaffoldingRegion) => {
-    if (!question) return;
-    updateQuestion({ ...question, scaffolding: [...(question.scaffolding ?? []), s] });
-  }, [question, updateQuestion]);
+    setQuestion(prev => {
+      if (!prev) return null;
+      const next = { ...prev, scaffolding: [...(prev.scaffolding ?? []), s] };
+      setJsonText(JSON.stringify(next, null, 2));
+      return next;
+    });
+  }, []);
 
   const updateScaffolding = useCallback((index: number, s: ScaffoldingRegion) => {
-    if (!question) return;
-    const scaffolding = [...(question.scaffolding ?? [])];
-    scaffolding[index] = s;
-    updateQuestion({ ...question, scaffolding });
-  }, [question, updateQuestion]);
+    setQuestion(prev => {
+      if (!prev) return null;
+      const scaffolding = [...(prev.scaffolding ?? [])];
+      scaffolding[index] = s;
+      const next = { ...prev, scaffolding };
+      setJsonText(JSON.stringify(next, null, 2));
+      return next;
+    });
+  }, []);
 
   const removeScaffolding = useCallback((index: number) => {
-    if (!question) return;
-    updateQuestion({ ...question, scaffolding: (question.scaffolding ?? []).filter((_, i) => i !== index) });
-  }, [question, updateQuestion]);
+    setQuestion(prev => {
+      if (!prev) return null;
+      const next = { ...prev, scaffolding: (prev.scaffolding ?? []).filter((_, i) => i !== index) };
+      setJsonText(JSON.stringify(next, null, 2));
+      return next;
+    });
+  }, []);
+
+  // ── 建立新空白題目 ──
+  const createNew = useCallback(() => {
+    setActive({
+      id: '',
+      source: '',
+      subject: '社會',
+      difficulty: 2,
+      tags: [],
+      mainStem: '',
+      options: ['', '', '', ''],
+      answer: 'A',
+      clues: [],
+      questions: [],
+      concept: { unit: '', brief: '' },
+      solution: { steps: [] },
+    });
+  }, [setActive]);
 
   // ── 檔案匯入/匯出（保留）──
   const loadFile = useCallback((file: File) => {
@@ -173,7 +217,7 @@ export function useQuestion() {
     // 當前題目
     question, jsonText, jsonError, saving,
     // 操作
-    applyJson, updateQuestion, setActive,
+    applyJson, updateQuestion, setActive, createNew,
     saveToDb,
     updateTokens, updateFigureTokens,
     addClue, updateClue, removeClue,
