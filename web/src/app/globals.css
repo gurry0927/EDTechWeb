@@ -31,7 +31,23 @@
   --color-card-bg-hover: var(--card-bg-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+
+  /* Detective theme tokens → Tailwind utilities (text-dt-text, bg-dt-card, etc.) */
+  --color-dt-bg: var(--dt-bg);
+  --color-dt-card: var(--dt-card);
+  --color-dt-wood: var(--dt-wood);
+  --color-dt-text: var(--dt-text);
+  --color-dt-text-secondary: var(--dt-text-secondary);
+  --color-dt-text-muted: var(--dt-text-muted);
+  --color-dt-accent: var(--dt-accent);
+  --color-dt-accent-tab: var(--dt-accent-tab);
+  --color-dt-scan: var(--dt-scan);
+  --color-dt-clue: var(--dt-clue);
+  --color-dt-success: var(--dt-success);
+  --color-dt-error: var(--dt-error);
+  --color-dt-border: var(--dt-border);
+  --color-dt-shadow: var(--dt-shadow);
+
   @keyframes scaffold-bounce {
     0%, 100% { transform: translateY(0); }
     50%       { transform: translateY(-4px); }
@@ -44,28 +60,84 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ── Question Detective ── */
+/* ── Question Detective Theme Layer ── */
+/* 所有偵探遊戲的視覺屬性集中在此，換主題只需加一組新的 [data-dt] */
 
-/* Variables */
 :root {
-  --det-paper: #f4efe4;
-  --det-paper-dark: #111119;
-  --det-accent: #c2553a;
-  --det-line: rgba(140,120,80,0.07);
-  --det-line-dark: rgba(140,120,80,0.04);
-  --det-border: rgba(140,120,80,0.15);
-  --det-shadow: rgba(80,60,30,0.08);
+  /* 背景 */
+  --dt-bg: #f4efe4;             /* 紙張底色 */
+  --dt-card: #f8f4eb;           /* 浮卡 */
+  --dt-wood: #c8b49a;           /* 木紋背景（body） */
+
+  /* 文字 */
+  --dt-text: #3d3426;           /* 主文字 */
+  --dt-text-secondary: #78716c; /* 次要文字 (stone-500) */
+  --dt-text-muted: #94a3b8;     /* 淡化文字 (slate-400) */
+
+  /* 強調色 */
+  --dt-accent: #c2553a;         /* 紅色主強調 */
+  --dt-accent-tab: #8b1a1a;     /* 機密 tab 文字 */
+  --dt-scan: #06b6d4;           /* 掃描/放大鏡 (cyan) */
+  --dt-clue: #f59e0b;           /* 線索命中 (amber) */
+  --dt-success: #10b981;        /* 成功 (emerald) */
+  --dt-error: #ef4444;          /* 錯誤/扣血 (red) */
+
+  /* 邊框 & 陰影 */
+  --dt-border: rgba(140,120,80,0.15);
+  --dt-shadow: rgba(80,60,30,0.08);
+  --dt-tab-shadow: rgba(60,35,10,0.2);
+  --dt-line: rgba(140,120,80,0.07);
+
+  /* 掃描效果 */
+  --dt-scan-sweep: rgba(34,211,238,0.3);
+  --dt-scan-glow: rgba(6,182,212,0.25);
+  --dt-highlight-bg: rgba(6,182,212,0.12);
+
+  /* 線索/鷹架 */
+  --dt-clue-found-bg: rgba(34,197,94,0.15);
+  --dt-notebook-badge: #ef4444;
+}
+
+.dark {
+  --dt-bg: #111119;
+  --dt-card: #1a1a24;
+  --dt-wood: #0a0a0f;
+
+  --dt-text: #e2e8f0;
+  --dt-text-secondary: rgba(255,255,255,0.5);
+  --dt-text-muted: rgba(255,255,255,0.3);
+
+  --dt-accent: #ef6b4a;
+  --dt-accent-tab: #f87171;
+  --dt-scan: #22d3ee;
+  --dt-clue: #fbbf24;
+  --dt-success: #34d399;
+  --dt-error: #f87171;
+
+  --dt-border: rgba(140,120,80,0.1);
+  --dt-shadow: rgba(0,0,0,0.3);
+  --dt-tab-shadow: rgba(0,0,0,0.4);
+  --dt-line: rgba(140,120,80,0.04);
+
+  --dt-scan-sweep: rgba(34,211,238,0.18);
+  --dt-scan-glow: rgba(6,182,212,0.15);
+  --dt-highlight-bg: rgba(6,182,212,0.08);
+
+  --dt-clue-found-bg: rgba(34,197,94,0.12);
+  --dt-notebook-badge: #f87171;
 }
 
 /* Scan sweep animation — 單次掃描（入場 / 掃描模式） */
 @keyframes scan-sweep { 0% { background-position: -100% 0 } 100% { background-position: 200% 0 } }
 .stem-scan {
-  background-image: linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.15) 40%, rgba(34,211,238,0.3) 50%, rgba(34,211,238,0.15) 60%, rgba(34,211,238,0) 100%);
+  background-image: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--dt-scan) 15%, transparent) 40%,
+    var(--dt-scan-sweep) 50%,
+    color-mix(in srgb, var(--dt-scan) 15%, transparent) 60%,
+    transparent 100%);
   background-position: -100% 0; background-size: 50% 100%; background-repeat: no-repeat;
   animation: scan-sweep 1.8s ease-in-out 2;
-}
-.dark .stem-scan {
-  background-image: linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.08) 40%, rgba(34,211,238,0.18) 50%, rgba(34,211,238,0.08) 60%, rgba(34,211,238,0) 100%);
 }
 
 /* 鷹架閒置跳動提示 */
@@ -115,8 +187,8 @@ body {
 /* 內層：視覺顆粒，animation 由 inline style 指定 */
 .clue-flyer-y {
   width: 10px; height: 10px; border-radius: 50%;
-  background: #F59E0B;
-  box-shadow: 0 0 8px 3px rgba(245,158,11,0.65);
+  background: var(--dt-clue);
+  box-shadow: 0 0 8px 3px color-mix(in srgb, var(--dt-clue) 65%, transparent);
   transform-origin: center center;
 }
 /* 通用抖動樣式 (左右) */
@@ -144,26 +216,18 @@ body {
   line-height: 1;
 }
 
-/* Shared paper base */
-.case-file, .detective-paper, .folder-tab { background-color: var(--det-paper); }
-.dark .case-file, .dark .detective-paper, .dark .folder-tab { background-color: var(--det-paper-dark); }
+/* Shared paper base — 自動跟隨 --dt-bg（dark mode 由變數切換） */
+.case-file, .detective-paper, .folder-tab { background-color: var(--dt-bg); }
 
 /* Case file: ruled lines + red accent — 卡片化後四邊都有陰影 */
 .case-file {
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--det-line) 23px, var(--det-line) 24px);
-  border-left: 3px solid var(--det-accent);
-  box-shadow: 
-    0 1px 3px rgba(60,35,10,0.1),
-    0 4px 12px rgba(60,35,10,0.15),
-    0 12px 40px rgba(60,35,10,0.25);
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--dt-line) 23px, var(--dt-line) 24px);
+  border-left: 3px solid var(--dt-accent);
+  box-shadow:
+    0 1px 3px var(--dt-shadow),
+    0 4px 12px var(--dt-shadow),
+    0 12px 40px var(--dt-tab-shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.dark .case-file {
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--det-line-dark) 23px, var(--det-line-dark) 24px);
-  border-left: 3px solid rgba(194,85,58,0.6);
-  box-shadow: 
-    0 4px 12px rgba(0,0,0,0.4),
-    0 15px 45px rgba(0,0,0,0.6);
 }
 
 
@@ -174,7 +238,7 @@ body {
   gap: 10px;
   padding-bottom: 4px;
   margin-bottom: 4px;
-  border-bottom: 2px solid var(--det-accent);
+  border-bottom: 2px solid var(--dt-accent);
   opacity: 0.85;
 }
 .case-file-header-label {
@@ -182,17 +246,15 @@ body {
   font-weight: 800;
   font-style: italic;
   letter-spacing: 0.12em;
-  color: var(--det-accent);
+  color: var(--dt-accent);
 }
 .case-file-header-rule {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, var(--det-accent), transparent);
+  background: linear-gradient(90deg, var(--dt-accent), transparent);
   opacity: 0.3;
   align-self: center;
 }
-.dark .case-file-header-label { color: rgba(194,85,58,0.85); }
-.dark .case-file-header-rule { opacity: 0.2; }
 
 /* 滾動提示：呼吸式青色漸層 — 題幹（手機）＋筆記本（全裝置）共用 */
 .stem-scroll-fade { position: relative; }
@@ -201,12 +263,9 @@ body {
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 2rem;
-  background: linear-gradient(to top, rgba(6,182,212,0.18), transparent);
+  background: linear-gradient(to top, var(--dt-scan-glow), transparent);
   pointer-events: none;
   animation: scroll-breathe 2.2s ease-in-out infinite;
-}
-.dark .stem-scroll-fade::after {
-  background: linear-gradient(to top, rgba(6,182,212,0.13), transparent);
 }
 @keyframes scroll-breathe {
   0%, 100% { opacity: 0.3; }
@@ -219,7 +278,7 @@ body {
 
 /* Chat area: 胡桃木桌面 */
 .detective-paper {
-  background-color: #c8b49a;
+  background-color: var(--dt-wood);
   background-image:
     repeating-linear-gradient(
       108deg,
@@ -238,7 +297,7 @@ body {
     );
 }
 .dark .detective-paper {
-  background-color: #2a1f16;
+  background-color: var(--dt-wood);
   background-image:
     repeating-linear-gradient(
       108deg,
@@ -261,7 +320,7 @@ body {
 .folder-tab {
   position: relative;
   top: 0;
-  border: 1px solid var(--det-border);
+  border: 1px solid var(--dt-border);
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   padding: 6px 14px 4px;
@@ -276,26 +335,21 @@ body {
 }
 
 /* 三層遞減：前景最亮 → 背景最暗 */
-.folder-tab-1 { z-index: 3; box-shadow: 2px -1px 6px rgba(60,35,10,0.15); }
-.folder-tab-2 { z-index: 2; box-shadow: 2px -1px 4px rgba(60,35,10,0.10); filter: brightness(0.97); }
-.folder-tab-3 { z-index: 1; box-shadow: 1px -1px 3px rgba(60,35,10,0.08); filter: brightness(0.94); }
+.folder-tab-1 { z-index: 3; box-shadow: 2px -1px 6px var(--dt-tab-shadow); }
+.folder-tab-2 { z-index: 2; box-shadow: 2px -1px 4px var(--dt-tab-shadow); filter: brightness(0.97); }
+.folder-tab-3 { z-index: 1; box-shadow: 1px -1px 3px var(--dt-tab-shadow); filter: brightness(0.94); }
 
 /* 主動 tab：微抬起 */
 .tab-active {
   filter: brightness(1.01) !important;
-  box-shadow: 2px -1px 8px rgba(60,35,10,0.2), 0 1px 2px rgba(255,255,255,0.25) inset !important;
+  box-shadow: 2px -1px 8px var(--dt-tab-shadow), 0 1px 2px rgba(255,255,255,0.25) inset !important;
   z-index: 10 !important;
 }
-
-.dark .folder-tab { border-color: rgba(140,120,80,0.1); }
-.dark .folder-tab-1 { box-shadow: 2px -1px 8px rgba(0,0,0,0.35); }
-.dark .folder-tab-2 { filter: brightness(0.9); }
-.dark .folder-tab-3 { filter: brightness(0.82); }
 
 /* SVG feTurbulence 撕裂紙邊條 */
 .paper-tear-top {
   height: 22px;
-  background: var(--det-paper);
+  background: var(--dt-bg);
   filter: url(#det-paper-tear-top);
   position: relative;
   z-index: 1;
@@ -304,15 +358,13 @@ body {
 }
 .paper-tear-bottom {
   height: 30px;                        /* 比頂部高，更破爛 */
-  background: var(--det-paper);
+  background: var(--dt-bg);
   filter: url(#det-paper-tear-bottom);
   position: relative;
   z-index: 1;
   margin-top: -15px;
   flex-shrink: 0;
 }
-.dark .paper-tear-top,
-.dark .paper-tear-bottom { background: var(--det-paper-dark); }
 
 /* Toast 淡入停留淡出 */
 @keyframes toast-life {
@@ -340,13 +392,13 @@ body {
 
 /* ── [NEW] 偵探筆記本面板 (Notebook Panel) ── */
 .notebook-paper {
-  background-color: var(--det-paper);
+  background-color: var(--dt-bg);
   background-image: repeating-linear-gradient(
     0deg,
     transparent, transparent 27px,
-    var(--det-line) 27px, var(--det-line) 28px
+    var(--dt-line) 27px, var(--dt-line) 28px
   );
-  box-shadow: 0 8px 28px var(--det-shadow), 0 1px 0 rgba(140,120,80,0.08);
+  box-shadow: 0 8px 28px var(--dt-shadow), 0 1px 0 rgba(140,120,80,0.08);
   /* Allow SVG displacement filter on paper-tear-top to extend visually
      while still preventing content from overflowing the container */
   overflow: clip;
@@ -354,11 +406,11 @@ body {
 }
 
 .dark .notebook-paper {
-  background-color: var(--det-paper-dark);
+  background-color: var(--dt-bg);
   background-image: repeating-linear-gradient(
     0deg,
     transparent, transparent 27px,
-    var(--det-line-dark) 27px, var(--det-line-dark) 28px
+    var(--dt-line) 27px, var(--dt-line) 28px
   );
   box-shadow: 0 8px 32px rgba(0,0,0,0.45);
 }
