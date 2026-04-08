@@ -368,7 +368,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       clearTimeout(nudgeTimer);
       clearTimeout(autoExitTimer);
     };
-  }, [activeScanning, foundClues.size]);
+  }, [activeScanning, foundClues.size, showToast, exitScanMode]);
 
   // Derived
   const gameOver = lives <= 0 && phase !== 'solution';
@@ -386,7 +386,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       showToast('🔍 +1 掃描機會（輔助線索獎勵）');
     }
     prevAuxFoundRef.current = auxFoundCount;
-  }, [auxFoundCount]);
+  }, [auxFoundCount, showToast]);
   // 推理順序：非輔助線索先，輔助線索排後（不阻擋主線，收集到才加入）
   const reasoningClues = useMemo(() => {
     const withIdx = question.clues.map((c, i) => ({ ...c, idx: i }));
@@ -426,11 +426,15 @@ export function DetectivePlayer({ question, onBack }: Props) {
     }
   }, [idleShimmer, firstContextScaffoldIdx, foundClues.size, seenContextRegions.size]);
 
-  // 有效互動後（命中線索或 context 鷹架）→ 停止跳動
+  // 有效互動後（命中線索或 context 鷹架）→ 停止跳動；30 秒後也自動停止避免無限循環
   useEffect(() => {
-    if (scaffoldPulse && (foundClues.size > 0 || seenContextRegions.size > 0)) {
+    if (!scaffoldPulse) return;
+    if (foundClues.size > 0 || seenContextRegions.size > 0) {
       setScaffoldPulse(false);
+      return;
     }
+    const t = setTimeout(() => setScaffoldPulse(false), 30000);
+    return () => clearTimeout(t);
   }, [scaffoldPulse, foundClues.size, seenContextRegions.size]);
 
   // stemSegs：展開 mainStem 線索的 aliases，讓題幹中出現的同義詞也能被點擊命中
@@ -608,7 +612,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       setChatEvents(prev => [...prev, { type: 'context', hint: msg, text: region.text }]);
       setSeenContextRegions(prev => new Set(prev).add(regionIdx));
     }
-  }, [question.scaffolding, seenContextRegions, triggerFlight, exitScanMode]);
+  }, [question.scaffolding, seenContextRegions, triggerFlight, exitScanMode, showToast]);
 
   const onNoiseMiss = useCallback((regionIdx: number, e?: React.MouseEvent) => {
     if (clueLocked || activeScanning || stemExpanded) return;
