@@ -328,6 +328,21 @@ body {
 @media (min-width: 640px) {
   .folder-tab { padding: 6px 18px 4px; }
 }
+/* 右側厚度陰影（clip-path 會裁掉 box-shadow，用偽元素補） */
+.folder-tab::after {
+  content: '';
+  position: absolute;
+  top: 15%;
+  right: 0;
+  width: 3px;
+  height: 70%;
+  background: linear-gradient(to right, transparent, rgba(60,35,10,0.12));
+  pointer-events: none;
+}
+.dark .folder-tab::after {
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.25));
+}
+
 /* 三層遞減：前景最亮最高 → 背景最暗最低 */
 .folder-tab-1 { z-index: 3; box-shadow: 0 3px 10px rgba(60,35,10,0.2); }
 .folder-tab-2 { z-index: 2; box-shadow: 0 2px 6px rgba(60,35,10,0.14); filter: brightness(0.97); }
