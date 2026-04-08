@@ -39,12 +39,12 @@ export default function QuestionDetectivePage() {
   }, [questions, groupBy]);
 
   return (
-    <div className="min-h-[100dvh] bg-stone-100 dark:bg-zinc-900 text-slate-800 dark:text-white flex flex-col">
+    <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col">
       {/* Header */}
       <header className="shrink-0 case-file px-5 py-4">
         <div className="max-w-2xl mx-auto">
           <button onClick={() => router.push('/')}
-            className="text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/80 text-sm flex items-center gap-1 mb-4">
+            className="text-dt-text-secondary hover:text-dt-text text-sm flex items-center gap-1 mb-4">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
@@ -53,12 +53,14 @@ export default function QuestionDetectivePage() {
           <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
             未解檔案室
           </h1>
-          <p className="text-sm text-slate-500 dark:text-white/40 mt-1.5 leading-relaxed">
+          <p className="text-sm text-dt-text-muted mt-1.5 leading-relaxed">
             每份檔案都藏著未解的謎團。選一份，開始調查。
           </p>
-          <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${dbQuestions ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-            {dbQuestions ? `DB (${dbQuestions.length})` : `Static (${ALL_QUESTIONS.length})`}
-          </span>
+          {process.env.NODE_ENV === 'development' && (
+            <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${dbQuestions ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              {dbQuestions ? `DB (${dbQuestions.length})` : `Static (${ALL_QUESTIONS.length})`}
+            </span>
+          )}
         </div>
       </header>
 
@@ -67,11 +69,11 @@ export default function QuestionDetectivePage() {
         <div className="flex gap-0">
           <button onClick={() => setGroupBy('subject')}
             className={`folder-tab ${groupBy === 'subject' ? 'folder-tab-1' : 'folder-tab-3'}`}>
-            <span className={`text-xs font-medium ${groupBy === 'subject' ? 'text-slate-700 dark:text-white/70' : 'text-slate-400 dark:text-white/30'}`}>按科目</span>
+            <span className={`text-xs font-medium ${groupBy === 'subject' ? 'text-dt-text' : 'text-dt-text-muted'}`}>按科目</span>
           </button>
           <button onClick={() => setGroupBy('year')}
             className={`folder-tab ${groupBy === 'year' ? 'folder-tab-1' : 'folder-tab-3'}`}>
-            <span className={`text-xs font-medium ${groupBy === 'year' ? 'text-slate-700 dark:text-white/70' : 'text-slate-400 dark:text-white/30'}`}>按年份</span>
+            <span className={`text-xs font-medium ${groupBy === 'year' ? 'text-dt-text' : 'text-dt-text-muted'}`}>按年份</span>
           </button>
         </div>
       </div>
@@ -83,11 +85,11 @@ export default function QuestionDetectivePage() {
             <div key={group}>
               {/* Group header — folder label */}
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm font-bold text-amber-800/50 dark:text-amber-400/40 tracking-wider" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
+                <span className="text-sm font-bold text-dt-clue/50 tracking-wider" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
                   {group}
                 </span>
-                <div className="flex-1 h-px bg-amber-800/10 dark:bg-amber-400/10" />
-                <span className="text-xs text-slate-400 dark:text-white/25">{groupQuestions.length} 件</span>
+                <div className="flex-1 h-px bg-dt-clue/10" />
+                <span className="text-xs text-dt-text-muted">{groupQuestions.length} 件</span>
               </div>
 
               {/* Question cards */}
@@ -97,29 +99,29 @@ export default function QuestionDetectivePage() {
                     className="w-full text-left rounded-lg p-4 case-file hover:shadow-md transition-all group">
                     <div className="flex items-start gap-3">
                       {/* Case number badge */}
-                      <div className="w-10 h-10 rounded bg-red-900/10 dark:bg-red-400/10 flex items-center justify-center shrink-0 border border-red-900/10 dark:border-red-400/10">
-                        <span className="text-red-900/40 dark:text-red-400/30 text-xs font-bold">
+                      <div className="w-10 h-10 rounded bg-dt-accent/10 flex items-center justify-center shrink-0 border border-dt-accent/10">
+                        <span className="text-dt-accent/40 text-xs font-bold">
                           {q.source.match(/第(\d+)題/)?.[1] || '?'}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-slate-400 dark:text-white/35">{q.source}</span>
+                          <span className="text-xs text-dt-text-muted">{q.source}</span>
                           <span className="inline-flex gap-0.5">
                             {[1, 2, 3].map(d => (
-                              <span key={d} className={`w-1.5 h-1.5 rounded-full ${d <= q.difficulty ? 'bg-amber-400' : 'bg-slate-200 dark:bg-white/15'}`} />
+                              <span key={d} className={`w-1.5 h-1.5 rounded-full ${d <= q.difficulty ? 'bg-dt-clue' : 'bg-dt-border'}`} />
                             ))}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-700 dark:text-white/70 leading-relaxed line-clamp-2 group-hover:text-slate-900 dark:group-hover:text-white/85 transition-colors">
+                        <p className="text-sm text-dt-text leading-relaxed line-clamp-2 group-hover:opacity-80 transition-colors">
                           {q.mainStem}
                         </p>
                         <div className="flex gap-1.5 mt-2">
-                          {q.subSubject && <span className="px-2 py-0.5 text-[10px] rounded-full text-amber-800/40 dark:text-amber-400/30 border border-amber-800/10 dark:border-amber-400/10">{q.subSubject}</span>}
-                          {q.gradeLevel && <span className="px-2 py-0.5 text-[10px] rounded-full text-amber-800/40 dark:text-amber-400/30 border border-amber-800/10 dark:border-amber-400/10">{q.gradeLevel}</span>}
+                          {q.subSubject && <span className="px-2 py-0.5 text-[10px] rounded-full text-dt-clue/40 border border-dt-clue/10">{q.subSubject}</span>}
+                          {q.gradeLevel && <span className="px-2 py-0.5 text-[10px] rounded-full text-dt-clue/40 border border-dt-clue/10">{q.gradeLevel}</span>}
                         </div>
                       </div>
-                      <svg className="w-5 h-5 text-slate-300 dark:text-white/20 group-hover:text-slate-400 dark:group-hover:text-white/40 transition-colors shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="w-5 h-5 text-dt-text-muted group-hover:text-dt-text-secondary transition-colors shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
