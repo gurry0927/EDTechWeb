@@ -510,15 +510,25 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
     return indexed;
   }, [question.figure, question.figureTokens, question.scaffolding, figureClues, scaffoldingWithIdx, stemBlankCount]);
 
-  // Auto-scroll & auto-advance
-  // 進場（clue phase + 無互動）→ 不滾，讓使用者讀開場白
-  // solution → 滾到解析開頭
-  // 其他 → 滾到底部
+  // Auto-scroll：兩階段
+  // 1) 立即滾到打字泡泡（讓使用者看到 ...）
+  // 2) 打字結束後再滾一次到底部（內容展開後對齊）
   useEffect(() => {
     if (phase === 'clue' && chatEvents.length === 0) return; // 進場不滾
-    const target = phase === 'solution' ? solutionTopRef.current : chatEndRef.current;
-    const t = setTimeout(() => { target?.scrollIntoView({ behavior: 'smooth' }); }, GAME.scrollDelay);
-    return () => clearTimeout(t);
+    if (phase === 'solution') {
+      const t = setTimeout(() => solutionTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), GAME.scrollDelay);
+      return () => clearTimeout(t);
+    }
+    // 第一階段：快速滾到底（打字泡泡可見）
+    const t1 = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, GAME.scrollDelay);
+    // 第二階段：打字結束後再滾一次（內容展開，高度變了）
+    const longestTyping = GAME.typingDelay.long + 100;
+    const t2 = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, GAME.scrollDelay + longestTyping);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [phase, foundClues.size, chatEvents.length, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
   useEffect(() => { if (gameOver) { const t = setTimeout(() => setPhase('solution'), GAME.gameOverDelay); return () => clearTimeout(t); } }, [gameOver]);
@@ -1120,7 +1130,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
           </>
         )}
 
-        <div ref={chatEndRef} />
+        <div ref={chatEndRef} className="h-24 shrink-0" />
         </div>
 
         {/* FAB — 浮動在聊天區右下角，推理按鈕 or 結案返回 */}
