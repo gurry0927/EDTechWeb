@@ -30,10 +30,38 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Hero feature — Question Detective */}
+      <section className="relative z-10 mx-auto max-w-5xl px-6 mb-16">
+        <Link
+          href="/question-detective"
+          className="group relative block rounded-2xl border border-amber-200/60 dark:border-amber-800/30 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-yellow-950/20 p-8 transition-all duration-300 hover:shadow-xl hover:scale-[1.01] hover:border-amber-300 dark:hover:border-amber-700/50 overflow-hidden"
+        >
+          {/* Background decoration */}
+          <div className="absolute top-4 right-6 text-7xl opacity-10 dark:opacity-5 select-none pointer-events-none">🔍</div>
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5">
+            <div className="w-14 h-14 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-3xl shrink-0 border border-amber-200/50 dark:border-amber-800/30">
+              🕵️
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-amber-900 dark:text-amber-200 mb-1.5" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
+                未解檔案室
+              </h2>
+              <p className="text-sm text-amber-800/70 dark:text-amber-300/50 leading-relaxed">
+                每份會考題都藏著未解的謎團。扮演偵探，從證詞中找出線索、推理破案。
+              </p>
+            </div>
+            <svg className="w-6 h-6 text-amber-400 dark:text-amber-600 transition-transform duration-300 group-hover:translate-x-1 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </Link>
+      </section>
+
       {/* Subject grid */}
       <main className="relative z-10 mx-auto max-w-5xl px-6 pb-24">
         <h2 className="text-sm font-medium uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-8">
-          選擇科目
+          其他學習模組
         </h2>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
