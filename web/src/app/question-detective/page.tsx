@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
 import { ALL_QUESTIONS } from '@/data/detective-questions';
@@ -24,21 +24,18 @@ export default function QuestionDetectivePage() {
   const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
   const [dbQuestions, setDbQuestions] = useState<PublicQuestion[] | null>(null);
-  const searchParams = useSearchParams();
   const [theme, setThemeState] = useState<ThemeId>('classic');
 
   useEffect(() => {
-    // 優先：URL query ?theme=cyber
-    const fromUrl = searchParams.get('theme') as ThemeId | null;
+    const fromUrl = new URLSearchParams(window.location.search).get('theme') as ThemeId | null;
     if (fromUrl && THEMES.some(t => t.id === fromUrl)) {
       setThemeState(fromUrl);
       localStorage.setItem('dt-theme', fromUrl);
       return;
     }
-    // 其次：localStorage
     const saved = localStorage.getItem('dt-theme') as ThemeId | null;
     if (saved && THEMES.some(t => t.id === saved)) setThemeState(saved);
-  }, [searchParams]);
+  }, []);
 
   const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);
