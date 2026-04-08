@@ -85,11 +85,11 @@ export default function QuestionDetectivePage() {
             <div key={group}>
               {/* Group header — folder label */}
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm font-bold text-dt-accent tracking-wider" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
+                <span className="text-sm font-extrabold text-dt-accent tracking-wider px-2 py-0.5 rounded bg-dt-bg/70" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
                   {group}
                 </span>
                 <div className="flex-1 h-px bg-dt-accent/25" />
-                <span className="text-xs text-dt-text">{groupQuestions.length} 件</span>
+                <span className="text-xs font-medium text-dt-text bg-dt-bg/70 px-1.5 py-0.5 rounded">{groupQuestions.length} 件</span>
               </div>
 
               {/* Question cards */}
