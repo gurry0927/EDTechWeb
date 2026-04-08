@@ -44,6 +44,16 @@ const PaperclipIcon = () => (
   </svg>
 );
 
+// 證物照片：聊天區 + 筆記本共用
+const EvidencePhoto = ({ src, maxW = 220, rotate = false, onClick }: { src: string; maxW?: number; rotate?: boolean; onClick?: () => void }) => (
+  <div className="relative">
+    <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><span className="dt-paperclip"><PaperclipIcon /></span></div>
+    <div className={`dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo ${rotate ? 'rotate-[-1.5deg]' : ''}`} style={{ maxWidth: maxW }}>
+      <img src={src} alt="案件附圖" onClick={onClick} className="w-full rounded-sm dt-photo-blend" />
+    </div>
+  </div>
+);
+
 // 輔助線索命中：灰藍細邊、字稍小、斜體感 — 比正式線索輕但仍可讀
 const ContextBubble = ({ children }: { children: React.ReactNode }) => (
   <div className="flex gap-2 items-start max-w-[85%] bubble-in">
@@ -1050,10 +1060,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
             {question.figureImage && (
               <div className="flex gap-2.5 items-start bubble-in">
                 <DetectiveAvatar />
-                <div className="relative dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo" style={{ maxWidth: 220 }}>
-                  <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
-                  <img src={question.figureImage} alt="案件附圖" className="w-full rounded-sm dt-photo-blend" />
-                </div>
+                <EvidencePhoto src={question.figureImage} />
               </div>
             )}
             <div className="grid grid-cols-1 gap-1.5 my-2">
@@ -1222,17 +1229,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                 <div className="space-y-6">
                   {question.figureImage && (
                     <div className="flex justify-center py-2">
-                      <div className="relative">
-                        <div className="absolute -top-5 right-6 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
-                        <div className="dt-photo p-2 pb-3 shadow-md rotate-[-1.5deg] rounded-sm case-photo">
-                          <img
-                            src={question.figureImage}
-                            alt="案件附圖"
-                            onClick={() => showToast(pick(DIALOGUE.evidencePhotoReactions))}
-                            className="w-full max-w-[200px] dt-photo-blend rounded-sm"
-                          />
-                        </div>
-                      </div>
+                      <EvidencePhoto src={question.figureImage!} maxW={200} rotate onClick={() => showToast(pick(DIALOGUE.evidencePhotoReactions))} />
                     </div>
                   )}
 

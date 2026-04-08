@@ -363,6 +363,9 @@ body {
 .minus-life-pop { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 [data-dt-theme="cyber"] .minus-life-pop { text-shadow: 0 0 8px var(--dt-error), 0 2px 4px rgba(0,0,0,0.5); }
 
+/* ── 迴紋針（classic 限定裝飾） ── */
+[data-dt-theme="cyber"] .dt-paperclip { display: none; }
+
 /* ── 按鈕 ── */
 .dt-btn-primary {
   background: var(--dt-btn-bg); color: var(--dt-btn-text);
