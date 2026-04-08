@@ -783,7 +783,7 @@ body {
       rgba(80,45,20,0.05) 40px, rgba(80,45,20,0.05) 42px
     );
 }
-.dark .detective-paper {
+:where(.dark) .detective-paper {
   background-color: var(--dt-wood);
   background-image:
     repeating-linear-gradient(
@@ -892,7 +892,7 @@ body {
   padding-top: 6px;
 }
 
-.dark .notebook-paper {
+:where(.dark) .notebook-paper {
   background-color: var(--dt-bg);
   background-image: repeating-linear-gradient(
     0deg,
@@ -932,7 +932,7 @@ body {
   background: radial-gradient(ellipse at center, transparent 55%, rgba(80,55,20,0.18) 100%);
   mix-blend-mode: multiply;
 }
-.dark .case-photo {
+:where(.dark) .case-photo {
   filter: sepia(0.55) saturate(0.65) contrast(1.08) brightness(0.82);
 }
 
