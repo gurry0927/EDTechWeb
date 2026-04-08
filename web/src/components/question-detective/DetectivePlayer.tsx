@@ -39,8 +39,8 @@ const StudentBubble = ({ children }: { children: React.ReactNode }) => (
 // 迴紋針：掛在案件照片角上
 const PaperclipIcon = () => (
   <svg width="18" height="42" viewBox="0 0 18 42" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
-    <path d="M9 2C5.5 2 3 4.5 3 8V30C3 35.5 7.5 40 13 40" stroke="#9CA3AF" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
-    <path d="M9 2C11.8 2 14 4.2 14 7V30C14 33.3 11.3 36 8 36C4.7 36 2 33.3 2 30V10" stroke="#D1D5DB" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
+    <path d="M9 2C5.5 2 3 4.5 3 8V30C3 35.5 7.5 40 13 40" stroke="var(--dt-text-muted)" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
+    <path d="M9 2C11.8 2 14 4.2 14 7V30C14 33.3 11.3 36 8 36C4.7 36 2 33.3 2 30V10" stroke="var(--dt-border)" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
   </svg>
 );
 
@@ -873,7 +873,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
 
         {/* Case-file 浮卡：左右 padding 露出木紋，底部 pb 露出木紋投影 */}
         <div className="max-w-2xl mx-auto px-4 pb-4">
-          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-dt-clue/70 ring-inset' : ''} ${pointingFlash ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.5)]' : ''}`}>
+          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-dt-clue/70 ring-inset' : ''} ${pointingFlash ? 'dt-pointing-flash' : ''}`}>
             <div className="px-4 pt-3 pb-4 space-y-2">
               {isPointingPhase
                 ? (
@@ -1052,7 +1052,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                 <DetectiveAvatar />
                 <div className="relative dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo" style={{ maxWidth: 220 }}>
                   <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
-                  <img src={question.figureImage} alt="案件附圖" className="w-full rounded-sm mix-blend-darken dark:mix-blend-normal" />
+                  <img src={question.figureImage} alt="案件附圖" className="w-full rounded-sm dt-photo-blend" />
                 </div>
               </div>
             )}
@@ -1200,7 +1200,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
               className="notebook-paper flex-1 flex flex-col min-h-0 dt-notebook-shadow"
             >
             {/* Header — shrink-0，固定不捲動，背景透明讓父層橫線穿透 */}
-            <div className="shrink-0 max-w-xl mx-auto w-full px-6 pt-3 pb-3 border-b border-black/5 dark:border-white/5">
+            <div className="shrink-0 max-w-xl mx-auto w-full px-6 pt-3 pb-3 border-b border-dt-border">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-xl text-dt-text flex items-center gap-2">
                   <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
@@ -1229,7 +1229,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                             src={question.figureImage}
                             alt="案件附圖"
                             onClick={() => showToast(pick(DIALOGUE.evidencePhotoReactions))}
-                            className="w-full max-w-[200px] mix-blend-darken dark:mix-blend-normal rounded-sm"
+                            className="w-full max-w-[200px] dt-photo-blend rounded-sm"
                           />
                         </div>
                       </div>
@@ -1404,7 +1404,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
       {lifeLossFeedbacks.map(f => (
         <span
           key={f.id}
-          className="minus-life-pop text-xl font-black text-dt-error pointer-events-none whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+          className="minus-life-pop text-xl font-black text-dt-error pointer-events-none whitespace-nowrap"
           style={{ left: `${f.x}px`, top: `${f.y}px` }}
         >
           -1 💔
