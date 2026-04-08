@@ -301,6 +301,113 @@ body {
   background: linear-gradient(to top, rgba(0,255,170,0.25), transparent);
 }
 
+/* ── 角色頭像 ── */
+.dt-avatar-detective {
+  background: rgba(6,182,212,0.12);
+  border: 1px solid rgba(6,182,212,0.25);
+}
+.dt-avatar-student {
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.25);
+}
+.dark .dt-avatar-detective { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.2); }
+.dark .dt-avatar-student { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
+
+[data-dt-theme="cyber"] .dt-avatar-detective {
+  background: rgba(0,255,170,0.1);
+  border-color: rgba(0,255,170,0.35);
+  box-shadow: 0 0 8px rgba(0,255,170,0.2);
+}
+[data-dt-theme="cyber"] .dt-avatar-student {
+  background: rgba(255,58,110,0.1);
+  border-color: rgba(255,58,110,0.3);
+  box-shadow: 0 0 8px rgba(255,58,110,0.15);
+}
+
+/* ── 泡泡 ── */
+.dt-bubble-detective {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+.dark .dt-bubble-detective {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+}
+.dt-bubble-student {
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #334155;
+}
+.dark .dt-bubble-student {
+  background: rgba(6,182,212,0.08);
+  border-color: rgba(6,182,212,0.15);
+  color: rgba(255,255,255,0.8);
+}
+
+[data-dt-theme="cyber"] .dt-bubble-detective {
+  background: var(--dt-card);
+  border: 1px solid rgba(0,255,170,0.2);
+  box-shadow: 0 0 10px rgba(0,255,170,0.05);
+  color: var(--dt-text);
+}
+[data-dt-theme="cyber"] .dt-bubble-student {
+  background: rgba(255,58,110,0.06);
+  border: 1px solid rgba(255,58,110,0.2);
+  box-shadow: 0 0 8px rgba(255,58,110,0.05);
+  color: var(--dt-text);
+}
+
+/* ── 線索命中 / 可指認 / Toast — 主題化 class ── */
+.dt-clue-found {
+  background-color: rgba(245,158,11,0.15);
+  border-bottom: 2px solid rgba(245,158,11,0.6);
+}
+.dt-clue-pointable {
+  cursor: pointer;
+  outline: 1px solid rgba(245,158,11,0.4);
+  outline-offset: -1px;
+}
+.dt-clue-pointable:hover { background-color: rgba(245,158,11,0.25); }
+.dark .dt-clue-found {
+  background-color: rgba(245,158,11,0.12);
+  border-bottom-color: rgba(245,158,11,0.4);
+}
+.dark .dt-clue-pointable { outline-color: rgba(245,158,11,0.3); }
+.dark .dt-clue-pointable:hover { background-color: rgba(245,158,11,0.2); }
+
+.dt-toast {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+.dark .dt-toast {
+  background: rgba(245,158,11,0.9);
+  color: #000;
+  border-color: transparent;
+}
+
+/* Cyber overrides */
+[data-dt-theme="cyber"] .dt-clue-found {
+  background-color: rgba(0,255,170,0.1);
+  border-bottom: 2px solid rgba(0,255,170,0.5);
+  box-shadow: 0 0 6px rgba(0,255,170,0.1);
+}
+[data-dt-theme="cyber"] .dt-clue-pointable {
+  outline-color: rgba(0,255,170,0.35);
+}
+[data-dt-theme="cyber"] .dt-clue-pointable:hover {
+  background-color: rgba(0,255,170,0.18);
+  box-shadow: 0 0 10px rgba(0,255,170,0.15);
+}
+[data-dt-theme="cyber"] .dt-toast {
+  background: var(--dt-card);
+  color: var(--dt-text);
+  border: 1px solid rgba(0,255,170,0.25);
+  box-shadow: 0 0 16px rgba(0,255,170,0.08), 0 4px 12px rgba(0,0,0,0.3);
+}
+
 /* Scan sweep animation — 單次掃描（入場 / 掃描模式） */
 @keyframes scan-sweep { 0% { background-position: -100% 0 } 100% { background-position: 200% 0 } }
 .stem-scan {

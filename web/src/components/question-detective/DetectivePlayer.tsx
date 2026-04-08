@@ -6,13 +6,13 @@ import { GAME, DIALOGUE, ACHIEVEMENTS, pick } from './detective-config';
 
 // ── Shared components (outside to avoid remount) ──
 const DetectiveAvatar = () => (
-  <span className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-900/40 flex items-center justify-center text-base shrink-0 border border-cyan-200 dark:border-cyan-800/40">🕵️</span>
+  <span className="dt-avatar-detective w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">🕵️</span>
 );
 
 const TypingBubble = () => (
   <div className="flex gap-2.5 items-start max-w-[85%] bubble-in">
     <DetectiveAvatar />
-    <div className="rounded-2xl rounded-tl-sm px-5 py-3 bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10">
+    <div className="dt-bubble-detective rounded-2xl rounded-tl-sm px-5 py-3">
       <div className="typing-dots text-dt-text-muted flex gap-1"><span /><span /><span /></div>
     </div>
   </div>
@@ -21,7 +21,7 @@ const TypingBubble = () => (
 const DetectiveBubble = ({ children }: { children: React.ReactNode }) => (
   <div className="flex gap-2.5 items-start max-w-[85%] bubble-in">
     <DetectiveAvatar />
-    <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 text-base text-slate-700 dark:text-white/80 leading-relaxed">
+    <div className="dt-bubble-detective rounded-2xl rounded-tl-sm px-4 py-2.5 text-base leading-relaxed">
       {children}
     </div>
   </div>
@@ -29,8 +29,8 @@ const DetectiveBubble = ({ children }: { children: React.ReactNode }) => (
 
 const StudentBubble = ({ children }: { children: React.ReactNode }) => (
   <div className="flex gap-2.5 items-start max-w-[85%] ml-auto flex-row-reverse bubble-in">
-    <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-base shrink-0 border border-amber-200 dark:border-amber-800/30">🧑‍🎓</span>
-    <div className="rounded-2xl rounded-tr-sm px-4 py-2.5 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800/30 text-base text-slate-700 dark:text-white/80 leading-relaxed">
+    <span className="dt-avatar-student w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">🧑‍🎓</span>
+    <div className="dt-bubble-student rounded-2xl rounded-tr-sm px-4 py-2.5 text-base leading-relaxed">
       {children}
     </div>
   </div>
@@ -787,8 +787,8 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
   }, [question.answer, triggerWrongFeedback]);
 
   // ── Stem rendering ──
-  const clsFound = 'bg-amber-100 dark:bg-amber-500/20 border-b-2 border-amber-400 dark:border-amber-400/40';
-  const clsPointable = clsFound + ' cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-500/30 ring-1 ring-amber-300 dark:ring-amber-500/30';
+  const clsFound = 'dt-clue-found';
+  const clsPointable = 'dt-clue-found dt-clue-pointable';
   const clsDim = 'opacity-30';
   const isCluePhase = phase === 'clue' && !clueLocked;
   const isPointingPhase = phase === 'reasoning' && reasoningMode === 'pointing';
@@ -1176,7 +1176,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
       {/* Toast — fixed z-[60]，永遠在最頂層，不被 notebook backdrop 壓住 */}
       {toast && (
         <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4" style={{ top: headerH + 10 }}>
-          <div key={toastKey} className={`${toastPersist ? 'toast-persist' : 'toast-anim'} px-4 py-2 rounded-xl text-sm font-medium shadow-lg bg-amber-100 dark:bg-amber-500/90 text-amber-700 dark:text-black border border-amber-300 dark:border-transparent`}>
+          <div key={toastKey} className={`${toastPersist ? 'toast-persist' : 'toast-anim'} dt-toast px-4 py-2 rounded-xl text-sm font-medium shadow-lg`}>
             <RichText text={toast ?? undefined} />
           </div>
         </div>
