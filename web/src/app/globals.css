@@ -316,47 +316,32 @@ body {
   top: 0;
   border: 1px solid var(--det-border);
   border-bottom: none;
-  border-radius: 10px 10px 0 0;
+  border-radius: 8px 8px 0 0;
   padding: 6px 14px 4px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   height: 100%;
-  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
-  margin-right: -6px;
+  margin-right: -4px;
   overflow: hidden;
 }
 @media (min-width: 640px) {
   .folder-tab { padding: 6px 18px 4px; }
 }
-/* 右側厚度陰影（clip-path 會裁掉 box-shadow，用偽元素補） */
-.folder-tab::after {
-  content: '';
-  position: absolute;
-  top: 15%;
-  right: 0;
-  width: 3px;
-  height: 70%;
-  background: linear-gradient(to right, transparent, rgba(60,35,10,0.12));
-  pointer-events: none;
-}
-.dark .folder-tab::after {
-  background: linear-gradient(to right, transparent, rgba(0,0,0,0.25));
-}
 
-/* 三層遞減：前景最亮最高 → 背景最暗最低 */
-.folder-tab-1 { z-index: 3; box-shadow: 0 3px 10px rgba(60,35,10,0.2); }
-.folder-tab-2 { z-index: 2; box-shadow: 0 2px 6px rgba(60,35,10,0.14); filter: brightness(0.97); }
-.folder-tab-3 { z-index: 1; box-shadow: 0 1px 4px rgba(60,35,10,0.10); filter: brightness(0.94); }
+/* 三層遞減：前景最亮 → 背景最暗 */
+.folder-tab-1 { z-index: 3; box-shadow: 2px -1px 6px rgba(60,35,10,0.15); }
+.folder-tab-2 { z-index: 2; box-shadow: 2px -1px 4px rgba(60,35,10,0.10); filter: brightness(0.97); }
+.folder-tab-3 { z-index: 1; box-shadow: 1px -1px 3px rgba(60,35,10,0.08); filter: brightness(0.94); }
 
 /* 主動 tab：微抬起 */
 .tab-active {
   filter: brightness(1.01) !important;
-  box-shadow: 0 1px 2px rgba(255,255,255,0.3) inset, 0 4px 14px rgba(60,35,10,0.25) !important;
+  box-shadow: 2px -1px 8px rgba(60,35,10,0.2), 0 1px 2px rgba(255,255,255,0.25) inset !important;
   z-index: 10 !important;
 }
 
 .dark .folder-tab { border-color: rgba(140,120,80,0.1); }
-.dark .folder-tab-1 { box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+.dark .folder-tab-1 { box-shadow: 2px -1px 8px rgba(0,0,0,0.35); }
 .dark .folder-tab-2 { filter: brightness(0.9); }
 .dark .folder-tab-3 { filter: brightness(0.82); }
 
