@@ -519,10 +519,16 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
   // Auto-scroll：兩階段（模擬真實聊天室）
   // 1) 新泡泡出現 → 滾到底（看到打字 ···）
   // 2) 打字結束 → 再滾一次（內容展開後高度變了）
-  const scrollToBottom = useCallback(() => {
-    const el = chatScrollRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  // 滾到最後一個泡泡剛好可見（不超過內容底部）
+  const scrollToLatest = useCallback(() => {
+    const container = chatScrollRef.current;
+    const anchor = chatEndRef.current;
+    if (!container || !anchor) return;
+    // 找 anchor 前面最後一個泡泡元素
+    const lastBubble = anchor.previousElementSibling as HTMLElement | null;
+    if (lastBubble) {
+      lastBubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   }, []);
 
   useEffect(() => {
@@ -531,8 +537,8 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
       const t = setTimeout(() => solutionTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), GAME.scrollDelay);
       return () => clearTimeout(t);
     }
-    const t1 = setTimeout(scrollToBottom, GAME.scrollDelay);
-    const t2 = setTimeout(scrollToBottom, GAME.scrollDelay + GAME.typingDelay.long + 100);
+    const t1 = setTimeout(scrollToLatest, GAME.scrollDelay);
+    const t2 = setTimeout(scrollToLatest, GAME.scrollDelay + GAME.typingDelay.long + 100);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [phase, foundClues.size, chatEvents.length, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
