@@ -900,40 +900,25 @@ body {
   pointer-events: none;
 }
 
-/* Classic: 做舊泛黃 + 暗角 */
-:where(:not([data-dt-theme])) .case-photo,
-[data-dt-theme="classic"] .case-photo {
-  filter: sepia(0.65) saturate(0.72) contrast(1.1);
+/* Classic: 做舊泛黃 + 暗角（預設 + classic 明確指定） */
+.case-photo {
+  filter: var(--dt-photo-filter, sepia(0.65) saturate(0.72) contrast(1.1));
 }
-:where(:not([data-dt-theme])) .case-photo::after,
-[data-dt-theme="classic"] .case-photo::after {
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(80,55,20,0.18) 100%);
-  mix-blend-mode: multiply;
+.case-photo::after {
+  background: var(--dt-photo-overlay, radial-gradient(ellipse at center, transparent 55%, rgba(80,55,20,0.18) 100%));
+  mix-blend-mode: var(--dt-photo-blend, multiply);
 }
-@media (prefers-color-scheme: dark) {
-  :where(:not([data-dt-theme])) .case-photo { filter: sepia(0.55) saturate(0.65) contrast(1.08) brightness(0.82); }
-}
-.dark :where(:not([data-dt-theme])) .case-photo,
-.dark [data-dt-theme="classic"] .case-photo {
-  filter: sepia(0.55) saturate(0.65) contrast(1.08) brightness(0.82);
+:where(.dark) .case-photo {
+  --dt-photo-filter: sepia(0.55) saturate(0.65) contrast(1.08) brightness(0.82);
 }
 
 /* Cyber: 全息投影風 — 泛綠 + 掃描線雜訊 */
 [data-dt-theme="cyber"] .case-photo {
-  filter: saturate(0.5) brightness(0.85) contrast(1.2) hue-rotate(120deg);
+  --dt-photo-filter: saturate(0.5) brightness(0.85) contrast(1.2) hue-rotate(120deg);
+  --dt-photo-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,170,0.05) 2px, rgba(0,255,170,0.05) 3px), radial-gradient(ellipse at center, transparent 40%, rgba(0,255,170,0.1) 100%);
+  --dt-photo-blend: screen;
   border: 1px solid rgba(0,255,170,0.3);
   box-shadow: 0 0 14px rgba(0,255,170,0.12), 0 0 2px rgba(0,255,170,0.5);
-}
-[data-dt-theme="cyber"] .case-photo::after {
-  background:
-    /* 水平掃描線 */
-    repeating-linear-gradient(0deg,
-      transparent, transparent 2px,
-      rgba(0,255,170,0.05) 2px, rgba(0,255,170,0.05) 3px
-    ),
-    /* 角落泛綠光暈 */
-    radial-gradient(ellipse at center, transparent 40%, rgba(0,255,170,0.1) 100%);
-  mix-blend-mode: screen;
 }
 /* Cyber: 照片外框 → 深色面板 + 霓虹邊 */
 [data-dt-theme="cyber"] .dt-photo {
