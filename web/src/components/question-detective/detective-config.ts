@@ -143,11 +143,11 @@ export const DIALOGUE = {
  *        auxFound=找到輔助線索數, auxTotal=輔助線索總數
  */
 export const ACHIEVEMENTS = [
-  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues === total && misses === 0 && wrongs === 0 && auxFound === auxTotal, label: '完美偵探 🏆', color: 'text-amber-600 dark:text-amber-300' },
-  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues === total && misses === 0 && wrongs === 0 && auxTotal > 0 && auxFound < auxTotal, label: '優秀偵探 🔍', color: 'text-cyan-600 dark:text-cyan-300' },
-  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues >= total * 0.75, label: '觀察敏銳', color: 'text-emerald-600 dark:text-emerald-300' },
-  { check: (_c: number, _t: number, _m: number, _w: number, _a: number, _at: number, gameOver: boolean) => gameOver, label: '偵探接管結案', color: 'text-red-400 dark:text-red-400' },
-  { check: () => true, label: '下次再仔細看看', color: 'text-slate-400 dark:text-white/40' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues === total && misses === 0 && wrongs === 0 && auxFound === auxTotal, label: '完美偵探 🏆', color: 'text-dt-clue' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues === total && misses === 0 && wrongs === 0 && auxTotal > 0 && auxFound < auxTotal, label: '優秀偵探 🔍', color: 'text-dt-scan' },
+  { check: (clues: number, total: number, misses: number, wrongs: number, auxFound: number, auxTotal: number, gameOver: boolean) => !gameOver && clues >= total * 0.75, label: '觀察敏銳', color: 'text-dt-success' },
+  { check: (_c: number, _t: number, _m: number, _w: number, _a: number, _at: number, gameOver: boolean) => gameOver, label: '偵探接管結案', color: 'text-dt-error' },
+  { check: () => true, label: '下次再仔細看看', color: 'text-dt-text-muted' },
 ];
 
 /** 隨機選一個 */

@@ -13,6 +13,12 @@ export default function Page() {
   const [question, setQuestion] = useState<DetectiveQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [theme, setTheme] = useState('classic');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('dt-theme');
+    if (saved) setTheme(saved);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,17 +49,17 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-stone-100 dark:bg-zinc-900 flex items-center justify-center">
-        <div className="text-slate-400 dark:text-white/40 text-sm">載入案件中…</div>
+      <div className="min-h-[100dvh] detective-paper text-dt-text flex items-center justify-center" data-dt-theme={theme}>
+        <div className="text-dt-text-muted text-sm">載入案件中…</div>
       </div>
     );
   }
 
   if (error || !question) {
     return (
-      <div className="min-h-[100dvh] bg-stone-100 dark:bg-zinc-900 flex flex-col items-center justify-center gap-3">
-        <div className="text-slate-500 dark:text-white/50 text-sm">找不到這份案件</div>
-        <button onClick={() => router.push('/question-detective')} className="text-blue-500 text-sm hover:underline">返回檔案室</button>
+      <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col items-center justify-center gap-3" data-dt-theme={theme}>
+        <div className="text-dt-text-secondary text-sm">找不到這份案件</div>
+        <button onClick={() => router.push('/question-detective')} className="text-dt-scan text-sm hover:underline">返回檔案室</button>
       </div>
     );
   }
