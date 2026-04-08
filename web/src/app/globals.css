@@ -252,8 +252,19 @@ body {
 [data-dt-theme="cyber"] .notebook-paper {
   background-color: var(--dt-card);
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(0,255,170,0.05) 27px, rgba(0,255,170,0.05) 28px);
-  box-shadow: 0 0 40px rgba(0,255,170,0.08), 0 8px 32px rgba(0,0,0,0.5);
+    /* 微光網格 */
+    linear-gradient(0deg, rgba(0,255,170,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,170,0.04) 1px, transparent 1px),
+    /* 頂部掃描光暈 */
+    radial-gradient(ellipse at 50% 0%, rgba(0,255,170,0.06), transparent 50%),
+    /* 角落漸層 */
+    radial-gradient(ellipse at 100% 100%, rgba(255,0,200,0.03), transparent 50%);
+  background-size: 20px 20px, 20px 20px, 100% 100%, 100% 100%;
+  box-shadow:
+    0 0 1px rgba(0,255,170,0.3),
+    0 0 40px rgba(0,255,170,0.06),
+    0 8px 32px rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,255,170,0.1);
 }
 .dt-notebook-shadow {
   box-shadow: 6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1);
