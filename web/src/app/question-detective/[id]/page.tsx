@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { DetectiveGamePage } from '@/components/question-detective/DetectiveGamePage';
 import { fetchQuestionDetail } from '@/data/detective-questions/api';
 import { ALL_QUESTIONS } from '@/data/detective-questions';
@@ -13,12 +13,15 @@ export default function Page() {
   const [question, setQuestion] = useState<DetectiveQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const searchParams = useSearchParams();
   const [theme, setTheme] = useState('classic');
 
   useEffect(() => {
+    const fromUrl = searchParams.get('theme');
+    if (fromUrl) { setTheme(fromUrl); localStorage.setItem('dt-theme', fromUrl); return; }
     const saved = localStorage.getItem('dt-theme');
     if (saved) setTheme(saved);
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;
