@@ -1,29 +1,37 @@
 // ── 題目偵探：集中設定檔 ──
 // 新增題目只需要加 JSON，這裡控制遊戲參數、台詞、成就判定。
 
-/** 遊戲參數 */
+/** 遊戲參數（所有 magic number 集中管理，Player 不應出現裸數字） */
 export const GAME = {
   maxLives: 5,
   typingDelay: { short: 500, medium: 800, long: 1200, intro: 3000 } as const,
-  scanDuration: 4000,
   scrollDelay: 300,
-  reasoningAdvanceDelay: 600,
-  answerAdvanceDelay: 800,
   toastDuration: 4000,
 
-  // [NEW] 掃描器（放大鏡模式）
-  // scanActiveDuration：按下掃描鈕後，掃描高亮持續幾毫秒
-  // scanCooldown：掃描鈕冷卻時間（毫秒），防止連續觸發
-  scanActiveDuration: 11600,
-  scanSweepDuration: 3600,  // 播放兩次 (1.8s * 2) 結束後才亮起呼吸高光
-  scanInitialUses: 1,
-  scanNudgeDelay: 15000,    // 15 秒無操作：提示玩家
-  scanAutoExitDelay: 30000, // 30 秒無操作：自動退出掃描模式
+  // 階段轉場延遲
+  reasoningAdvanceDelay: 600,   // 推理答對 → 下一題
+  reasoningSkipDelay: 500,      // 無推理線索 → 跳至 answer
+  answerAdvanceDelay: 800,      // 答對/推理完 → 下一階段
+  gameOverDelay: 1800,          // game over → solution 延遲
 
-  // [NEW] 憐憫機制：連續失誤幾次後觸發高價值提示
-  // pityScanThreshold = 3 → 第 3 次連續失誤時觸發
-  // 「連續」的定義：命中真實線索或 context 區域可重置計數器；noise 與空白失誤會累計
-  pityScanThreshold: 3,
+  // 閒置提示
+  idleDelay: 8000,              // 無操作多久後觸發閒置提示
+  scaffoldPulseTimeout: 30000,  // 鷹架跳動最長持續時間
+
+  // 掃描器（放大鏡模式）
+  scanSweepDuration: 3600,      // 掃光動畫時間（1.8s × 2）
+  scanInitialUses: 1,
+  scanNudgeDelay: 15000,        // 掃描中無操作提示延遲
+  scanAutoExitDelay: 30000,     // 掃描中無操作自動退出
+
+  // 動畫時間
+  notebookCloseDuration: 260,   // 筆記本關閉動畫
+  pointingFlashDuration: 900,   // 指認階段題幹閃爍
+  clueFlightDuration: 560,      // 線索飛向筆記本動畫
+  lifeLossFeedbackDuration: 1000, // 扣血 "-1" 動畫
+
+  // 憐憫機制
+  pityScanThreshold: 3,         // 連續失誤幾次觸發提示
 };
 
 /** 偵探台詞（可替換語氣/語言） */
@@ -82,7 +90,6 @@ export const DIALOGUE = {
 
   // [NEW] 掃描器台詞
   scanActivate: '🔍 掃描模式啟動，注意高亮的區域。',
-  scanCooldownMsg: '掃描器冷卻中…',
   scanMissProtected: '掃描中，先別亂動——仔細看清楚再出手。',
   scanUsedUp: '掃描次數已用完（找到輔助線索可補充）',
   scanNudge: '💡 發光的地方藏著線索，試著點點看！',

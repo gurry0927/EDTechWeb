@@ -252,10 +252,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [isClosing, setIsClosing] = useState(false);
   const closingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // [NEW] 掃描器狀態
-  // activeScanning = true 時，題幹 <p> 套用 "stem-scan" class（已有），並顯示 magnifier overlay
-  // 按下掃描鈕後 GAME.scanActiveDuration ms 自動關閉
-  // scanOnCooldown = true 時，掃描鈕顯示灰色並禁用，避免連續觸發
+  // 掃描器狀態
   const [activeScanning, setActiveScanning] = useState(false);
 
   const [stemExpanded, setStemExpanded] = useState(false);
@@ -280,7 +277,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     idleTimerRef.current = setTimeout(() => {
       setIdleShimmer(true);
       if (withToast) showPersistToast('👆 點擊上方証詞中可疑的字詞！');
-    }, 8000);
+    }, GAME.idleDelay);
   }, [showPersistToast]);
 
   // 筆記本關閉後用：不清 shimmer（若已啟動則繼續），只重啟計時器
@@ -289,7 +286,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     idleTimerRef.current = setTimeout(() => {
       setIdleShimmer(true);
       if (withToast) showPersistToast('👆 點擊上方証詞中可疑的字詞！');
-    }, 8000);
+    }, GAME.idleDelay);
   }, [showPersistToast]);
 
   // 進場後啟動 idle timer（附 toast）；首次點擊或離開 clue phase 後清除
@@ -340,7 +337,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   useEffect(() => {
     if (reasoningMode !== 'pointing') return;
     setPointingFlash(true);
-    const t = setTimeout(() => setPointingFlash(false), 900);
+    const t = setTimeout(() => setPointingFlash(false), GAME.pointingFlashDuration);
     return () => clearTimeout(t);
   }, [reasoningMode]);
 
@@ -351,7 +348,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     if (foundClues.size === 0) {
       setTimeout(() => {
         detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
+      }, GAME.scrollDelay);
     }
     // 掃光結束後才亮起呼吸高光
     const highlightTimer = setTimeout(() => setScanHighlight(true), GAME.scanSweepDuration);
@@ -433,7 +430,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       setScaffoldPulse(false);
       return;
     }
-    const t = setTimeout(() => setScaffoldPulse(false), 30000);
+    const t = setTimeout(() => setScaffoldPulse(false), GAME.scaffoldPulseTimeout);
     return () => clearTimeout(t);
   }, [scaffoldPulse, foundClues.size, seenContextRegions.size]);
 
@@ -519,7 +516,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     return () => clearTimeout(t);
   }, [phase, foundClues.size, chatEvents.length, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
-  useEffect(() => { if (gameOver) { const t = setTimeout(() => setPhase('solution'), 1800); return () => clearTimeout(t); } }, [gameOver]);
+  useEffect(() => { if (gameOver) { const t = setTimeout(() => setPhase('solution'), GAME.gameOverDelay); return () => clearTimeout(t); } }, [gameOver]);
 
   // ── Handlers ──
   const [clueFlyer, setClueFlyer] = useState<{ x: number, y: number, kfId: string } | null>(null);
@@ -534,7 +531,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     const y = e ? e.clientY : window.innerHeight / 2;
     const newId = Date.now();
     setLifeLossFeedbacks(prev => [...prev, { id: newId, x, y }]);
-    setTimeout(() => setLifeLossFeedbacks(prev => prev.filter(f => f.id !== newId)), 1000);
+    setTimeout(() => setLifeLossFeedbacks(prev => prev.filter(f => f.id !== newId)), GAME.lifeLossFeedbackDuration);
   }, []);
 
   // 共用飛行觸發：動態注入 @keyframes（避免 var() 在 keyframes 的相容問題）
@@ -564,7 +561,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       document.getElementById(kfId)?.remove();
       setClueFlyer(null);
       setNotebookShakeKey(prev => prev + 1);
-    }, 560);
+    }, GAME.clueFlightDuration);
   }, []);
 
   const onClueHit = useCallback((idx: number, e?: React.MouseEvent) => {
@@ -681,7 +678,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
       setIsClosing(false);
       closingTimerRef.current = null;
       if (foundClues.size === 0 && seenContextRegions.size === 0) startIdleTimer(true);
-    }, 260);
+    }, GAME.notebookCloseDuration);
   }, [foundClues.size, seenContextRegions.size, startIdleTimer]);
 
   // cleanup closingTimer on unmount
@@ -692,7 +689,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   // P0 fix: reasoningClues 為空時自動跳至 answer（原本用 render 內 IIFE + setTimeout，違反 React 規則）
   useEffect(() => {
     if (phase !== 'reasoning' || reasoningClues.length > 0) return;
-    const t = setTimeout(() => setPhase('answer'), 500);
+    const t = setTimeout(() => setPhase('answer'), GAME.reasoningSkipDelay);
     return () => clearTimeout(t);
   }, [phase, reasoningClues.length]);
   // 共用推理按鈕樣式：footer（小）與筆記本（大）同色同形，尺寸透過 padding 區分
@@ -1328,7 +1325,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             {phase === 'clue' && !gameOver && (allCriticalFound || clueLocked) && (
               <div className="shrink-0 px-6 py-3 flex justify-center">
                 <button
-                  onClick={() => { closeNotebook(); setTimeout(enterReasoning, 280); }}
+                  onClick={() => { closeNotebook(); setTimeout(enterReasoning, GAME.notebookCloseDuration + 20); }}
                   className={`${reasoningBtnBase} text-sm px-8 py-2.5`}
                 >
                   {allCriticalFound ? DIALOGUE.clueReady : DIALOGUE.clueForceAdvance}
