@@ -239,6 +239,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
   const showToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); setToastPersist(false); }, []);
   const showPersistToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); setToastPersist(true); }, []);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const solutionTopRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const clueTabRef = useRef<HTMLButtonElement>(null);
   const [headerH, setHeaderH] = useState(0);
@@ -510,8 +511,10 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
   }, [question.figure, question.figureTokens, question.scaffolding, figureClues, scaffoldingWithIdx, stemBlankCount]);
 
   // Auto-scroll & auto-advance
+  // solution 階段滾到解析開頭（讓使用者從上往下讀），其他階段滾到底部
   useEffect(() => {
-    const t = setTimeout(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, GAME.scrollDelay);
+    const target = phase === 'solution' ? solutionTopRef.current : chatEndRef.current;
+    const t = setTimeout(() => { target?.scrollIntoView({ behavior: 'smooth' }); }, GAME.scrollDelay);
     return () => clearTimeout(t);
   }, [phase, foundClues.size, chatEvents.length, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
@@ -1062,6 +1065,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
 
         {phase === 'solution' && (
           <>
+            <div ref={solutionTopRef} />
             {lives <= 0 && (
               <div className="text-xs font-bold text-dt-error text-center tracking-wider py-1">{DIALOGUE.solutionGameOver}</div>
             )}
