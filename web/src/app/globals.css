@@ -258,7 +258,7 @@ body {
 .dt-notebook-shadow {
   box-shadow: 6px 10px 36px rgba(80,60,30,0.22), 2px 4px 12px rgba(80,60,30,0.1);
 }
-.dark .dt-notebook-shadow {
+:where(.dark) .dt-notebook-shadow {
   box-shadow: 6px 10px 36px rgba(0,0,0,0.4), 2px 4px 12px rgba(0,0,0,0.2);
 }
 [data-dt-theme="cyber"] .dt-notebook-shadow {
@@ -340,7 +340,7 @@ body {
   background: rgba(255,255,255,0.8); color: #64748b; border: 1px solid #e2e8f0;
 }
 .dt-btn-secondary:hover { color: #334155; }
-.dark .dt-btn-secondary {
+:where(.dark) .dt-btn-secondary {
   background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1);
 }
 
@@ -348,7 +348,7 @@ body {
   border: 1px solid rgba(6,182,212,0.35); color: var(--dt-scan);
 }
 .dt-btn-scan:hover { background: rgba(6,182,212,0.08); }
-.dark .dt-btn-scan { border-color: rgba(6,182,212,0.2); }
+:where(.dark) .dt-btn-scan { border-color: rgba(6,182,212,0.2); }
 
 [data-dt-theme="cyber"] .dt-btn-primary {
   background: rgba(0,255,170,0.15); color: #00ffaa; border-color: rgba(0,255,170,0.4);
@@ -374,7 +374,7 @@ body {
 .dt-badge-concept {
   background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;
 }
-.dark .dt-badge-concept {
+:where(.dark) .dt-badge-concept {
   background: rgba(16,185,129,0.15); color: #6ee7b7; border-color: rgba(16,185,129,0.3);
 }
 [data-dt-theme="cyber"] .dt-badge-concept {
@@ -386,7 +386,7 @@ body {
 .dt-card-achievement {
   background: #f5f3ff; border: 1px solid #ddd6fe;
 }
-.dark .dt-card-achievement {
+:where(.dark) .dt-card-achievement {
   background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.12);
 }
 [data-dt-theme="cyber"] .dt-card-achievement {
@@ -398,7 +398,7 @@ body {
 .dt-bubble-context {
   background: rgba(240,249,255,0.7); border: 1px solid rgba(186,230,253,0.6); color: #64748b;
 }
-.dark .dt-bubble-context {
+:where(.dark) .dt-bubble-context {
   background: rgba(14,165,233,0.06); border-color: rgba(14,165,233,0.12); color: rgba(255,255,255,0.55);
 }
 [data-dt-theme="cyber"] .dt-bubble-context {
@@ -410,7 +410,7 @@ body {
 .dt-bubble-pity {
   background: #fffbeb; border: 1px solid rgba(252,211,77,0.5); color: rgba(180,130,20,0.8);
 }
-.dark .dt-bubble-pity {
+:where(.dark) .dt-bubble-pity {
   background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); color: rgba(251,191,36,0.8);
 }
 [data-dt-theme="cyber"] .dt-bubble-pity {
@@ -423,18 +423,18 @@ body {
   border: 1px solid #e2e8f0; background: white;
 }
 .dt-choice:hover { border-color: #06b6d4; background: rgba(6,182,212,0.05); }
-.dark .dt-choice { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
-.dark .dt-choice:hover { border-color: rgba(6,182,212,0.4); background: rgba(6,182,212,0.06); }
+:where(.dark) .dt-choice { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+:where(.dark) .dt-choice:hover { border-color: rgba(6,182,212,0.4); background: rgba(6,182,212,0.06); }
 
 .dt-choice-wrong {
   border: 1px solid #f87171; background: #fef2f2; color: #b91c1c;
 }
-.dark .dt-choice-wrong { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.06); color: #fca5a5; }
+:where(.dark) .dt-choice-wrong { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.06); color: #fca5a5; }
 
 .dt-choice-letter { background: #f1f5f9; color: #64748b; }
-.dark .dt-choice-letter { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+:where(.dark) .dt-choice-letter { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
 .dt-choice-letter-wrong { background: #fecaca; color: #f87171; }
-.dark .dt-choice-letter-wrong { background: rgba(239,68,68,0.15); }
+:where(.dark) .dt-choice-letter-wrong { background: rgba(239,68,68,0.15); }
 
 [data-dt-theme="cyber"] .dt-choice {
   border-color: var(--dt-border); background: var(--dt-card);
@@ -450,7 +450,7 @@ body {
 
 /* ── 照片 / 圖標按鈕 ── */
 .dt-photo { background: white; }
-.dark .dt-photo { background: rgba(255,255,255,0.9); }
+:where(.dark) .dt-photo { background: rgba(255,255,255,0.9); }
 [data-dt-theme="cyber"] .dt-photo {
   background: var(--dt-card); border: 1px solid var(--dt-border);
 }
@@ -459,8 +459,8 @@ body {
   background: #f1f5f9; color: #94a3b8;
 }
 .dt-btn-icon:hover { color: #475569; }
-.dark .dt-btn-icon { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
-.dark .dt-btn-icon:hover { color: rgba(255,255,255,0.7); }
+:where(.dark) .dt-btn-icon { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+:where(.dark) .dt-btn-icon:hover { color: rgba(255,255,255,0.7); }
 [data-dt-theme="cyber"] .dt-btn-icon {
   background: rgba(0,255,170,0.06); color: rgba(0,255,170,0.4);
 }
@@ -468,14 +468,14 @@ body {
 
 /* ── 筆記本：線索卡片 ── */
 .dt-nb-clue-found { border: 1px solid rgba(16,185,129,0.25); background: rgba(16,185,129,0.06); }
-.dark .dt-nb-clue-found { border-color: rgba(16,185,129,0.15); background: rgba(16,185,129,0.06); }
+:where(.dark) .dt-nb-clue-found { border-color: rgba(16,185,129,0.15); background: rgba(16,185,129,0.06); }
 .dt-nb-clue-locked { border: 1px solid #f1f5f9; background: rgba(248,250,252,0.5); }
-.dark .dt-nb-clue-locked { border-color: rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
+:where(.dark) .dt-nb-clue-locked { border-color: rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
 
 .dt-nb-num-found { background: #d1fae5; color: #065f46; }
-.dark .dt-nb-num-found { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+:where(.dark) .dt-nb-num-found { background: rgba(16,185,129,0.15); color: #6ee7b7; }
 .dt-nb-num-locked { background: #f1f5f9; color: var(--dt-text-muted); }
-.dark .dt-nb-num-locked { background: rgba(255,255,255,0.1); }
+:where(.dark) .dt-nb-num-locked { background: rgba(255,255,255,0.1); }
 
 [data-dt-theme="cyber"] .dt-nb-clue-found { border-color: rgba(0,255,170,0.2); background: rgba(0,255,170,0.05); }
 [data-dt-theme="cyber"] .dt-nb-clue-locked { border-color: var(--dt-border); background: rgba(0,255,170,0.02); }
@@ -484,13 +484,13 @@ body {
 
 /* ── 筆記本：提示區塊 + 事件條 ── */
 .dt-nb-hint-block { background: rgba(255,251,235,0.6); border: 1px solid rgba(252,211,77,0.4); }
-.dark .dt-nb-hint-block { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.15); }
+:where(.dark) .dt-nb-hint-block { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.15); }
 [data-dt-theme="cyber"] .dt-nb-hint-block { background: rgba(255,212,59,0.04); border-color: rgba(255,212,59,0.15); }
 
 .dt-nb-event-clue { color: #0e7490; background: rgba(236,254,255,0.5); border: 1px solid rgba(186,230,253,0.5); }
-.dark .dt-nb-event-clue { color: rgba(103,232,249,0.8); background: rgba(6,182,212,0.08); border-color: rgba(6,182,212,0.15); }
+:where(.dark) .dt-nb-event-clue { color: rgba(103,232,249,0.8); background: rgba(6,182,212,0.08); border-color: rgba(6,182,212,0.15); }
 .dt-nb-event-pity { color: #92400e; background: rgba(255,251,235,0.6); border: 1px solid rgba(252,211,77,0.5); }
-.dark .dt-nb-event-pity { color: rgba(251,191,36,0.8); background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.15); }
+:where(.dark) .dt-nb-event-pity { color: rgba(251,191,36,0.8); background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.15); }
 
 [data-dt-theme="cyber"] .dt-nb-event-clue { color: #00ffaa; background: rgba(0,255,170,0.04); border-color: rgba(0,255,170,0.12); }
 [data-dt-theme="cyber"] .dt-nb-event-pity { color: #ffd43b; background: rgba(255,212,59,0.04); border-color: rgba(255,212,59,0.12); }
@@ -504,8 +504,8 @@ body {
   background: rgba(245,158,11,0.12);
   border: 1px solid rgba(245,158,11,0.25);
 }
-.dark .dt-avatar-detective { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.2); }
-.dark .dt-avatar-student { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
+:where(.dark) .dt-avatar-detective { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.2); }
+:where(.dark) .dt-avatar-student { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); }
 
 [data-dt-theme="cyber"] .dt-avatar-detective {
   background: rgba(0,255,170,0.1);
@@ -524,7 +524,7 @@ body {
   border: 1px solid #e2e8f0;
   color: #334155;
 }
-.dark .dt-bubble-detective {
+:where(.dark) .dt-bubble-detective {
   background: rgba(255,255,255,0.06);
   border-color: rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.8);
@@ -534,7 +534,7 @@ body {
   border: 1px solid #a5f3fc;
   color: #334155;
 }
-.dark .dt-bubble-student {
+:where(.dark) .dt-bubble-student {
   background: rgba(6,182,212,0.08);
   border-color: rgba(6,182,212,0.15);
   color: rgba(255,255,255,0.8);
@@ -564,19 +564,19 @@ body {
   outline-offset: -1px;
 }
 .dt-clue-pointable:hover { background-color: rgba(245,158,11,0.25); }
-.dark .dt-clue-found {
+:where(.dark) .dt-clue-found {
   background-color: rgba(245,158,11,0.12);
   border-bottom-color: rgba(245,158,11,0.4);
 }
-.dark .dt-clue-pointable { outline-color: rgba(245,158,11,0.3); }
-.dark .dt-clue-pointable:hover { background-color: rgba(245,158,11,0.2); }
+:where(.dark) .dt-clue-pointable { outline-color: rgba(245,158,11,0.3); }
+:where(.dark) .dt-clue-pointable:hover { background-color: rgba(245,158,11,0.2); }
 
 .dt-toast {
   background: #fef3c7;
   color: #92400e;
   border: 1px solid #fcd34d;
 }
-.dark .dt-toast {
+:where(.dark) .dt-toast {
   background: rgba(245,158,11,0.9);
   color: #000;
   border-color: transparent;
@@ -584,16 +584,17 @@ body {
 
 /* Cyber overrides */
 [data-dt-theme="cyber"] .dt-clue-found {
-  background-color: rgba(0,255,170,0.1);
+  background-color: rgba(0,255,170,0.12);
   border-bottom: 2px solid rgba(0,255,170,0.5);
-  box-shadow: 0 0 6px rgba(0,255,170,0.1);
+  box-shadow: 0 0 8px rgba(0,255,170,0.12);
+  color: var(--dt-text);
 }
 [data-dt-theme="cyber"] .dt-clue-pointable {
-  outline-color: rgba(0,255,170,0.35);
+  outline-color: rgba(0,255,170,0.4);
 }
 [data-dt-theme="cyber"] .dt-clue-pointable:hover {
-  background-color: rgba(0,255,170,0.18);
-  box-shadow: 0 0 10px rgba(0,255,170,0.15);
+  background-color: rgba(0,255,170,0.2);
+  box-shadow: 0 0 12px rgba(0,255,170,0.18);
 }
 [data-dt-theme="cyber"] .dt-toast {
   background: var(--dt-card);
@@ -625,7 +626,7 @@ body {
   padding: 0 1px;
   transition: none;
 }
-.dark .scaffold-pulse {
+:where(.dark) .scaffold-pulse {
   background-color: rgba(245,158,11,0.1);
   border-bottom-color: rgba(245,158,11,0.4);
 }
