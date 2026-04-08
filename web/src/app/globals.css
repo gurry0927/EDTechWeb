@@ -488,6 +488,8 @@ body {
 .dt-nb-num-locked { background: #f1f5f9; color: var(--dt-text-muted); }
 :where(.dark) .dt-nb-num-locked { background: rgba(255,255,255,0.1); }
 
+.dt-nb-clue-glow { box-shadow: 0 0 10px rgba(52,211,153,0.12); }
+[data-dt-theme="cyber"] .dt-nb-clue-glow { box-shadow: 0 0 12px rgba(0,255,170,0.15); }
 [data-dt-theme="cyber"] .dt-nb-clue-found { border-color: rgba(0,255,170,0.2); background: rgba(0,255,170,0.05); }
 [data-dt-theme="cyber"] .dt-nb-clue-locked { border-color: var(--dt-border); background: rgba(0,255,170,0.02); }
 [data-dt-theme="cyber"] .dt-nb-num-found { background: rgba(0,255,170,0.12); color: #00ffaa; }

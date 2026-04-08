@@ -873,7 +873,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
 
         {/* Case-file 浮卡：左右 padding 露出木紋，底部 pb 露出木紋投影 */}
         <div className="max-w-2xl mx-auto px-4 pb-4">
-          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-amber-400/70 ring-inset' : ''} ${pointingFlash ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.5)]' : ''}`}>
+          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-dt-clue/70 ring-inset' : ''} ${pointingFlash ? 'shadow-[0_0_0_4px_rgba(251,191,36,0.5)]' : ''}`}>
             <div className="px-4 pt-3 pb-4 space-y-2">
               {isPointingPhase
                 ? (
@@ -965,7 +965,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                 <S>我覺得「{clue.text}」很可疑。</S>
                 <TypedDetective delay="medium">
                   {event.reaction}
-                  <span className={`font-medium ${isAux ? 'text-cyan-700 dark:text-cyan-300' : 'text-dt-clue'}`}>「{clue.text}」</span>
+                  <span className={`font-medium ${isAux ? 'text-dt-scan' : 'text-dt-clue'}`}>「{clue.text}」</span>
                   {' — '}{hasTeaser ? <RichText text={clue.teaser} /> : <RichText text={clue.why} />}
                   {hasTeaser && <><br/><span className="text-dt-scan text-sm">{isAux ? DIALOGUE.auxiliaryNotebookCTA : DIALOGUE.clueNotebookCTA}</span></>}
                 </TypedDetective>
@@ -1097,7 +1097,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
             <D>{question.concept.brief}</D>
             {question.questions.length > 0 && (
               <D>
-                <span className="text-sm text-slate-400 dark:text-white/35">{DIALOGUE.solutionExtendLabel}</span><br/>
+                <span className="text-sm text-dt-text-muted">{DIALOGUE.solutionExtendLabel}</span><br/>
                 {question.questions.map((q, i) => <span key={i} className="block mt-1">{q.prompt}</span>)}
               </D>
             )}
@@ -1202,7 +1202,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
             {/* Header — shrink-0，固定不捲動，背景透明讓父層橫線穿透 */}
             <div className="shrink-0 max-w-xl mx-auto w-full px-6 pt-3 pb-3 border-b border-black/5 dark:border-white/5">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-xl text-slate-700 dark:text-white/80 flex items-center gap-2">
+                <h2 className="font-bold text-xl text-dt-text flex items-center gap-2">
                   <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
                 </h2>
                 <button onClick={closeNotebook}
@@ -1252,11 +1252,11 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                       <div>
                         <h3 className={`text-xs font-bold uppercase tracking-widest mb-2 border-b pb-1 transition-colors duration-500 ${
                           canIdentify
-                            ? 'text-emerald-600/60 dark:text-emerald-400/50 border-emerald-200/40 dark:border-emerald-600/20'
-                            : 'text-slate-400/60 dark:text-white/20 border-slate-100/60 dark:border-white/5'
+                            ? 'text-dt-success/60 border-dt-success/20'
+                            : 'text-dt-text-muted/60 border-dt-border'
                         }`}>
                           嫌疑犯名單
-                          {canIdentify && <span className="ml-2 text-emerald-500">✓ 可指認</span>}
+                          {canIdentify && <span className="ml-2 text-dt-success">✓ 可指認</span>}
                         </h3>
                         <ul className="space-y-1">
                           {question.options.map((opt, i) => {
@@ -1270,10 +1270,9 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                                 }}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all duration-500 ${
                                   canIdentify
-                                    ? 'dt-nb-clue-found cursor-default'
+                                    ? 'dt-nb-clue-found dt-nb-clue-glow cursor-default'
                                     : 'dt-nb-clue-locked cursor-pointer'
                                 }`}
-                                style={{ boxShadow: canIdentify ? '0 0 10px rgba(52,211,153,0.12)' : 'none' }}
                               >
                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-500 ${
                                   canIdentify
@@ -1281,7 +1280,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                                     : 'dt-nb-num-locked'
                                 }`}>{letter}</span>
                                 <span
-                                  className="text-slate-600 dark:text-white/60 leading-snug transition-all duration-700 select-none"
+                                  className="text-dt-text-secondary leading-snug transition-all duration-700 select-none"
                                   style={{ filter: blurPx > 0 ? `blur(${blurPx}px)` : 'none' }}
                                 >{opt}</span>
                               </li>
@@ -1293,7 +1292,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                   })()}
 
                   <div>
-                    <h3 className="text-xs font-bold text-red-800/40 dark:text-red-400/30 uppercase tracking-widest mb-3 border-b border-red-800/10 dark:border-red-400/10 pb-1">
+                    <h3 className="text-xs font-bold text-dt-accent/40 uppercase tracking-widest mb-3 border-b border-dt-accent/10 pb-1">
                       {DIALOGUE.notebookCluesSection} ({foundClues.size}/{totalClues})
                     </h3>
                     {foundClues.size === 0 ? (
@@ -1301,8 +1300,8 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                         <p className="text-sm text-dt-text-muted italic">{DIALOGUE.notebookEmpty}</p>
                         {question.startHint && (
                           <div className="flex gap-2 items-start dt-nb-hint-block rounded-lg px-3 py-2.5">
-                            <span className="text-amber-500 shrink-0 mt-0.5">💡</span>
-                            <p className="text-sm text-amber-800 dark:text-amber-300/80">{question.startHint}</p>
+                            <span className="text-dt-clue shrink-0 mt-0.5">💡</span>
+                            <p className="text-sm text-dt-clue">{question.startHint}</p>
                           </div>
                         )}
                       </div>
@@ -1316,7 +1315,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                                 <span className="w-1.5 h-1.5 rounded-full bg-dt-clue opacity-50" />
                                 {clue.text}
                               </span>
-                              <span className="text-slate-500 dark:text-white/50 pl-4 border-l-2 border-slate-100 dark:border-white/5 ml-0.5 py-1">
+                              <span className="text-dt-text-secondary pl-4 border-l-2 border-dt-border ml-0.5 py-1">
                                 <RichText text={clue.why} />
                               </span>
                             </li>
@@ -1328,7 +1327,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
 
                   {chatEvents.some(e => e.type === 'context' || e.type === 'pity') && (
                     <div>
-                      <h3 className="text-xs font-bold text-cyan-600/50 dark:text-cyan-400/40 uppercase tracking-widest mb-3 border-b border-cyan-600/10 dark:border-cyan-400/10 pb-1">
+                      <h3 className="text-xs font-bold text-dt-scan/50 uppercase tracking-widest mb-3 border-b border-dt-scan/10 pb-1">
                         {DIALOGUE.notebookHintsSection}
                       </h3>
                       <ul className="space-y-2.5">
@@ -1405,7 +1404,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
       {lifeLossFeedbacks.map(f => (
         <span
           key={f.id}
-          className="minus-life-pop text-xl font-black text-red-500 pointer-events-none whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+          className="minus-life-pop text-xl font-black text-dt-error pointer-events-none whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
           style={{ left: `${f.x}px`, top: `${f.y}px` }}
         >
           -1 💔
