@@ -41,7 +41,6 @@ export const DIALOGUE = {
   introWithFigure: '案件送達！一份証詞送到了偵探社，另附有照片證物。📓 照片已收進右上方的偵探筆記本，記得翻開來看。',
   introHint: '👆 點選上方證詞中你覺得可疑的字詞',
   caseQuestionPrompt: '仔細閱讀上方證詞，點擊你認為證詞中和案件相關的關鍵字詞！',
-  clueMiss: '這裡沒什麼線索，再看看別的。',
   clueMissReactions: [
     '這裡似乎只是背景細節，試著找找能決定「時間」或「位置」的關鍵詞？',
     '冷靜點，偵探。觀察一下，這個片段對案件的進展有幫助嗎？',
@@ -49,12 +48,7 @@ export const DIALOGUE = {
     '直覺告訴我，這不是我們要找的關鍵。往更具體的名詞看。',
   ],
 
-  // [NEW] 三種分層回饋台詞：
-  // contextHit：點到「脈絡區」— 有用但非關鍵，不扣血，給方向感
-  // noiseHit：點到「雜訊區」— 無關，扣血，讓偵探冷冷回應
-  // plainMiss：點到完全空白區— 現有行為，扣血
-  //
-  // 這三個 key 在 onContextHit / onNoiseMiss / onClueMiss 中使用（見 DetectivePlayer.tsx）
+  // 分層回饋：context（不扣血）/ noise（扣血）/ plainMiss（扣血）
   contextHitReactions: [
     '這個細節有點意思，但還不是最關鍵的線索。',
     '記下來，但我們先繼續找其他證據。',
@@ -78,17 +72,11 @@ export const DIALOGUE = {
   // 推理選錯時，引導去筆記本複查
   reasoningWrongNotebookHint: '再去筆記本確認一下線索的分析，也許能找到方向。',
   clueLocked: '調查機會用完了。帶著目前的線索繼續推理吧。',
-  clueHintMore: '還有關鍵線索沒找到，繼續調查吧。',
 
-  // [NEW] 憐憫機制台詞
-  // pityCategoryHint：連續失誤達 GAME.pityScanThreshold 次後觸發。
-  // 接受一個 tag 字串（通常是 question.tags[1] 或最具體的那個），
-  // 組成一句明確的分類提示。
-  // 呼叫方式：DIALOGUE.pityCategoryHint(question.tags[1])
-  // 範例輸出：「提示：這道題的關鍵與「台灣糖業」有關，試著往那個方向找。」
+  // 憐憫機制：連續失誤 N 次後觸發，用 tag 組成分類提示
   pityCategoryHint: (tag: string) => `提示：這道題的關鍵與「${tag}」有關，試著往那個方向找。`,
 
-  // [NEW] 掃描器台詞
+  // 掃描器台詞
   scanActivate: '🔍 掃描模式啟動，注意高亮的區域。',
   scanMissProtected: '掃描中，先別亂動——仔細看清楚再出手。',
   scanUsedUp: '掃描次數已用完（找到輔助線索可補充）',
@@ -132,11 +120,7 @@ export const DIALOGUE = {
   solutionAuxiliaryMissed: '現場其實還留有一條線索未採集…下次試試能否找到全部線索。',
   solutionAuxiliaryFound: '你連隱藏的背景線索也沒放過——真正的完美結案。',
 
-  // 圖片
-  figureExpand: '展開附圖',
-  figureCollapse: '收合附圖',
-
-  // [NEW] 偵探筆記本 UI 台詞
+  // 偵探筆記本 UI 台詞
   notebookTitle: '偵探筆記本',
   notebookSubtitle: '這是我專門記錄關鍵細節的地方。只要在證詞中捕捉到可疑字詞，它們就會出現在這；集齊後，我就能鎖定嫌疑人了。',
   evidencePhotoReactions: [
@@ -152,7 +136,6 @@ export const DIALOGUE = {
   notebookCluesSection: '已收集的線索',
   notebookHintsSection: '偵探提示',
   notebookEmpty: '還沒有找到任何線索',
-  notebookClose: '收合',
 };
 
 /** 成就判定（依序檢查，第一個符合的生效）
