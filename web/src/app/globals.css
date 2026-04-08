@@ -50,18 +50,11 @@ body {
 :root {
   --det-paper: #f4efe4;
   --det-paper-dark: #111119;
-  --det-wood: #c8b49a;
   --det-accent: #c2553a;
   --det-line: rgba(140,120,80,0.07);
   --det-line-dark: rgba(140,120,80,0.04);
-  --det-dot: rgba(120,100,70,0.1);
-  --det-dot-dark: rgba(160,140,100,0.08);
   --det-border: rgba(140,120,80,0.15);
   --det-shadow: rgba(80,60,30,0.08);
-}
-
-.dark {
-  --det-wood: #2a1f16;
 }
 
 /* Scan sweep animation — 單次掃描（入場 / 掃描模式） */
@@ -73,36 +66,6 @@ body {
 }
 .dark .stem-scan {
   background-image: linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.08) 40%, rgba(34,211,238,0.18) 50%, rgba(34,211,238,0.08) 60%, rgba(34,211,238,0) 100%);
-}
-
-/* Idle shimmer — 閒置 8 秒後循環掃光，吸引使用者點擊題幹 */
-@keyframes idle-shimmer {
-  0%   { background-position: -60% 0 }
-  100% { background-position: 160% 0 }
-}
-.stem-idle-shimmer {
-  background-image: linear-gradient(
-    90deg,
-    rgba(245,158,11,0) 0%,
-    rgba(245,158,11,0.15) 40%,
-    rgba(245,158,11,0.3) 50%,
-    rgba(245,158,11,0.15) 60%,
-    rgba(245,158,11,0) 100%
-  );
-  background-position: -60% 0;
-  background-size: 50% 100%;
-  background-repeat: no-repeat;
-  animation: idle-shimmer 2.2s ease-in-out infinite;
-}
-.dark .stem-idle-shimmer {
-  background-image: linear-gradient(
-    90deg,
-    rgba(245,158,11,0) 0%,
-    rgba(245,158,11,0.08) 40%,
-    rgba(245,158,11,0.18) 50%,
-    rgba(245,158,11,0.08) 60%,
-    rgba(245,158,11,0) 100%
-  );
 }
 
 /* 鷹架閒置跳動提示 */
@@ -141,15 +104,8 @@ body {
   -webkit-touch-callout: none;
 }
 
-/* Clue flight & Tab pop effects */
+/* Clue flight effects */
 /* 拋物線軌跡 keyframes 由 JS 動態注入（避免 var() 在 @keyframes 的瀏覽器相容問題） */
-/* 卡比彈跳：輕巧版 */
-@keyframes tab-pop {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.10); }
-  65%  { transform: scale(0.96); }
-  100% { transform: scale(1); }
-}
 /* 外層：fixed 錨點，animation 由 inline style 指定 */
 .clue-flyer-x {
   position: fixed;
@@ -170,18 +126,9 @@ body {
   40%, 80% { transform: translateX(5px); }
 }
 
-.animate-wrong-shake { animation: shake-x 0.4s ease-in-out both; }
-.animate-hearts-shake { animation: shake-x 0.4s ease-in-out both; }
+.animate-wrong-shake,
+.animate-hearts-shake,
 .animate-notebook-shake { animation: shake-x 0.4s ease-in-out both; }
-
-/* 舊的 tab-pop 改名為 tab-pulse 供其他地方使用 */
-@keyframes tab-pulse {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.10); }
-  65%  { transform: scale(0.96); }
-  100% { transform: scale(1); }
-}
-.animate-tab-pulse { animation: tab-pulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
 /* -1 💔 飄走 */
 @keyframes minus-life {
@@ -374,7 +321,7 @@ body {
   78%  { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-4px); }
 }
-.toast-anim { animation: toast-life 3.8s ease-out forwards; }
+.toast-anim { animation: toast-life 3.6s ease-out forwards; }
 
 /* Toast 淡入後常駐（不淡出），由 JS 手動清除 */
 @keyframes toast-enter {
@@ -416,33 +363,7 @@ body {
   box-shadow: 0 8px 32px rgba(0,0,0,0.45);
 }
 
-/* ── [NEW] 放大鏡掃描效果 (Magnifier Mode) ── */
-.magnifier-active {
-  filter: brightness(1.06) contrast(1.05);
-  transition: filter 0.4s ease;
-  position: relative;
-}
-
-.magnifier-active::after {
-  content: '';
-  position: absolute;
-  inset: -10px;
-  background: radial-gradient(circle at center, rgba(34,211,238,0.08) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: -1;
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; transform: scale(0.98); }
-  50% { opacity: 0.8; transform: scale(1.02); }
-}
-
-.dark .magnifier-active {
-  filter: brightness(1.1) contrast(1.08);
-}
-
-/* ── [NEW] 筆記本面板滑入／滑出動畫 ── */
+/* 筆記本面板滑入／滑出動畫 */
 @keyframes notebook-slide-down {
   from { opacity: 0; transform: translateY(-10%); }
   to   { opacity: 1; transform: translateY(0); }
@@ -477,5 +398,5 @@ body {
 }
 
 .notebook-slide-out {
-  animation: notebook-slide-up-out 0.28s cubic-bezier(0.4, 0, 1, 0.8) both;
+  animation: notebook-slide-up-out 0.26s cubic-bezier(0.4, 0, 1, 0.8) both;
 }
