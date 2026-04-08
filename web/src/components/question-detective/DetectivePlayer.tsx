@@ -48,7 +48,7 @@ const PaperclipIcon = () => (
 const EvidencePhoto = ({ src, maxW = 220, rotate = false, onClick }: { src: string; maxW?: number; rotate?: boolean; onClick?: () => void }) => (
   <div className="relative">
     <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><span className="dt-paperclip"><PaperclipIcon /></span></div>
-    <div className={`dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo ${rotate ? 'rotate-[-1.5deg]' : ''}`} style={{ maxWidth: maxW }}>
+    <div className={`dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo ${rotate ? 'dt-photo-tilt' : ''}`} style={{ maxWidth: maxW }}>
       <img src={src} alt="案件附圖" onClick={onClick} className="w-full rounded-sm dt-photo-blend" />
     </div>
   </div>
