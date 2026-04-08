@@ -127,6 +127,79 @@ body {
   --dt-notebook-badge: #f87171;
 }
 
+/* ── Cyberpunk Theme ── */
+[data-dt-theme="cyber"] {
+  --dt-bg: #0f172a;
+  --dt-card: #1e293b;
+  --dt-wood: #0c1222;
+
+  --dt-text: #e0f2fe;
+  --dt-text-secondary: #7dd3fc;
+  --dt-text-muted: #475569;
+
+  --dt-accent: #f43f5e;
+  --dt-accent-tab: #22d3ee;
+  --dt-scan: #00ff9d;
+  --dt-clue: #facc15;
+  --dt-success: #00ff9d;
+  --dt-error: #ff2d6b;
+
+  --dt-border: rgba(0,255,157,0.12);
+  --dt-shadow: rgba(0,0,0,0.4);
+  --dt-tab-shadow: rgba(0,255,157,0.08);
+  --dt-line: rgba(0,255,157,0.06);
+
+  --dt-scan-sweep: rgba(0,255,157,0.25);
+  --dt-scan-glow: rgba(0,255,157,0.15);
+  --dt-highlight-bg: rgba(0,255,157,0.08);
+
+  --dt-clue-found-bg: rgba(0,255,157,0.12);
+  --dt-notebook-badge: #f43f5e;
+}
+
+/* Cyber: 科技格柵取代木紋 */
+[data-dt-theme="cyber"] .detective-paper {
+  background-color: var(--dt-wood);
+  background-image:
+    linear-gradient(0deg, rgba(0,255,157,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Cyber: 掃描線取代橫線紋 */
+[data-dt-theme="cyber"] .case-file {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,255,157,0.05) 23px, rgba(0,255,157,0.05) 24px);
+  border-left: 3px solid var(--dt-accent);
+  box-shadow:
+    0 0 1px rgba(0,255,157,0.3),
+    0 0 15px rgba(0,255,157,0.06),
+    0 4px 20px rgba(0,0,0,0.5);
+}
+
+/* Cyber: tab 發光邊框 */
+[data-dt-theme="cyber"] .folder-tab {
+  border-color: rgba(0,255,157,0.15);
+}
+[data-dt-theme="cyber"] .tab-active {
+  box-shadow: 0 0 8px rgba(0,255,157,0.15), 0 1px 2px rgba(0,255,157,0.1) inset !important;
+}
+
+/* Cyber: 筆記本面板 */
+[data-dt-theme="cyber"] .notebook-paper {
+  background-color: #1e293b;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(0,255,157,0.04) 27px, rgba(0,255,157,0.04) 28px);
+  box-shadow: 0 0 30px rgba(0,255,157,0.08), 0 8px 32px rgba(0,0,0,0.5);
+}
+
+/* Cyber: 聊天泡泡玻璃態 */
+[data-dt-theme="cyber"] .bubble-in > div:last-child {
+  background: rgba(30,41,59,0.85);
+  backdrop-filter: blur(8px);
+  border-color: rgba(0,255,157,0.1);
+}
+
 /* Scan sweep animation — 單次掃描（入場 / 掃描模式） */
 @keyframes scan-sweep { 0% { background-position: -100% 0 } 100% { background-position: 200% 0 } }
 .stem-scan {

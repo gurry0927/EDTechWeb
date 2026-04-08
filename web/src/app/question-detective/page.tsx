@@ -1,10 +1,16 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
 import { ALL_QUESTIONS } from '@/data/detective-questions';
+
+const THEMES = [
+  { id: 'classic', label: '📜 偵探社', desc: '經典牛皮紙風格' },
+  { id: 'cyber', label: '🔮 賽博', desc: '科技霓虹風格' },
+] as const;
+type ThemeId = typeof THEMES[number]['id'];
 
 // Extract year from source string like "114年會考-社會-第20題"
 function getYear(q: Pick<DetectiveQuestion, 'source'>): string {
@@ -18,6 +24,17 @@ export default function QuestionDetectivePage() {
   const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
   const [dbQuestions, setDbQuestions] = useState<PublicQuestion[] | null>(null);
+  const [theme, setThemeState] = useState<ThemeId>('classic');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('dt-theme') as ThemeId | null;
+    if (saved && THEMES.some(t => t.id === saved)) setThemeState(saved);
+  }, []);
+
+  const setTheme = useCallback((id: ThemeId) => {
+    setThemeState(id);
+    localStorage.setItem('dt-theme', id);
+  }, []);
 
   useEffect(() => {
     fetchPublicQuestions().then(qs => {
@@ -39,17 +56,34 @@ export default function QuestionDetectivePage() {
   }, [questions, groupBy]);
 
   return (
-    <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col">
+    <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col" data-dt-theme={theme}>
       {/* Header */}
       <header className="shrink-0 case-file px-5 py-4">
         <div className="max-w-2xl mx-auto">
-          <button onClick={() => router.push('/')}
-            className="text-dt-text-secondary hover:text-dt-text text-sm flex items-center gap-1 mb-4">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            首頁
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => router.push('/')}
+              className="text-dt-text-secondary hover:text-dt-text text-sm flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              首頁
+            </button>
+            {/* Theme switcher */}
+            <div className="flex gap-1">
+              {THEMES.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTheme(t.id)}
+                  title={t.desc}
+                  className={`text-xs px-2 py-1 rounded-full border transition-all ${
+                    theme === t.id
+                      ? 'border-dt-accent bg-dt-accent/10 text-dt-accent'
+                      : 'border-dt-border text-dt-text-muted hover:text-dt-text-secondary'
+                  }`}
+                >{t.label}</button>
+              ))}
+            </div>
+          </div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
             未解檔案室
           </h1>
