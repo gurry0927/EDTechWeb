@@ -908,6 +908,30 @@ body {
   filter: sepia(0.55) saturate(0.65) contrast(1.08) brightness(0.82);
 }
 
+/* Cyber: 全息投影風 — 泛綠 + 掃描線雜訊 */
+[data-dt-theme="cyber"] .case-photo {
+  filter: saturate(0.5) brightness(0.85) contrast(1.2) hue-rotate(120deg);
+  border: 1px solid rgba(0,255,170,0.3);
+  box-shadow: 0 0 14px rgba(0,255,170,0.12), 0 0 2px rgba(0,255,170,0.5);
+}
+[data-dt-theme="cyber"] .case-photo::after {
+  background:
+    /* 水平掃描線 */
+    repeating-linear-gradient(0deg,
+      transparent, transparent 2px,
+      rgba(0,255,170,0.05) 2px, rgba(0,255,170,0.05) 3px
+    ),
+    /* 角落泛綠光暈 */
+    radial-gradient(ellipse at center, transparent 40%, rgba(0,255,170,0.1) 100%);
+  mix-blend-mode: screen;
+}
+/* Cyber: 照片外框 → 深色面板 + 霓虹邊 */
+[data-dt-theme="cyber"] .dt-photo {
+  background: var(--dt-card);
+  border: 1px solid rgba(0,255,170,0.15);
+  box-shadow: 0 0 10px rgba(0,255,170,0.06);
+}
+
 .notebook-slide-out {
   animation: notebook-slide-up-out 0.26s cubic-bezier(0.4, 0, 1, 0.8) both;
 }
