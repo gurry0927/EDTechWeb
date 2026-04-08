@@ -4,7 +4,7 @@
 /** 遊戲參數（所有 magic number 集中管理，Player 不應出現裸數字） */
 export const GAME = {
   maxLives: 5,
-  typingDelay: { short: 500, medium: 800, long: 1200, intro: 3000 } as const,
+  typingDelay: { short: 400, medium: 700, long: 1000, intro: 1800 } as const,
   scrollDelay: 300,
   toastDuration: 4000,
 
