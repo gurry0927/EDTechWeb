@@ -129,165 +129,176 @@ body {
 
 /* ── Cyberpunk Theme ── */
 [data-dt-theme="cyber"] {
-  --dt-bg: #0f172a;
-  --dt-card: #1e293b;
-  --dt-wood: #0c1222;
+  --dt-bg: #1a2236;
+  --dt-card: #202d45;
+  --dt-wood: #141c2e;
 
-  --dt-text: #e0f2fe;
-  --dt-text-secondary: #7dd3fc;
-  --dt-text-muted: #475569;
+  --dt-text: #e8f4ff;
+  --dt-text-secondary: #90cdf4;
+  --dt-text-muted: #64748b;
 
-  --dt-accent: #f43f5e;
-  --dt-accent-tab: #22d3ee;
-  --dt-scan: #00ff9d;
-  --dt-clue: #facc15;
-  --dt-success: #00ff9d;
-  --dt-error: #ff2d6b;
+  --dt-accent: #ff3a6e;
+  --dt-accent-tab: #00ffaa;
+  --dt-scan: #00ffaa;
+  --dt-clue: #ffd43b;
+  --dt-success: #00ffaa;
+  --dt-error: #ff3a6e;
 
-  --dt-border: rgba(0,255,157,0.12);
-  --dt-shadow: rgba(0,0,0,0.4);
-  --dt-tab-shadow: rgba(0,255,157,0.08);
-  --dt-line: rgba(0,255,157,0.06);
+  --dt-border: rgba(0,255,170,0.2);
+  --dt-shadow: rgba(0,0,0,0.3);
+  --dt-tab-shadow: rgba(0,255,170,0.1);
+  --dt-line: rgba(0,255,170,0.08);
 
-  --dt-scan-sweep: rgba(0,255,157,0.25);
-  --dt-scan-glow: rgba(0,255,157,0.15);
-  --dt-highlight-bg: rgba(0,255,157,0.08);
+  --dt-scan-sweep: rgba(0,255,170,0.3);
+  --dt-scan-glow: rgba(0,255,170,0.2);
+  --dt-highlight-bg: rgba(0,255,170,0.1);
 
-  --dt-clue-found-bg: rgba(0,255,157,0.12);
-  --dt-notebook-badge: #f43f5e;
+  --dt-clue-found-bg: rgba(0,255,170,0.08);
+  --dt-notebook-badge: #ff3a6e;
 }
 
-/* ── Cyber: 全域背景 ── */
+/* ── Cyber: 全域背景 — 深藍網格 + 頂部微光 ── */
 [data-dt-theme="cyber"] .detective-paper {
   background-color: var(--dt-wood);
   background-image:
-    linear-gradient(0deg, rgba(0,255,157,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px),
-    radial-gradient(ellipse at 50% 0%, rgba(0,255,157,0.04), transparent 70%);
+    linear-gradient(0deg, rgba(0,255,170,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,170,0.05) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0%, rgba(0,255,170,0.08), transparent 60%);
   background-size: 24px 24px, 24px 24px, 100% 100%;
 }
 
-/* ── Cyber: 案件卡片 — 霓虹邊框 + glow ── */
+/* ── Cyber: 案件卡片 — 明顯霓虹邊框 ── */
 [data-dt-theme="cyber"] .case-file {
-  background-color: rgba(15,23,42,0.92);
+  background-color: var(--dt-card);
   background-image: none;
-  border-left: 2px solid rgba(0,255,157,0.5);
-  border-top: 1px solid rgba(0,255,157,0.1);
-  border-right: 1px solid rgba(0,255,157,0.05);
-  border-bottom: 1px solid rgba(0,255,157,0.05);
+  border: 1px solid rgba(0,255,170,0.25);
+  border-left: 3px solid rgba(0,255,170,0.6);
   box-shadow:
-    0 0 1px rgba(0,255,157,0.4),
-    0 0 20px rgba(0,255,157,0.05),
-    0 4px 24px rgba(0,0,0,0.6);
+    0 0 2px rgba(0,255,170,0.5),
+    0 0 24px rgba(0,255,170,0.08),
+    inset 0 1px 0 rgba(0,255,170,0.1),
+    0 8px 32px rgba(0,0,0,0.4);
 }
 [data-dt-theme="cyber"] .case-file-header {
-  border-bottom-color: rgba(0,255,157,0.25);
+  border-bottom: 2px solid rgba(0,255,170,0.35);
 }
 [data-dt-theme="cyber"] .case-file-header-label {
-  color: #00ff9d;
-  text-shadow: 0 0 12px rgba(0,255,157,0.4);
+  color: #00ffaa;
+  text-shadow: 0 0 16px rgba(0,255,170,0.6), 0 0 4px rgba(0,255,170,0.3);
   font-style: normal;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.25em;
 }
 [data-dt-theme="cyber"] .case-file-header-rule {
-  background: linear-gradient(90deg, rgba(0,255,157,0.4), transparent);
+  background: linear-gradient(90deg, rgba(0,255,170,0.5), transparent);
+  opacity: 0.5;
 }
 
-/* ── Cyber: tabs — 霓虹底光 ── */
+/* ── Cyber: tabs — 明顯分層 ── */
 [data-dt-theme="cyber"] .folder-tab {
-  border-color: rgba(0,255,157,0.12);
-  background-color: rgba(15,23,42,0.85);
+  border-color: rgba(0,255,170,0.2);
+  background-color: var(--dt-bg);
 }
 [data-dt-theme="cyber"] .tab-active {
-  background-color: rgba(15,23,42,0.95) !important;
-  box-shadow: 0 0 10px rgba(0,255,157,0.12), 0 -2px 0 rgba(0,255,157,0.4) inset !important;
+  background-color: var(--dt-card) !important;
+  border-color: rgba(0,255,170,0.35) !important;
+  box-shadow: 0 0 12px rgba(0,255,170,0.1), inset 0 -2px 0 rgba(0,255,170,0.5) !important;
   filter: none !important;
 }
 
-/* ── Cyber: 偵探泡泡 — 玻璃態 + 霓虹邊 ── */
+/* ── Cyber: 偵探泡泡 — 明顯邊框 + 背景與木紋區分 ── */
 [data-dt-theme="cyber"] .bubble-in > div:last-child {
-  background: rgba(15,23,42,0.8) !important;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0,255,157,0.12) !important;
-  box-shadow: 0 0 8px rgba(0,255,157,0.04), 0 2px 8px rgba(0,0,0,0.3);
+  background: var(--dt-card) !important;
+  border: 1px solid rgba(0,255,170,0.2) !important;
+  box-shadow: 0 0 10px rgba(0,255,170,0.06), 0 2px 8px rgba(0,0,0,0.3);
   color: var(--dt-text);
 }
 
-/* 偵探頭像 — 霓虹環 */
-[data-dt-theme="cyber"] .bubble-in > span:first-child,
-[data-dt-theme="cyber"] .bubble-in > div > span:first-child {
-  box-shadow: 0 0 6px rgba(0,255,157,0.2);
-  border-color: rgba(0,255,157,0.25) !important;
-  background: rgba(0,255,157,0.08) !important;
+/* 偵探頭像 — 綠色發光環 */
+[data-dt-theme="cyber"] .bubble-in > span:first-child {
+  box-shadow: 0 0 8px rgba(0,255,170,0.3);
+  border-color: rgba(0,255,170,0.4) !important;
+  background: rgba(0,255,170,0.1) !important;
 }
 
-/* 學生泡泡 — 粉紅霓虹 */
-[data-dt-theme="cyber"] .bubble-in.flex-row-reverse > div:last-child,
-[data-dt-theme="cyber"] .ml-auto > div:last-child {
-  border-color: rgba(244,63,94,0.15) !important;
-  box-shadow: 0 0 8px rgba(244,63,94,0.06);
+/* 學生泡泡 — 粉紅邊框 */
+[data-dt-theme="cyber"] .ml-auto .rounded-2xl {
+  background: rgba(255,58,110,0.08) !important;
+  border-color: rgba(255,58,110,0.25) !important;
+  box-shadow: 0 0 10px rgba(255,58,110,0.06);
+}
+/* 學生頭像 — 粉紅環 */
+[data-dt-theme="cyber"] .ml-auto > span:first-child {
+  box-shadow: 0 0 8px rgba(255,58,110,0.25);
+  border-color: rgba(255,58,110,0.35) !important;
+  background: rgba(255,58,110,0.1) !important;
 }
 
 /* ── Cyber: 打字泡泡 dots ── */
 [data-dt-theme="cyber"] .typing-dots span {
-  background: #00ff9d !important;
-  box-shadow: 0 0 4px rgba(0,255,157,0.5);
+  background: #00ffaa !important;
+  box-shadow: 0 0 6px rgba(0,255,170,0.6);
 }
 
-/* ── Cyber: toast — 霓虹條 ── */
+/* ── Cyber: toast — 明顯面板 ── */
 [data-dt-theme="cyber"] .toast-anim,
 [data-dt-theme="cyber"] .toast-persist {
-  background: rgba(15,23,42,0.92) !important;
-  border: 1px solid rgba(0,255,157,0.15);
-  box-shadow: 0 0 16px rgba(0,255,157,0.08), 0 4px 12px rgba(0,0,0,0.4);
-  color: var(--dt-text);
+  background: var(--dt-card) !important;
+  border: 1px solid rgba(0,255,170,0.25) !important;
+  box-shadow: 0 0 20px rgba(0,255,170,0.1), 0 4px 16px rgba(0,0,0,0.4) !important;
+  color: var(--dt-text) !important;
 }
 
-/* ── Cyber: 筆記本 — 深色面板 + 掃描線 ── */
+/* ── Cyber: 筆記本 ── */
 [data-dt-theme="cyber"] .notebook-paper {
-  background-color: rgba(15,23,42,0.95);
+  background-color: var(--dt-card);
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(0,255,157,0.03) 27px, rgba(0,255,157,0.03) 28px);
-  box-shadow: 0 0 40px rgba(0,255,157,0.06), 0 8px 32px rgba(0,0,0,0.6);
+    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(0,255,170,0.05) 27px, rgba(0,255,170,0.05) 28px);
+  box-shadow: 0 0 40px rgba(0,255,170,0.08), 0 8px 32px rgba(0,0,0,0.5);
 }
 
-/* ── Cyber: 掃描呼吸特效 — 更亮的霓虹 ── */
+/* ── Cyber: 掃描呼吸 ── */
 [data-dt-theme="cyber"] .highlight-scan {
   animation: cyber-breathing 1.6s ease-in-out infinite;
 }
 @keyframes cyber-breathing {
-  0%, 100% { background-color: rgba(0,255,157,0.06); box-shadow: 0 0 4px rgba(0,255,157,0.1); }
-  50% { background-color: rgba(0,255,157,0.18); box-shadow: 0 0 16px rgba(0,255,157,0.3); }
+  0%, 100% { background-color: rgba(0,255,170,0.08); box-shadow: 0 0 6px rgba(0,255,170,0.15); }
+  50% { background-color: rgba(0,255,170,0.22); box-shadow: 0 0 20px rgba(0,255,170,0.35); }
 }
 
-/* ── Cyber: 鷹架跳動 — 霓虹黃 ── */
+/* ── Cyber: 鷹架跳動 ── */
 [data-dt-theme="cyber"] .scaffold-pulse {
-  background-color: rgba(250,204,21,0.12);
-  border-bottom-color: rgba(250,204,21,0.5);
-  text-shadow: 0 0 6px rgba(250,204,21,0.2);
+  background-color: rgba(255,212,59,0.15);
+  border-bottom-color: rgba(255,212,59,0.6);
+  text-shadow: 0 0 8px rgba(255,212,59,0.3);
 }
 
-/* ── Cyber: 線索飛行粒子 — 霓虹綠 ── */
+/* ── Cyber: 線索飛行粒子 ── */
 [data-dt-theme="cyber"] .clue-flyer-y {
-  background: #00ff9d;
-  box-shadow: 0 0 12px rgba(0,255,157,0.7), 0 0 24px rgba(0,255,157,0.3);
+  background: #00ffaa;
+  box-shadow: 0 0 14px rgba(0,255,170,0.8), 0 0 28px rgba(0,255,170,0.4);
 }
 
-/* ── Cyber: 扣血 — 霓虹紅 ── */
+/* ── Cyber: 扣血 — 大粉紅發光 ── */
 [data-dt-theme="cyber"] .minus-life-pop {
-  filter: drop-shadow(0 0 10px rgba(244,63,94,0.6));
-  color: #ff2d6b;
+  filter: drop-shadow(0 0 14px rgba(255,58,110,0.7)) drop-shadow(0 0 4px rgba(255,58,110,0.9));
+  color: #ff3a6e;
 }
 
-/* ── Cyber: 紙張撕裂邊 — 隱藏（科技面板不需要） ── */
+/* ── Cyber: 線索找到 — 深底亮字（取代黃底白字） ── */
+[data-dt-theme="cyber"] .bg-emerald-100,
+[data-dt-theme="cyber"] .bg-emerald-500\/20 {
+  background: rgba(0,255,170,0.12) !important;
+  color: #00ffaa !important;
+  border-color: rgba(0,255,170,0.25) !important;
+}
+
+/* ── Cyber: 隱藏撕裂邊 ── */
 [data-dt-theme="cyber"] .paper-tear-top,
-[data-dt-theme="cyber"] .paper-tear-bottom {
-  display: none;
-}
+[data-dt-theme="cyber"] .paper-tear-bottom { display: none; }
 
-/* ── Cyber: 滾動提示 — 霓虹綠 ── */
+/* ── Cyber: 滾動提示 ── */
 [data-dt-theme="cyber"] .stem-scroll-fade::after {
-  background: linear-gradient(to top, rgba(0,255,157,0.2), transparent);
+  background: linear-gradient(to top, rgba(0,255,170,0.25), transparent);
 }
 
 /* Scan sweep animation — 單次掃描（入場 / 掃描模式） */
