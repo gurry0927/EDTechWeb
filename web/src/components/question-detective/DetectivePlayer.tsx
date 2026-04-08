@@ -214,10 +214,10 @@ type ChatEvent =
   | { type: 'clue';    idx: number; reaction: string }
   | { type: 'context'; hint: string; text: string }
   | { type: 'pity';    hint: string }
-interface Props { question: DetectiveQuestion; onBack: () => void; }
+interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () => void; }
 
 // ── Main Component ──
-export function DetectivePlayer({ question, onBack }: Props) {
+export function DetectivePlayer({ question, onBack, onRetry }: Props) {
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);
@@ -1128,10 +1128,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
           </div>
         )}
         {phase === 'solution' && (
-          <div className="sticky bottom-4 flex justify-end px-4 pointer-events-none">
+          <div className="sticky bottom-4 flex justify-end gap-2 px-4 pointer-events-none">
+            <button
+              onClick={onRetry}
+              className="pointer-events-auto h-10 text-sm px-5 rounded-full bg-cyan-600 text-white border border-cyan-500/30 hover:bg-cyan-500 shadow-xl transition-all active:scale-95"
+            >
+              再試一次
+            </button>
             <button
               onClick={onBack}
-              className="pointer-events-auto h-10 text-sm px-6 rounded-full bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50 hover:text-slate-700 shadow-xl backdrop-blur-sm transition-all active:scale-95"
+              className="pointer-events-auto h-10 text-sm px-5 rounded-full bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50 hover:text-slate-700 shadow-xl backdrop-blur-sm transition-all active:scale-95"
             >
               回到題庫
             </button>
