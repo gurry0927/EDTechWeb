@@ -64,11 +64,16 @@ const PityBubble = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-function TypedDetective({ children, delay = 'medium' }: { children: React.ReactNode; delay?: 'short' | 'medium' | 'long' | 'intro' }) {
-  const [typing, setTyping] = useState(true);
-  const ms = GAME.typingDelay[delay];
-  useEffect(() => { const t = setTimeout(() => setTyping(false), ms); return () => clearTimeout(t); }, [ms]);
-  if (typing) return <TypingBubble />;
+function TypedDetective({ children, delay = 'medium', waitMs = 0 }: { children: React.ReactNode; delay?: 'short' | 'medium' | 'long' | 'intro'; waitMs?: number }) {
+  const [phase, setPhase] = useState<'hidden' | 'typing' | 'done'>(waitMs > 0 ? 'hidden' : 'typing');
+  const typingMs = GAME.typingDelay[delay];
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase('typing'), waitMs);
+    const t2 = setTimeout(() => setPhase('done'), waitMs + typingMs);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [waitMs, typingMs]);
+  if (phase === 'hidden') return null;
+  if (phase === 'typing') return <TypingBubble />;
   return <DetectiveBubble>{children}</DetectiveBubble>;
 }
 
@@ -239,6 +244,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
   const showToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); setToastPersist(false); }, []);
   const showPersistToast = useCallback((msg: string) => { setToast(msg); setToastKey(k => k + 1); setToastPersist(true); }, []);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLElement>(null);
   const solutionTopRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const clueTabRef = useRef<HTMLButtonElement>(null);
@@ -510,24 +516,23 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
     return indexed;
   }, [question.figure, question.figureTokens, question.scaffolding, figureClues, scaffoldingWithIdx, stemBlankCount]);
 
-  // Auto-scroll：兩階段
-  // 1) 立即滾到打字泡泡（讓使用者看到 ...）
-  // 2) 打字結束後再滾一次到底部（內容展開後對齊）
+  // Auto-scroll：兩階段（模擬真實聊天室）
+  // 1) 新泡泡出現 → 滾到底（看到打字 ···）
+  // 2) 打字結束 → 再滾一次（內容展開後高度變了）
+  const scrollToBottom = useCallback(() => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, []);
+
   useEffect(() => {
     if (phase === 'clue' && chatEvents.length === 0) return; // 進場不滾
     if (phase === 'solution') {
       const t = setTimeout(() => solutionTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), GAME.scrollDelay);
       return () => clearTimeout(t);
     }
-    // 第一階段：快速滾到底（打字泡泡可見）
-    const t1 = setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, GAME.scrollDelay);
-    // 第二階段：打字結束後再滾一次（內容展開，高度變了）
-    const longestTyping = GAME.typingDelay.long + 100;
-    const t2 = setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, GAME.scrollDelay + longestTyping);
+    const t1 = setTimeout(scrollToBottom, GAME.scrollDelay);
+    const t2 = setTimeout(scrollToBottom, GAME.scrollDelay + GAME.typingDelay.long + 100);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [phase, foundClues.size, chatEvents.length, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
@@ -929,18 +934,18 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
       </div>
 
       {/* Chat — position:relative 讓 FAB 能正確 absolute 定位 */}
-      <main className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase || activeScanning || stemExpanded ? 'opacity-30 pointer-events-none' : ''}`}>
+      <main ref={chatScrollRef} className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase || activeScanning || stemExpanded ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{question.figureImage ? DIALOGUE.introWithFigure : DIALOGUE.intro}<br/><span className="text-dt-scan text-sm">{DIALOGUE.introHint}</span></D>
 
         {question.caseQuestion && (
           <>
-            <TypedDetective delay="intro">
+            <TypedDetective delay="intro" waitMs={GAME.typingDelay.intro}>
               <span className="font-medium text-dt-clue">📌 本案問題：</span><br/>
               <RichText text={question.caseQuestion} />
             </TypedDetective>
-            <TypedDetective delay="long">{DIALOGUE.caseQuestionPrompt}</TypedDetective>
+            <TypedDetective delay="long" waitMs={GAME.typingDelay.intro * 2}>{DIALOGUE.caseQuestionPrompt}</TypedDetective>
           </>
         )}
 
@@ -1130,7 +1135,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
           </>
         )}
 
-        <div ref={chatEndRef} className="h-24 shrink-0" />
+        <div ref={chatEndRef} />
         </div>
 
         {/* FAB — 浮動在聊天區右下角，推理按鈕 or 結案返回 */}
