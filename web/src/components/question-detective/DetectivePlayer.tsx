@@ -250,6 +250,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
   const [consecutiveMisses, setConsecutiveMisses] = useState(0);
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const closingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // [NEW] 掃描器狀態
   // activeScanning = true 時，題幹 <p> 套用 "stem-scan" class（已有），並顯示 magnifier overlay
@@ -583,16 +584,16 @@ export function DetectivePlayer({ question, onBack }: Props) {
     } else {
       setConsecutiveMisses(next);
     }
-  }, [consecutiveMisses, question.pityHint, question.tags]);
+  }, [consecutiveMisses, question.pityHint, question.tags, showToast]);
 
   const onClueMiss = useCallback((e?: React.MouseEvent) => {
     if (clueLocked || activeScanning || stemExpanded) return;
-    const msg = pick((DIALOGUE as any).clueMissReactions || [DIALOGUE.clueMiss]);
+    const msg = pick(DIALOGUE.clueMissReactions);
     setLives(prev => prev - 1);
     triggerWrongFeedback(e);
     showToast(msg);
     triggerMissIncrement();
-  }, [clueLocked, activeScanning, triggerMissIncrement, triggerWrongFeedback]);
+  }, [clueLocked, activeScanning, stemExpanded, triggerMissIncrement, triggerWrongFeedback, showToast]);
 
   const onContextHit = useCallback((regionIdx: number, e?: React.MouseEvent) => {
     const region = question.scaffolding?.[regionIdx];
@@ -617,7 +618,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     triggerWrongFeedback(e);
     showToast(msg);
     triggerMissIncrement();
-  }, [clueLocked, activeScanning, question.scaffolding, triggerMissIncrement, triggerWrongFeedback]);
+  }, [clueLocked, activeScanning, stemExpanded, question.scaffolding, triggerMissIncrement, triggerWrongFeedback, showToast]);
 
   // [MODIFY] onSegTap：三層分歧邏輯（原本只有兩層：clue / miss）
   // clueIndex != null  → onClueHit（不變）
@@ -655,7 +656,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
     } else {
       onClueMiss(e);
     }
-  }, [activeScanning, stemExpanded, isIdleDisabled, hasStartedInteracting, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding, resetIdleTimer]);
+  }, [activeScanning, stemExpanded, isIdleDisabled, hasStartedInteracting, onClueHit, onClueMiss, onContextHit, onNoiseMiss, question.scaffolding, resetIdleTimer, showToast]);
 
   const openNotebook = useCallback(() => {
     // 暫停 idle 計時器 + 隱藏 toast（筆記本蓋住題幹，提示會誤導）
@@ -670,16 +671,26 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   const closeNotebook = useCallback(() => {
     setIsClosing(true);
-    setTimeout(() => {
+    if (closingTimerRef.current) clearTimeout(closingTimerRef.current);
+    closingTimerRef.current = setTimeout(() => {
       setIsNotebookOpen(false);
       setIsClosing(false);
-      // 重啟計時器但不清 shimmer（若已啟動則繼續顯示）
-      // 重啟計時器，若尚未有有效互動則 8 秒後繼續跳動
+      closingTimerRef.current = null;
       if (foundClues.size === 0 && seenContextRegions.size === 0) startIdleTimer(true);
     }, 260);
   }, [foundClues.size, seenContextRegions.size, startIdleTimer]);
 
+  // cleanup closingTimer on unmount
+  useEffect(() => () => { if (closingTimerRef.current) clearTimeout(closingTimerRef.current); }, []);
+
   const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); }, []);
+
+  // P0 fix: reasoningClues 為空時自動跳至 answer（原本用 render 內 IIFE + setTimeout，違反 React 規則）
+  useEffect(() => {
+    if (phase !== 'reasoning' || reasoningClues.length > 0) return;
+    const t = setTimeout(() => setPhase('answer'), 500);
+    return () => clearTimeout(t);
+  }, [phase, reasoningClues.length]);
   // 共用推理按鈕樣式：footer（小）與筆記本（大）同色同形，尺寸透過 padding 區分
   const reasoningBtnBase = 'rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 border border-cyan-400/30 shadow-[0_0_15px_rgba(8,145,178,0.35)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center';
 
@@ -792,7 +803,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
 
   const D = DetectiveBubble;
   const S = StudentBubble;
-  const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length, auxFoundCount, auxiliaryClues.length, lives <= 0));
+  const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length, auxFoundCount, auxiliaryClues.length, gameOver));
 
   return (
     <div className="h-[100dvh] detective-paper text-slate-800 dark:text-white flex flex-col overflow-hidden">
@@ -1007,9 +1018,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             )}
           </>
         )}
-        {phase === 'reasoning' && reasoningClues.length === 0 && (
-          <>{(() => { setTimeout(() => setPhase('answer'), 500); return null; })()}</>
-        )}
+        {/* reasoningClues 為空時自動跳至 answer phase — 由 useEffect 處理 */}
 
         {phase === 'answer' && !answeredCorrectly && (
           <>

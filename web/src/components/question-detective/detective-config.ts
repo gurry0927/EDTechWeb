@@ -16,7 +16,6 @@ export const GAME = {
   // scanCooldown：掃描鈕冷卻時間（毫秒），防止連續觸發
   scanActiveDuration: 11600,
   scanSweepDuration: 3600,  // 播放兩次 (1.8s * 2) 結束後才亮起呼吸高光
-  scanCooldown: 12000,
   scanInitialUses: 1,
   scanNudgeDelay: 15000,    // 15 秒無操作：提示玩家
   scanAutoExitDelay: 30000, // 30 秒無操作：自動退出掃描模式
