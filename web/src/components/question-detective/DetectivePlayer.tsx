@@ -73,11 +73,10 @@ function TypedDetective({ children, delay = 'medium' }: { children: React.ReactN
 }
 
 const LivesDisplay = ({ lives }: { lives: number }) => (
-  <div className="flex items-center gap-1">
-    {Array.from({ length: GAME.maxLives }).map((_, i) => (
-      <span key={i} className="text-sm">{i < lives ? '❤️' : '🖤'}</span>
-    ))}
-  </div>
+  <span className="flex items-center gap-0.5">
+    <span className="text-red-500 dark:text-red-400 text-[13px]">❤️</span>
+    <span className={`text-[11px] font-bold tabular-nums ${lives <= 1 ? 'text-red-500' : 'text-stone-500 dark:text-white/50'}`}>{lives}/{GAME.maxLives}</span>
+  </span>
 );
 
 // 簡單的 Markdown 粗體解析器 (**粗體文字**)
@@ -818,17 +817,17 @@ export function DetectivePlayer({ question, onBack }: Props) {
           <span className="flex-1 text-center text-sm text-stone-500 dark:text-white/40">{question.source}</span>
         </header>
 
-        {/* Tabs — 資料夾索引，貼在浮卡頂端 */}
+        {/* Tabs — 資料夾索引，統一 text-[11px] + nowrap 防溢出 */}
         <div className="max-w-2xl mx-auto px-4 pl-6 flex items-end h-9">
           <div className="folder-tab folder-tab-1 tab-active relative z-[3]">
-            <span className="font-bold text-xs tracking-wider text-red-700 dark:text-red-400">機密檔案</span>
+            <span className="whitespace-nowrap font-bold text-[11px] tracking-wider text-red-700 dark:text-red-400">機密</span>
           </div>
-          <button 
+          <button
             ref={clueTabRef}
-            onClick={openNotebook} 
+            onClick={openNotebook}
             className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${notebookShakeKey > 0 ? 'animate-notebook-shake' : ''}`} key={`notebook-${notebookShakeKey}`}
           >
-            <span className="text-xs font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
+            <span className="whitespace-nowrap text-[11px] font-medium text-amber-800/40 dark:text-white/35 flex items-center gap-1">
               偵探筆記本
               {(chatEvents.length > notebookSeenCount || (!!question.figureImage && !hasOpenedNotebook)) && (
                 <span className="relative flex w-2 h-2 shrink-0">
@@ -839,7 +838,7 @@ export function DetectivePlayer({ question, onBack }: Props) {
             </span>
           </button>
           <div className="folder-tab folder-tab-3 relative z-[1] -ml-2 cursor-default">
-            <div key={`hearts-${wrongFeedbackKey}`} className={wrongFeedbackKey > 0 ? 'animate-hearts-shake' : ''}>
+            <div key={`hearts-${wrongFeedbackKey}`} className={`whitespace-nowrap ${wrongFeedbackKey > 0 ? 'animate-hearts-shake' : ''}`}>
               <LivesDisplay lives={lives} />
             </div>
           </div>

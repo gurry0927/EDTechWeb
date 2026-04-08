@@ -316,33 +316,34 @@ body {
   top: 0;
   border: 1px solid var(--det-border);
   border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  padding: 8px 20px 4px;
+  border-radius: 10px 10px 0 0;
+  padding: 6px 14px 4px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   height: 100%;
-  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
-  margin-right: -8px;
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+  margin-right: -6px;
+  overflow: hidden;
 }
-.folder-tab-1 { z-index: 3; box-shadow: 0 4px 12px rgba(60,35,10,0.25), 0 1px 3px rgba(60,35,10,0.15); }
-.folder-tab-2 { z-index: 2; box-shadow: 0 3px 8px rgba(60,35,10,0.18); filter: brightness(0.97); }
-.folder-tab-3 { z-index: 1; box-shadow: 0 3px 6px rgba(60,35,10,0.12); filter: brightness(0.94); }
+@media (min-width: 640px) {
+  .folder-tab { padding: 6px 18px 4px; }
+}
+/* 三層遞減：前景最亮最高 → 背景最暗最低 */
+.folder-tab-1 { z-index: 3; box-shadow: 0 3px 10px rgba(60,35,10,0.2); }
+.folder-tab-2 { z-index: 2; box-shadow: 0 2px 6px rgba(60,35,10,0.14); filter: brightness(0.97); }
+.folder-tab-3 { z-index: 1; box-shadow: 0 1px 4px rgba(60,35,10,0.10); filter: brightness(0.94); }
 
-/* 主動 tab：擬真立體化 */
+/* 主動 tab：微抬起 */
 .tab-active {
-  filter: brightness(1.02) !important;
-  box-shadow: 
-    0 1px 2px rgba(255,255,255,0.4) inset,
-    0 8px 24px rgba(60,35,10,0.35) !important;
+  filter: brightness(1.01) !important;
+  box-shadow: 0 1px 2px rgba(255,255,255,0.3) inset, 0 4px 14px rgba(60,35,10,0.25) !important;
   z-index: 10 !important;
-  clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
-  transition: all 0.25s ease;
 }
 
 .dark .folder-tab { border-color: rgba(140,120,80,0.1); }
-.dark .folder-tab-1 { box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+.dark .folder-tab-1 { box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
 .dark .folder-tab-2 { filter: brightness(0.9); }
-.dark .folder-tab-3 { filter: brightness(0.8); }
+.dark .folder-tab-3 { filter: brightness(0.82); }
 
 /* SVG feTurbulence 撕裂紙邊條 */
 .paper-tear-top {
