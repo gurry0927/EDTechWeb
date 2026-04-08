@@ -48,7 +48,7 @@ const PaperclipIcon = () => (
 const ContextBubble = ({ children }: { children: React.ReactNode }) => (
   <div className="flex gap-2 items-start max-w-[85%] bubble-in">
     <DetectiveAvatar />
-    <div className="rounded-2xl rounded-tl-sm px-3.5 py-2 bg-sky-50/70 dark:bg-sky-900/10 border border-sky-200/60 dark:border-sky-700/25 text-sm text-slate-500 dark:text-white/55 leading-relaxed italic">
+    <div className="dt-bubble-context rounded-2xl rounded-tl-sm px-3.5 py-2 text-sm leading-relaxed italic">
       {children}
     </div>
   </div>
@@ -58,7 +58,7 @@ const ContextBubble = ({ children }: { children: React.ReactNode }) => (
 const PityBubble = ({ children }: { children: React.ReactNode }) => (
   <div className="flex gap-2.5 items-start max-w-[85%] bubble-in">
     <DetectiveAvatar />
-    <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 bg-amber-50 dark:bg-amber-900/15 border border-amber-300/50 dark:border-amber-600/25 text-sm text-dt-clue/80 leading-relaxed">
+    <div className="dt-bubble-pity rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm leading-relaxed">
       <span className="mr-1.5">🔍</span>{children}
     </div>
   </div>
@@ -719,7 +719,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
     return () => clearTimeout(t);
   }, [phase, reasoningClues.length]);
   // 共用推理按鈕樣式：footer（小）與筆記本（大）同色同形，尺寸透過 padding 區分
-  const reasoningBtnBase = 'rounded-full font-bold bg-cyan-600 text-white hover:bg-cyan-500 border border-cyan-400/30 shadow-[0_0_15px_rgba(8,145,178,0.35)] transition-all active:scale-95 whitespace-nowrap flex items-center justify-center';
+  const reasoningBtnBase = 'dt-btn-primary rounded-full font-bold transition-all active:scale-95 whitespace-nowrap flex items-center justify-center';
 
   // [NEW] 關鍵線索斷句高亮演算法
   const currentHighlightRanges = useMemo(() => {
@@ -822,7 +822,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
       }
       
       // 平時狀態：移除對掃描狀態的依賴，但在掃描時禁用 active 變色類別
-      const activeCls = activeScanning ? '' : 'active:bg-slate-200 dark:active:bg-white/10';
+      const activeCls = activeScanning ? '' : 'active:bg-dt-border';
       return <span key={i} onClick={(e) => onSegTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${activeCls} ${isFound ? clsFound : ''}`}>{seg.text}</span>;
     }
     return <span key={i} className={isFound ? clsFound : ''}>{seg.text}</span>;
@@ -858,8 +858,8 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
               偵探筆記本
               {(chatEvents.length > notebookSeenCount || (!!question.figureImage && !hasOpenedNotebook)) && (
                 <span className="relative flex w-2 h-2 shrink-0">
-                  <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-75" />
-                  <span className="relative w-2 h-2 rounded-full bg-red-500" />
+                  <span className="absolute inset-0 rounded-full dt-badge-ping animate-ping opacity-75" />
+                  <span className="relative w-2 h-2 rounded-full dt-badge-dot" />
                 </span>
               )}
             </span>
@@ -906,7 +906,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                         className={`shrink-0 ml-2 text-sm flex items-center justify-center gap-0.5 px-2 h-7 rounded-full border transition-all
                           ${scanUsesLeft <= 0
                             ? 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-white/20 cursor-not-allowed'
-                            : 'border-cyan-300 dark:border-cyan-700/40 text-dt-scan hover:bg-cyan-50 dark:hover:bg-cyan-900/10 shadow-sm active:scale-95'
+                            : 'dt-btn-scan shadow-sm active:scale-95'
                           }`}
                         title={scanUsesLeft <= 0 ? DIALOGUE.scanUsedUp : '掃描模式'}
                       >
@@ -1003,10 +1003,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                             key={`${ci}-${isWrong ? wrongFeedbackKey : 0}`} 
                             onClick={(e) => onReasoningChoice(ci, e)}
                             className={`text-left px-4 py-2 rounded-xl text-base border transition-colors duration-200
-                              ${isWrong
-                                ? 'border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300 animate-wrong-shake'
-                                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:border-cyan-400 dark:hover:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-900/10'
-                              }`}
+                              ${isWrong ? 'dt-choice-wrong animate-wrong-shake' : 'dt-choice'}`}
                           >{choice}</button>
                         );
                       })}
@@ -1053,7 +1050,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
             {question.figureImage && (
               <div className="flex gap-2.5 items-start bubble-in">
                 <DetectiveAvatar />
-                <div className="relative bg-white dark:bg-white/90 p-2 pb-3 shadow-lg rounded-sm case-photo" style={{ maxWidth: 220 }}>
+                <div className="relative dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo" style={{ maxWidth: 220 }}>
                   <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
                   <img src={question.figureImage} alt="案件附圖" className="w-full rounded-sm mix-blend-darken dark:mix-blend-normal" />
                 </div>
@@ -1065,8 +1062,8 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                 const wasWrong = wrongAttempts.includes(letter);
                 return (
                   <button key={i} onClick={(e) => !wasWrong && onSelectAnswer(letter, e)} disabled={wasWrong}
-                    className={`text-left px-3 py-2 rounded-lg text-base transition-all flex items-center gap-2 ${wasWrong ? 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-300 dark:text-red-500/40 line-through' : 'bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-cyan-400 dark:hover:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 cursor-pointer'}`}>
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${wasWrong ? 'bg-red-200 dark:bg-red-500/20 text-red-400' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-white/50'}`}>{letter}</span>
+                    className={`text-left px-3 py-2 rounded-lg text-base transition-all flex items-center gap-2 ${wasWrong ? 'dt-choice-wrong line-through' : 'dt-choice cursor-pointer'}`}>
+                    <span className={`dt-choice-letter w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${wasWrong ? 'dt-choice-letter-wrong' : ''}`}>{letter}</span>
                     <span>{opt}</span>
                   </button>
                 );
@@ -1095,7 +1092,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
             )}
             <D>
               {DIALOGUE.solutionConceptLabel}
-              <span className="inline-block mt-2 px-2.5 py-0.5 text-sm rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 font-medium">{question.concept.unit}</span>
+              <span className="dt-badge-concept inline-block mt-2 px-2.5 py-0.5 text-sm rounded-full font-medium">{question.concept.unit}</span>
             </D>
             <D>{question.concept.brief}</D>
             {question.questions.length > 0 && (
@@ -1128,11 +1125,11 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
             {!gameOver && auxiliaryClues.length > 0 && auxFoundCount === auxiliaryClues.length && (
               <D><span className="text-dt-success text-sm">{DIALOGUE.solutionAuxiliaryFound}</span></D>
             )}
-            <div className="rounded-xl p-4 flex items-center gap-4 text-sm bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800/20 my-2">
+            <div className="dt-card-achievement rounded-xl p-4 flex items-center gap-4 text-sm my-2">
               <div className="text-center"><div className="text-xl font-bold text-dt-clue">{foundClues.size}<span className="text-dt-text-muted text-sm font-normal">/{totalClues}</span></div><div className="text-dt-text-muted">線索</div></div>
-              <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />
+              <div className="w-px h-8 bg-dt-border" />
               <div className="text-center"><div className="text-xl font-bold text-dt-error">{livesLost}</div><div className="text-dt-text-muted">失誤</div></div>
-              <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />
+              <div className="w-px h-8 bg-dt-border" />
               <div className="text-center"><div className="text-xl font-bold text-dt-scan">{wrongAttempts.length}</div><div className="text-dt-text-muted">錯答</div></div>
               <div className="flex-1 text-right">
                 {achievement && <span className={`font-medium ${achievement.color}`}>{achievement.label}</span>}
@@ -1159,13 +1156,13 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
           <div className="sticky bottom-4 flex justify-end gap-2 px-4 pointer-events-none">
             <button
               onClick={onRetry}
-              className="pointer-events-auto h-10 text-sm px-5 rounded-full bg-cyan-600 text-white border border-cyan-500/30 hover:bg-cyan-500 shadow-xl transition-all active:scale-95"
+              className="pointer-events-auto h-10 text-sm px-5 dt-btn-primary rounded-full shadow-xl transition-all active:scale-95"
             >
               再試一次
             </button>
             <button
               onClick={onBack}
-              className="pointer-events-auto h-10 text-sm px-5 rounded-full bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/50 hover:text-slate-700 shadow-xl backdrop-blur-sm transition-all active:scale-95"
+              className="pointer-events-auto h-10 text-sm px-5 dt-btn-secondary rounded-full shadow-xl backdrop-blur-sm transition-all active:scale-95"
             >
               回到題庫
             </button>
@@ -1210,7 +1207,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                   <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
                 </h2>
                 <button onClick={closeNotebook}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/70">
+                  className="w-8 h-8 flex items-center justify-center rounded-full dt-btn-icon">
                   ✕
                 </button>
               </div>
@@ -1228,7 +1225,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                     <div className="flex justify-center py-2">
                       <div className="relative">
                         <div className="absolute -top-5 right-6 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
-                        <div className="bg-white dark:bg-white/90 p-2 pb-3 shadow-md rotate-[-1.5deg] rounded-sm case-photo">
+                        <div className="dt-photo p-2 pb-3 shadow-md rotate-[-1.5deg] rounded-sm case-photo">
                           <img
                             src={question.figureImage}
                             alt="案件附圖"
@@ -1274,15 +1271,15 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                                 }}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all duration-500 ${
                                   canIdentify
-                                    ? 'border-emerald-200/50 dark:border-emerald-600/20 bg-emerald-50/40 dark:bg-emerald-900/10 cursor-default'
-                                    : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] cursor-pointer'
+                                    ? 'dt-nb-clue-found cursor-default'
+                                    : 'dt-nb-clue-locked cursor-pointer'
                                 }`}
                                 style={{ boxShadow: canIdentify ? '0 0 10px rgba(52,211,153,0.12)' : 'none' }}
                               >
                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-500 ${
                                   canIdentify
-                                    ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                                    : 'bg-slate-100 dark:bg-white/10 text-dt-text-muted'
+                                    ? 'dt-nb-num-found'
+                                    : 'dt-nb-num-locked'
                                 }`}>{letter}</span>
                                 <span
                                   className="text-slate-600 dark:text-white/60 leading-snug transition-all duration-700 select-none"
@@ -1304,7 +1301,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                       <div className="space-y-2 py-1">
                         <p className="text-sm text-dt-text-muted italic">{DIALOGUE.notebookEmpty}</p>
                         {question.startHint && (
-                          <div className="flex gap-2 items-start bg-amber-50/60 dark:bg-amber-900/10 rounded-lg px-3 py-2.5 border border-amber-200/40 dark:border-amber-700/20">
+                          <div className="flex gap-2 items-start dt-nb-hint-block rounded-lg px-3 py-2.5">
                             <span className="text-amber-500 shrink-0 mt-0.5">💡</span>
                             <p className="text-sm text-amber-800 dark:text-amber-300/80">{question.startHint}</p>
                           </div>
@@ -1317,7 +1314,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                           return (
                             <li key={i} className="flex flex-col gap-0.5">
                               <span className="text-dt-clue font-bold text-base flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 opacity-50" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-dt-clue opacity-50" />
                                 {clue.text}
                               </span>
                               <span className="text-slate-500 dark:text-white/50 pl-4 border-l-2 border-slate-100 dark:border-white/5 ml-0.5 py-1">
@@ -1339,10 +1336,10 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                         {chatEvents.filter(e => e.type === 'context' || e.type === 'pity').map((e, i) => (
                           <li key={i} className={`text-sm rounded-xl px-4 py-3 border shadow-sm relative overflow-hidden ${
                             e.type === 'pity'
-                              ? 'text-amber-800 dark:text-amber-200/80 bg-amber-50/60 dark:bg-amber-900/15 border-amber-200/50 dark:border-amber-600/20'
-                              : 'text-cyan-700 dark:text-cyan-300/80 bg-cyan-50/50 dark:bg-cyan-900/20 border-cyan-100/50 dark:border-cyan-800/20'
+                              ? 'dt-nb-event-pity'
+                              : 'dt-nb-event-clue'
                           }`}>
-                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${e.type === 'pity' ? 'bg-amber-400/40' : 'bg-cyan-400/30'}`} />
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${e.type === 'pity' ? 'bg-dt-clue/40' : 'bg-dt-scan/30'}`} />
                             {e.type === 'pity' && <span className="mr-1.5">🔍</span>}
                             {(e as { type: string; hint: string }).hint}
                           </li>
