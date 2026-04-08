@@ -912,11 +912,17 @@ body {
   --dt-photo-filter: sepia(0.55) saturate(0.65) contrast(1.08) brightness(0.82);
 }
 
-/* Cyber: 全息投影風 — 泛綠 + 掃描線雜訊 */
+/* Cyber: 全息投影風 — 綠色 tint + 掃描線 */
 [data-dt-theme="cyber"] .case-photo {
-  --dt-photo-filter: saturate(0.5) brightness(0.85) contrast(1.2) hue-rotate(120deg);
-  --dt-photo-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,170,0.05) 2px, rgba(0,255,170,0.05) 3px), radial-gradient(ellipse at center, transparent 40%, rgba(0,255,170,0.1) 100%);
-  --dt-photo-blend: screen;
+  --dt-photo-filter: brightness(0.9) contrast(1.2) grayscale(0.3);
+  --dt-photo-overlay:
+    /* 綠色全息 tint */
+    linear-gradient(0deg, rgba(0,255,170,0.15), rgba(0,255,170,0.08)),
+    /* 水平掃描線 */
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,170,0.06) 2px, rgba(0,255,170,0.06) 3px),
+    /* 角落泛綠光暈 */
+    radial-gradient(ellipse at center, transparent 40%, rgba(0,255,170,0.12) 100%);
+  --dt-photo-blend: normal;
   border: 1px solid rgba(0,255,170,0.3);
   box-shadow: 0 0 14px rgba(0,255,170,0.12), 0 0 2px rgba(0,255,170,0.5);
 }
