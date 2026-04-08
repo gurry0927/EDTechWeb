@@ -511,8 +511,11 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
   }, [question.figure, question.figureTokens, question.scaffolding, figureClues, scaffoldingWithIdx, stemBlankCount]);
 
   // Auto-scroll & auto-advance
-  // solution 階段滾到解析開頭（讓使用者從上往下讀），其他階段滾到底部
+  // 進場（clue phase + 無互動）→ 不滾，讓使用者讀開場白
+  // solution → 滾到解析開頭
+  // 其他 → 滾到底部
   useEffect(() => {
+    if (phase === 'clue' && chatEvents.length === 0) return; // 進場不滾
     const target = phase === 'solution' ? solutionTopRef.current : chatEndRef.current;
     const t = setTimeout(() => { target?.scrollIntoView({ behavior: 'smooth' }); }, GAME.scrollDelay);
     return () => clearTimeout(t);
