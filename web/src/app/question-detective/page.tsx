@@ -24,18 +24,13 @@ export default function QuestionDetectivePage() {
   const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
   const [dbQuestions, setDbQuestions] = useState<PublicQuestion[] | null>(null);
-  const [theme, setThemeState] = useState<ThemeId>('classic');
-
-  useEffect(() => {
+  const [theme, setThemeState] = useState<ThemeId>(() => {
+    if (typeof window === 'undefined') return 'classic';
     const fromUrl = new URLSearchParams(window.location.search).get('theme') as ThemeId | null;
-    if (fromUrl && THEMES.some(t => t.id === fromUrl)) {
-      setThemeState(fromUrl);
-      localStorage.setItem('dt-theme', fromUrl);
-      return;
-    }
+    if (fromUrl && THEMES.some(t => t.id === fromUrl)) { localStorage.setItem('dt-theme', fromUrl); return fromUrl; }
     const saved = localStorage.getItem('dt-theme') as ThemeId | null;
-    if (saved && THEMES.some(t => t.id === saved)) setThemeState(saved);
-  }, []);
+    return (saved && THEMES.some(t => t.id === saved)) ? saved : 'classic';
+  });
 
   const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);

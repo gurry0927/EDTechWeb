@@ -1,19 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DetectivePlayer } from './DetectivePlayer';
 import type { DetectiveQuestion } from './types';
 
+function getInitialTheme(): string {
+  if (typeof window === 'undefined') return 'classic';
+  const fromUrl = new URLSearchParams(window.location.search).get('theme');
+  if (fromUrl) { localStorage.setItem('dt-theme', fromUrl); return fromUrl; }
+  return localStorage.getItem('dt-theme') || 'classic';
+}
+
 export function DetectiveGamePage({ question }: { question: DetectiveQuestion }) {
   const router = useRouter();
   const [gameKey, setGameKey] = useState(0);
-  const [theme, setTheme] = useState('classic');
-
-  useEffect(() => {
-    const saved = localStorage.getItem('dt-theme');
-    if (saved) setTheme(saved);
-  }, []);
+  const [theme] = useState(getInitialTheme);
 
   return (
     <div data-dt-theme={theme}>

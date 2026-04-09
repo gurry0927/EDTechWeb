@@ -13,14 +13,12 @@ export default function Page() {
   const [question, setQuestion] = useState<DetectiveQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [theme, setTheme] = useState('classic');
-
-  useEffect(() => {
+  const [theme] = useState(() => {
+    if (typeof window === 'undefined') return 'classic';
     const fromUrl = new URLSearchParams(window.location.search).get('theme');
-    if (fromUrl) { setTheme(fromUrl); localStorage.setItem('dt-theme', fromUrl); return; }
-    const saved = localStorage.getItem('dt-theme');
-    if (saved) setTheme(saved);
-  }, []);
+    if (fromUrl) { localStorage.setItem('dt-theme', fromUrl); return fromUrl; }
+    return localStorage.getItem('dt-theme') || 'classic';
+  });
 
   useEffect(() => {
     let cancelled = false;
