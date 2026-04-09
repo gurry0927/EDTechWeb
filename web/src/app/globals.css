@@ -368,6 +368,160 @@ body {
   background: linear-gradient(to top, rgba(0,255,170,0.25), transparent);
 }
 
+/* ══════════════════════════════════════════
+   國風主題 (guofeng) — 墨色 + 硃砂 + 金 + 宣紙
+   ══════════════════════════════════════════ */
+[data-dt-theme="guofeng"] {
+  --dt-bg: #f5f0e3;
+  --dt-card: #ece5d0;
+  --dt-wood: #3a2e28;
+
+  --dt-text: #2c1810;
+  --dt-text-secondary: #6b5744;
+  --dt-text-muted: #a09080;
+
+  --dt-accent: #c23a2a;           /* 硃砂紅 */
+  --dt-accent-tab: #8b1a1a;
+  --dt-scan: #b8860b;             /* 暗金 */
+  --dt-clue: #d4a017;             /* 金色 */
+  --dt-success: #5b8c5a;          /* 松綠 */
+  --dt-error: #c23a2a;
+
+  --dt-border: rgba(60,40,20,0.15);
+  --dt-shadow: rgba(40,25,10,0.12);
+  --dt-tab-shadow: rgba(40,25,10,0.18);
+  --dt-line: rgba(60,40,20,0.06);
+
+  --dt-scan-sweep: rgba(180,130,20,0.25);
+  --dt-scan-glow: rgba(180,130,20,0.15);
+  --dt-highlight-bg: rgba(180,130,20,0.1);
+
+  --dt-clue-found-bg: rgba(212,160,23,0.12);
+  --dt-notebook-badge: #c23a2a;
+
+  --dt-btn-bg: #8b1a1a;
+  --dt-btn-hover: #a02020;
+  --dt-btn-text: #f5e6c8;
+  --dt-surface: #ece5d0;
+  --dt-surface-dim: #e0d8c2;
+}
+
+/* ── 國風: 背景 — 宣紙紋理 ── */
+[data-dt-theme="guofeng"] .detective-paper {
+  background-color: var(--dt-wood);
+  background-image:
+    repeating-linear-gradient(108deg, transparent, transparent 15px, rgba(255,240,200,0.03) 15px, rgba(255,240,200,0.03) 16px),
+    repeating-linear-gradient(72deg, transparent, transparent 25px, rgba(0,0,0,0.02) 25px, rgba(0,0,0,0.02) 26px);
+}
+
+/* ── 國風: 案件卷軸 ── */
+[data-dt-theme="guofeng"] .case-file {
+  background-color: var(--dt-bg);
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(60,40,20,0.04) 23px, rgba(60,40,20,0.04) 24px);
+  border-left: 4px solid var(--dt-accent);
+  box-shadow:
+    0 2px 8px var(--dt-shadow),
+    0 8px 24px rgba(40,25,10,0.15);
+}
+
+/* ── 國風: tab — 竹簡感 ── */
+[data-dt-theme="guofeng"] .folder-tab {
+  border-color: rgba(60,40,20,0.12);
+  background-color: var(--dt-bg);
+}
+[data-dt-theme="guofeng"] .tab-active {
+  background-color: var(--dt-card) !important;
+  box-shadow: 0 -2px 0 var(--dt-accent) inset, 2px -1px 6px var(--dt-tab-shadow) !important;
+}
+
+/* ── 國風: 泡泡 — 宣紙底 + 墨邊 ── */
+[data-dt-theme="guofeng"] .dt-bubble-detective {
+  background: var(--dt-bg);
+  border: 1px solid rgba(60,40,20,0.12);
+  color: var(--dt-text);
+}
+[data-dt-theme="guofeng"] .dt-bubble-student {
+  background: rgba(212,160,23,0.06);
+  border: 1px solid rgba(212,160,23,0.15);
+  color: var(--dt-text);
+}
+
+/* ── 國風: 頭像 — 硃砂環 / 金環 ── */
+[data-dt-theme="guofeng"] .dt-avatar-detective {
+  background: rgba(194,58,42,0.08);
+  border-color: rgba(194,58,42,0.25);
+}
+[data-dt-theme="guofeng"] .dt-avatar-student {
+  background: rgba(212,160,23,0.08);
+  border-color: rgba(212,160,23,0.2);
+}
+
+/* ── 國風: 筆記本 — 古卷風 ── */
+[data-dt-theme="guofeng"] .notebook-paper {
+  background-color: var(--dt-bg);
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(60,40,20,0.04) 27px, rgba(60,40,20,0.04) 28px);
+  box-shadow: 0 8px 28px var(--dt-shadow);
+}
+
+/* ── 國風: 照片 — 水墨泛黃 ── */
+[data-dt-theme="guofeng"] .case-photo {
+  --dt-photo-filter: sepia(0.8) saturate(0.5) contrast(1.1) brightness(0.95);
+  --dt-photo-overlay: radial-gradient(ellipse at center, transparent 50%, rgba(60,40,20,0.2) 100%);
+  --dt-photo-blend: multiply;
+  border: 2px solid rgba(60,40,20,0.15);
+}
+[data-dt-theme="guofeng"] .dt-photo {
+  background: var(--dt-bg);
+  border: 1px solid rgba(60,40,20,0.1);
+}
+[data-dt-theme="guofeng"] .dt-photo-tilt { transform: rotate(-1deg); }
+
+/* ── 國風: 掃描呼吸 — 金色光暈 ── */
+[data-dt-theme="guofeng"] .highlight-scan {
+  animation: guofeng-breathing 2s ease-in-out infinite;
+}
+@keyframes guofeng-breathing {
+  0%, 100% { background-color: rgba(180,130,20,0.06); box-shadow: 0 0 4px rgba(180,130,20,0.1); }
+  50% { background-color: rgba(180,130,20,0.15); box-shadow: 0 0 12px rgba(180,130,20,0.25); }
+}
+
+/* ── 國風: 鷹架跳動 — 硃砂色 ── */
+[data-dt-theme="guofeng"] .scaffold-pulse {
+  background-color: rgba(194,58,42,0.1);
+  border-bottom-color: rgba(194,58,42,0.5);
+}
+
+/* ── 國風: 線索飛行 — 金色光球 ── */
+[data-dt-theme="guofeng"] .clue-flyer-y {
+  background: #d4a017;
+  box-shadow: 0 0 10px rgba(212,160,23,0.7), 0 0 24px rgba(212,160,23,0.3);
+}
+
+/* ── 國風: 筆記本收到線索 — 硃砂閃光 ── */
+[data-dt-theme="guofeng"] .animate-notebook-shake {
+  animation: shake-x 0.4s ease-in-out both, guofeng-tab-flash 0.4s ease-out both;
+}
+@keyframes guofeng-tab-flash {
+  0% { box-shadow: 0 0 16px rgba(194,58,42,0.4); }
+  100% { box-shadow: none; }
+}
+
+/* ── 國風: 扣血 ── */
+[data-dt-theme="guofeng"] .minus-life-pop {
+  text-shadow: 0 0 8px rgba(194,58,42,0.6), 0 2px 4px rgba(0,0,0,0.3);
+  color: var(--dt-error);
+}
+
+/* ── 國風: 迴紋針保留（古卷用封蠟感）── */
+/* dt-paperclip 不隱藏 */
+
+/* ── 國風: 滾動提示 — 金色 ── */
+[data-dt-theme="guofeng"] .stem-scroll-fade::after {
+  background: linear-gradient(to top, rgba(180,130,20,0.2), transparent);
+}
+
 /* ── 指認閃爍 / 照片混合 / 扣血陰影 ── */
 .dt-pointing-flash { box-shadow: 0 0 0 4px color-mix(in srgb, var(--dt-clue) 50%, transparent); }
 .dt-photo-blend { mix-blend-mode: darken; }

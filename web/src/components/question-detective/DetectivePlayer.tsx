@@ -1,14 +1,22 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef, createContext, useContext } from 'react';
 import type { DetectiveQuestion } from './types';
 import { GAME, getDialogue, ACHIEVEMENTS, pick } from './detective-config';
-import { THEME_REGISTRY } from './theme-registry';
+import { THEME_REGISTRY, type ThemeAvatar } from './theme-registry';
+
+// ── Avatar Context（避免 prop drilling）──
+const AvatarCtx = createContext<ThemeAvatar>({ detective: '🕵️', student: '🧑‍🎓' });
 
 // ── Shared components (outside to avoid remount) ──
-const DetectiveAvatar = () => (
-  <span className="dt-avatar-detective w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">🕵️</span>
-);
+const DetectiveAvatar = () => {
+  const { detective } = useContext(AvatarCtx);
+  return <span className="dt-avatar-detective w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">{detective}</span>;
+};
+const StudentAvatar = () => {
+  const { student } = useContext(AvatarCtx);
+  return <span className="dt-avatar-student w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">{student}</span>;
+};
 
 const TypingBubble = () => (
   <div className="flex gap-2.5 items-start max-w-[85%] bubble-in">
@@ -30,7 +38,7 @@ const DetectiveBubble = ({ children }: { children: React.ReactNode }) => (
 
 const StudentBubble = ({ children }: { children: React.ReactNode }) => (
   <div className="flex gap-2.5 items-start max-w-[85%] ml-auto flex-row-reverse bubble-in">
-    <span className="dt-avatar-student w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">🧑‍🎓</span>
+    <StudentAvatar />
     <div className="dt-bubble-student rounded-2xl rounded-tr-sm px-4 py-2.5 text-base leading-relaxed">
       {children}
     </div>
@@ -235,6 +243,7 @@ interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () =
 // ── Main Component ──
 export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
   const DIALOGUE = useMemo(() => getDialogue(theme, THEME_REGISTRY[theme]?.dialogue), [theme]);
+  const avatar = useMemo(() => THEME_REGISTRY[theme]?.avatar ?? { detective: '🕵️', student: '🧑‍🎓' }, [theme]);
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);
@@ -857,6 +866,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length, auxFoundCount, auxiliaryClues.length, gameOver));
 
   return (
+    <AvatarCtx.Provider value={avatar}>
     <div className="h-[100dvh] detective-paper text-dt-text flex flex-col overflow-hidden">
       {/* Header + Tabs + Stem card — 全體木紋底色，case-file 浮卡 */}
       <div ref={headerRef} className="shrink-0 sticky top-0 z-10 bg-transparent">
@@ -1422,5 +1432,6 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
         </span>
       ))}
     </div>
+    </AvatarCtx.Provider>
   );
 }
