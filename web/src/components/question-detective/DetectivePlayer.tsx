@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { DetectiveQuestion } from './types';
-import { GAME, DIALOGUE, ACHIEVEMENTS, pick } from './detective-config';
+import { GAME, getDialogue, ACHIEVEMENTS, pick } from './detective-config';
 
 // ── Shared components (outside to avoid remount) ──
 const DetectiveAvatar = () => (
@@ -229,10 +229,11 @@ type ChatEvent =
   | { type: 'clue';    idx: number; reaction: string }
   | { type: 'context'; hint: string; text: string }
   | { type: 'pity';    hint: string }
-interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () => void; }
+interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () => void; theme?: string; }
 
 // ── Main Component ──
-export function DetectivePlayer({ question, onBack, onRetry }: Props) {
+export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
+  const DIALOGUE = useMemo(() => getDialogue(theme), [theme]);
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);
@@ -857,7 +858,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
         {/* Tabs — 資料夾索引，統一 h-5 內容行高 + text-[11px] + nowrap */}
         <div className="max-w-2xl mx-auto px-4 pl-6 flex items-end h-9">
           <div className="folder-tab folder-tab-1 tab-active relative z-[3]">
-            <span className="whitespace-nowrap font-bold text-[11px] leading-5 tracking-wider text-dt-accent-tab">機密</span>
+            <span className="whitespace-nowrap font-bold text-[11px] leading-5 tracking-wider text-dt-accent-tab">{DIALOGUE.tabLabel}</span>
           </div>
           <button
             ref={clueTabRef}
@@ -895,7 +896,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                 : (
                   <div className="case-file-header flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="case-file-header-label">案件証詞</span>
+                      <span className="case-file-header-label">{DIALOGUE.stemHeader}</span>
                       <div className="case-file-header-rule flex-1" />
                     </div>
                     {phase === 'clue' && !clueLocked && (
@@ -934,7 +935,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                   </p>
                   {question.figure && (
                     <div className="mt-5 border-l-2 border-dt-accent/25 pl-3" ref={detailSectionRef}>
-                      <span className="text-xs font-bold tracking-widest text-dt-accent/50 select-none uppercase">証物細節</span>
+                      <span className="text-xs font-bold tracking-widest text-dt-accent/50 select-none uppercase">{DIALOGUE.figureLabel}</span>
                       <div className={`mt-1 text-base ${activeScanning ? 'stem-scan' : ''}`}>
                         <p className="text-dt-text leading-relaxed">
                           {figureSegs ? renderSegs(figureSegs, true) : question.figure}
@@ -1252,7 +1253,7 @@ export function DetectivePlayer({ question, onBack, onRetry }: Props) {
                             ? 'text-dt-success/60 border-dt-success/20'
                             : 'text-dt-text-muted/60 border-dt-border'
                         }`}>
-                          嫌疑犯名單
+                          {DIALOGUE.suspectListHeader}
                           {canIdentify && <span className="ml-2 text-dt-success">✓ 可指認</span>}
                         </h3>
                         <ul className="space-y-1">

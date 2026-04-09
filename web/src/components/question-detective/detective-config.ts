@@ -34,8 +34,14 @@ export const GAME = {
   pityScanThreshold: 3,         // 連續失誤幾次觸發提示
 };
 
-/** 偵探台詞（可替換語氣/語言） */
-export const DIALOGUE = {
+/** 偵探台詞 — base（classic 主題） */
+const DIALOGUE_BASE = {
+  // UI 標籤
+  tabLabel: '機密',
+  stemHeader: '案件証詞',
+  figureLabel: '証物細節',
+  suspectListHeader: '嫌疑犯名單',
+
   // 線索階段
   intro: '案件送達！一份証詞送到了偵探社。',
   introWithFigure: '案件送達！一份証詞送到了偵探社，另附有照片證物。📓 照片已收進右上方的偵探筆記本，記得翻開來看。',
@@ -48,7 +54,7 @@ export const DIALOGUE = {
     '直覺告訴我，這不是我們要找的關鍵。往更具體的名詞看。',
   ],
 
-  // 分層回饋：context（不扣血）/ noise（扣血）/ plainMiss（扣血）
+  // 分層回饋
   contextHitReactions: [
     '這個細節有點意思，但還不是最關鍵的線索。',
     '記下來，但我們先繼續找其他證據。',
@@ -59,8 +65,6 @@ export const DIALOGUE = {
     '調查機會消耗了，要謹慎選擇。',
     '這不是我們要找的線索。',
   ],
-  // teaser 有填：顯示 teaser（話說一半）+ 引導去筆記本
-  // teaser 沒填：顯示原本的 clueReactions（向後相容）
   clueReactions: ['有道理。', '說得沒錯。', '好眼力。', '這很關鍵。'],
   clueNotebookCTA: '📓 詳細分析已記入偵探筆記本。',
   auxiliaryClueReactions: [
@@ -69,14 +73,13 @@ export const DIALOGUE = {
     '值得深入追查——',
   ],
   auxiliaryNotebookCTA: '📓 已收進偵探筆記本，去看看嫌疑犯的情況有沒有變化。',
-  // 推理選錯時，引導去筆記本複查
   reasoningWrongNotebookHint: '再去筆記本確認一下線索的分析，也許能找到方向。',
   clueLocked: '調查機會用完了。帶著目前的線索繼續推理吧。',
 
-  // 憐憫機制：連續失誤 N 次後觸發，用 tag 組成分類提示
+  // 憐憫機制
   pityCategoryHint: (tag: string) => `提示：這道題的關鍵與「${tag}」有關，試著往那個方向找。`,
 
-  // 掃描器台詞
+  // 掃描器
   scanActivate: '🔍 掃描模式啟動，注意高亮的區域。',
   scanMissProtected: '掃描中，先別亂動——仔細看清楚再出手。',
   scanUsedUp: '掃描次數已用完（找到輔助線索可補充）',
@@ -84,7 +87,7 @@ export const DIALOGUE = {
   clueReady: '🔎 線索到手，開始推理',
   clueForceAdvance: '帶著現有線索繼續 →',
 
-  // 推理階段
+  // 推理
   reasoningIntro: '好，根據你找到的線索，我有幾個問題要確認。',
   reasoningWrongPrefix: '不太對。',
   reasoningCorrect: '✓',
@@ -100,14 +103,14 @@ export const DIALOGUE = {
   reasoningDone: '推理完成！',
   reasoningDoneAction: '真相只有一個——指認你的答案吧。',
 
-  // 作答階段
+  // 作答
   answerPrompt: '真相只有一個——指認你的答案吧。',
   answerWrongPrefix: '不對。',
   answerWrongSuffix: '不是正確答案。再看看線索，想想你剛才的推理。',
   answerCorrect: '🎉 破案了！',
   answerCorrectSuffix: '完全正確。',
 
-  // 偵探接管（血歸零）
+  // 偵探接管
   gameOverTakeover: '調查機會耗盡。這次就由我來替你整理案情吧。',
   solutionGameOver: '⚠️ 偵探代為結案',
 
@@ -120,7 +123,7 @@ export const DIALOGUE = {
   solutionAuxiliaryMissed: '現場其實還留有一條線索未採集…下次試試能否找到全部線索。',
   solutionAuxiliaryFound: '你連隱藏的背景線索也沒放過——真正的完美結案。',
 
-  // 偵探筆記本 UI 台詞
+  // 筆記本
   notebookTitle: '偵探筆記本',
   notebookSubtitle: '這是我專門記錄關鍵細節的地方。只要在證詞中捕捉到可疑字詞，它們就會出現在這；集齊後，我就能鎖定嫌疑人了。',
   evidencePhotoReactions: [
@@ -137,6 +140,104 @@ export const DIALOGUE = {
   notebookHintsSection: '偵探提示',
   notebookEmpty: '還沒有找到任何線索',
 };
+
+/** Cyber 主題覆寫層 — 只需列出要改的 key */
+const DIALOGUE_CYBER: Partial<typeof DIALOGUE_BASE> = {
+  tabLabel: '機密',
+  stemHeader: '攔截數據',
+  figureLabel: '附件掃描',
+  suspectListHeader: '目標清單',
+
+  intro: '資料封包已截獲。開始解析。',
+  introWithFigure: '資料封包已截獲，附帶影像附件。📓 影像已載入右上方的資料終端，記得查閱。',
+  introHint: '👆 掃描上方數據流中的異常節點',
+  caseQuestionPrompt: '分析數據流，標記你認為與任務相關的關鍵字段！',
+  clueMissReactions: [
+    '這段數據沒有異常特徵，換個區段掃描。',
+    '訊號正常。重新定位——哪些字段的數值偏離了基準？',
+    '無效標記。再仔細比對，找出真正的異常點。',
+    '這組數據沒有情報價值。聚焦到更具體的關鍵字。',
+  ],
+
+  contextHitReactions: [
+    '偵測到次級訊號，但還不是核心數據。',
+    '已記錄。繼續掃描主線索。',
+    '背景參數已擷取，但還需要關鍵證據。',
+  ],
+  noiseHitReactions: [
+    '這段是干擾訊號。',
+    '運算資源消耗了，精準定位目標。',
+    '錯誤標記，非目標數據。',
+  ],
+  clueReactions: ['數據吻合。', '訊號確認。', '精準擷取。', '關鍵數據鎖定。'],
+  clueNotebookCTA: '📓 分析報告已寫入資料終端。',
+  auxiliaryClueReactions: [
+    '偵測到隱藏訊號——',
+    '次級數據中有異常模式——',
+    '值得深入解碼——',
+  ],
+  auxiliaryNotebookCTA: '📓 已載入資料終端，檢查目標狀態是否更新。',
+  reasoningWrongNotebookHint: '回資料終端交叉比對數據，重新推算。',
+  clueLocked: '掃描配額耗盡。用現有數據推進分析。',
+
+  pityCategoryHint: (tag: string) => `系統提示：任務核心與「${tag}」高度相關，重新定位掃描範圍。`,
+
+  scanActivate: '🔍 全頻掃描啟動，鎖定訊號源。',
+  scanMissProtected: '掃描進行中——確認目標後再行動。',
+  scanUsedUp: '掃描配額已用完（擷取次級數據可補充）',
+  scanNudge: '💡 高亮區域偵測到異常訊號，嘗試標記。',
+  clueReady: '🔎 數據就緒，啟動推理引擎',
+  clueForceAdvance: '以現有數據推進 →',
+
+  reasoningIntro: '數據擷取完成。啟動邏輯驗證程序。',
+  reasoningAskEvidence: '指出數據流中支持此結論的證據節點',
+  reasoningPointingBanner: '在數據流中指認支持推理的證據節點',
+  wrongEvidence: [
+    '此數據與結論無直接關聯。',
+    '驗證失敗，重新比對證據鏈。',
+    '定位錯誤——哪個節點才是關鍵？',
+  ],
+  reasoningDone: '邏輯驗證完成！',
+  reasoningDoneAction: '啟動最終鎖定——指認目標。',
+
+  answerPrompt: '啟動最終鎖定——指認目標。',
+  answerWrongSuffix: '目標不符。重新比對數據鏈。',
+  answerCorrect: '🎯 目標鎖定！',
+  answerCorrectSuffix: '驗證通過。',
+
+  gameOverTakeover: '能量耗盡。系統接管，自動完成分析。',
+  solutionGameOver: '⚠️ 系統自動結案',
+
+  solutionAuxiliaryMissed: '資料庫中仍有一筆未擷取的隱藏數據…下次提升掃描效率。',
+  solutionAuxiliaryFound: '所有隱藏節點均已擷取——完美的數據分析。',
+
+  notebookTitle: '資料終端',
+  notebookSubtitle: '此終端記錄所有已擷取的數據節點。收集完整數據鏈後，即可鎖定目標。',
+  evidencePhotoReactions: [
+    '影像僅供參考。關閉終端，回到主介面分析數據。',
+    '附件已歸檔。返回數據流比對異常點。',
+    '影像掃描完成。請回到主畫面繼續標記。',
+  ],
+  insufficientEvidenceReactions: [
+    '數據不足！返回主介面繼續擷取。',
+    '證據鏈不完整。回數據流中補齊節點。',
+    '尚未達到鎖定閾值。繼續掃描。',
+  ],
+  notebookCluesSection: '已擷取數據',
+  notebookHintsSection: '系統提示',
+  notebookEmpty: '尚未擷取任何數據節點',
+};
+
+export type Dialogue = typeof DIALOGUE_BASE;
+
+/** 根據主題取得台詞（cyber 覆蓋 base，其餘 fallback） */
+export function getDialogue(theme: string): Dialogue {
+  if (theme === 'cyber') return { ...DIALOGUE_BASE, ...DIALOGUE_CYBER } as Dialogue;
+  return DIALOGUE_BASE;
+}
+
+/** 向後相容：預設 classic */
+export const DIALOGUE = DIALOGUE_BASE;
 
 /** 成就判定（依序檢查，第一個符合的生效）
  *  參數：clues=找到線索數, total=全部線索數（含輔助）, misses=失誤次數, wrongs=答錯次數,
