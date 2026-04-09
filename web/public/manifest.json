@@ -1,0 +1,14 @@
+{
+  "name": "EDTech 互動學習平台",
+  "short_name": "EDTech",
+  "description": "遊戲化互動教材 — 問題偵探、互動地圖",
+  "start_url": "/question-detective",
+  "display": "standalone",
+  "background_color": "#f4efe4",
+  "theme_color": "#c2553a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "/icons/icon-192.svg", "sizes": "512x512", "type": "image/svg+xml" }
+  ]
+}

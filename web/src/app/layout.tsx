@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EDTech — 互動教學平台",
   description: "數位互動教材，讓學習更有趣",
+  manifest: "/manifest.json",
+  themeColor: "#c2553a",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "EDTech",
+  },
 };
 
 export default function RootLayout({
@@ -30,9 +37,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
+            __html: `try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}\nif('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
           }}
         />
       </head>
