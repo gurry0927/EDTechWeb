@@ -2,10 +2,8 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { DetectiveQuestion } from '@/components/question-detective/types';
-import { getInitialTheme, VALID_THEMES, type ThemeId } from '@/components/question-detective/theme-utils';
+import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
-import { ALL_QUESTIONS } from '@/data/detective-questions';
 
 const THEMES: { id: ThemeId; label: string; desc: string }[] = [
   { id: 'classic', label: '📜 偵探社', desc: '經典牛皮紙風格' },
@@ -13,7 +11,7 @@ const THEMES: { id: ThemeId; label: string; desc: string }[] = [
 ];
 
 // Extract year from source string like "114年會考-社會-第20題"
-function getYear(q: Pick<DetectiveQuestion, 'source'>): string {
+function getYear(q: { source: string }): string {
   const m = q.source.match(/^(\d+)年/);
   return m ? `${m[1]}年` : '其他';
 }
@@ -23,7 +21,8 @@ type GroupBy = 'subject' | 'year';
 export default function QuestionDetectivePage() {
   const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
-  const [dbQuestions, setDbQuestions] = useState<PublicQuestion[] | null>(null);
+  const [questions, setQuestions] = useState<PublicQuestion[]>([]);
+  const [listLoading, setListLoading] = useState(true);
   const [theme, setThemeState] = useState<ThemeId>(getInitialTheme);
 
   const setTheme = useCallback((id: ThemeId) => {
@@ -33,12 +32,10 @@ export default function QuestionDetectivePage() {
 
   useEffect(() => {
     fetchPublicQuestions().then(qs => {
-      if (qs.length > 0) setDbQuestions(qs);
+      setQuestions(qs);
+      setListLoading(false);
     });
   }, []);
-
-  // DB 有資料用 DB，否則 fallback 靜態檔案
-  const questions = dbQuestions ?? ALL_QUESTIONS;
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof questions>();
@@ -86,8 +83,8 @@ export default function QuestionDetectivePage() {
             每份檔案都藏著未解的謎團。選一份，開始調查。
           </p>
           {process.env.NODE_ENV === 'development' && (
-            <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${dbQuestions ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-              {dbQuestions ? `DB (${dbQuestions.length})` : `Static (${ALL_QUESTIONS.length})`}
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+              DB ({questions.length})
             </span>
           )}
         </div>
@@ -109,6 +106,11 @@ export default function QuestionDetectivePage() {
 
       {/* Case files */}
       <main className="flex-1 px-5 pb-8 pt-6 max-w-2xl mx-auto w-full">
+        {listLoading ? (
+          <div className="text-center py-12 text-dt-text-muted text-sm">載入題庫中…</div>
+        ) : questions.length === 0 ? (
+          <div className="text-center py-12 text-dt-text-muted text-sm">題庫尚無資料</div>
+        ) : (
         <div className="space-y-6">
           {grouped.map(([group, groupQuestions]) => (
             <div key={group}>
@@ -160,6 +162,7 @@ export default function QuestionDetectivePage() {
             </div>
           ))}
         </div>
+        )}
       </main>
     </div>
   );

@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { DetectiveGamePage } from '@/components/question-detective/DetectiveGamePage';
 import { getInitialTheme } from '@/components/question-detective/theme-utils';
 import { fetchQuestionDetail } from '@/data/detective-questions/api';
-import { ALL_QUESTIONS } from '@/data/detective-questions';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 
 export default function Page() {
@@ -18,28 +17,12 @@ export default function Page() {
 
   useEffect(() => {
     let cancelled = false;
-
-    async function load() {
-      setLoading(true);
-      // 先嘗試從 Supabase 載入完整資料
-      const dbQuestion = await fetchQuestionDetail(id);
-      if (!cancelled) {
-        if (dbQuestion) {
-          setQuestion(dbQuestion);
-        } else {
-          // Fallback: 靜態檔案
-          const staticQuestion = ALL_QUESTIONS.find(q => q.id === id) ?? null;
-          if (staticQuestion) {
-            setQuestion(staticQuestion);
-          } else {
-            setError(true);
-          }
-        }
-        setLoading(false);
-      }
-    }
-
-    load();
+    fetchQuestionDetail(id).then(q => {
+      if (cancelled) return;
+      if (q) setQuestion(q);
+      else setError(true);
+      setLoading(false);
+    });
     return () => { cancelled = true; };
   }, [id]);
 
