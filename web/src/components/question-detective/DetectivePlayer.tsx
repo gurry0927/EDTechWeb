@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { DetectiveQuestion } from './types';
 import { GAME, getDialogue, ACHIEVEMENTS, pick } from './detective-config';
+import { THEME_REGISTRY } from './theme-registry';
 
 // ── Shared components (outside to avoid remount) ──
 const DetectiveAvatar = () => (
@@ -233,7 +234,7 @@ interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () =
 
 // ── Main Component ──
 export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
-  const DIALOGUE = useMemo(() => getDialogue(theme), [theme]);
+  const DIALOGUE = useMemo(() => getDialogue(theme, THEME_REGISTRY[theme]?.dialogue), [theme]);
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);

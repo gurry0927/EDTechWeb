@@ -2,14 +2,9 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
+import { THEME_LIST } from '@/components/question-detective/theme-registry';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
-
-const THEMES: { id: ThemeId; label: string; desc: string }[] = [
-  { id: 'classic', label: '📜 偵探社', desc: '經典牛皮紙風格' },
-  { id: 'cyber', label: '🔮 賽博', desc: '科技霓虹風格' },
-];
 
 // Extract year from source string like "114年會考-社會-第20題"
 function getYear(q: { source: string }): string {
@@ -20,7 +15,6 @@ function getYear(q: { source: string }): string {
 type GroupBy = 'subject' | 'year';
 
 export default function QuestionDetectivePage() {
-  const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
   const [questions, setQuestions] = useState<PublicQuestion[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -63,7 +57,7 @@ export default function QuestionDetectivePage() {
             </Link>
             {/* Theme switcher */}
             <div className="flex gap-1">
-              {THEMES.map(t => (
+              {THEME_LIST.map(t => (
                 <button
                   key={t.id}
                   onClick={() => setTheme(t.id)}
