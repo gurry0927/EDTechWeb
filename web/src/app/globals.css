@@ -576,6 +576,17 @@ body {
   background: linear-gradient(to top, rgba(180,130,20,0.2), transparent);
 }
 
+/* ── 教學引導跳動 ── */
+@keyframes tutorial-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.tutorial-pulse {
+  animation: tutorial-bounce 0.8s ease-in-out infinite;
+  box-shadow: 0 0 0 3px var(--dt-scan), 0 0 16px rgba(6,182,212,0.3);
+  border-radius: 8px;
+}
+
 /* ── 指認閃爍 / 照片混合 / 扣血陰影 ── */
 .dt-pointing-flash { box-shadow: 0 0 0 4px color-mix(in srgb, var(--dt-clue) 50%, transparent); }
 .dt-photo-blend { mix-blend-mode: darken; }

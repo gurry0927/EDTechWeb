@@ -1,40 +1,49 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface TutorialStep {
-  target: string;       // CSS selector
+  target: string;          // CSS selector
   title: string;
   text: string;
+  action: string;          // 按鈕文字（引導使用者操作）
   position?: 'top' | 'bottom';
-  waitForEvent?: string;  // 'click-target' = 等使用者點目標才進下一步
+  requireClick?: boolean;  // true = 必須點擊目標元素才能進下一步
+  pulseTarget?: boolean;   // true = 目標元素加跳動動畫吸引注意
 }
 
 const STEPS: TutorialStep[] = [
   {
     target: '.case-file',
     title: '📖 案件証詞',
-    text: '這是案件的核心資料。仔細閱讀，找出你認為可疑的字詞，直接點擊它！',
+    text: '這是案件的核心文字。仔細閱讀後，點擊你覺得可疑的字詞。現在先往下看說明。',
+    action: '了解！',
     position: 'bottom',
   },
   {
     target: '.dt-btn-scan',
     title: '🔍 掃描器',
-    text: '卡住了？點這個按鈕啟動掃描，系統會高亮可疑區域給你提示。',
+    text: '看不出線索在哪？點擊掃描器，系統會高亮可疑區域。試試看！',
+    action: '👆 請點擊掃描器',
     position: 'bottom',
+    requireClick: true,
+    pulseTarget: true,
   },
   {
     target: '.folder-tab-2',
     title: '📓 筆記本',
-    text: '找到的線索會記錄在這裡。點開可以看到線索分析和詳細資訊。',
+    text: '找到的線索和偵探分析都記錄在筆記本裡。點開來看看！',
+    action: '👆 請點擊筆記本',
     position: 'bottom',
+    requireClick: true,
+    pulseTarget: true,
   },
   {
-    target: '.dt-btn-primary',
-    title: '🧠 推理階段',
-    text: '集齊關鍵線索後，這個按鈕會出現。點擊進入推理，回答問題並指認證據！',
-    position: 'top',
-    waitForEvent: 'click-target',
+    target: '.case-file',
+    title: '🎯 現在輪到你了',
+    text: '關掉筆記本，回到案件証詞。點擊題幹中你認為可疑的字詞，蒐集所有關鍵線索！集齊後就能進入推理階段。',
+    action: '開始調查！',
+    position: 'bottom',
   },
 ];
 
@@ -45,6 +54,7 @@ interface Props {
 export function TutorialOverlay({ onComplete }: Props) {
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const listenerRef = useRef<(() => void) | null>(null);
 
   const currentStep = STEPS[step];
 
@@ -54,10 +64,21 @@ export function TutorialOverlay({ onComplete }: Props) {
     const el = document.querySelector(currentStep.target);
     if (el) {
       setRect(el.getBoundingClientRect());
+      // 跳動動畫
+      if (currentStep.pulseTarget) {
+        el.classList.add('tutorial-pulse');
+      }
     } else {
       setRect(null);
     }
   }, [currentStep]);
+
+  // 清理上一步的跳動
+  useEffect(() => {
+    return () => {
+      document.querySelectorAll('.tutorial-pulse').forEach(el => el.classList.remove('tutorial-pulse'));
+    };
+  }, [step]);
 
   useEffect(() => {
     updateRect();
@@ -69,21 +90,43 @@ export function TutorialOverlay({ onComplete }: Props) {
     };
   }, [updateRect]);
 
-  const handleNext = () => {
+  // requireClick: 監聽目標元素的 click 事件
+  useEffect(() => {
+    if (!currentStep?.requireClick) return;
+
+    const handler = () => {
+      // 清跳動
+      document.querySelectorAll('.tutorial-pulse').forEach(el => el.classList.remove('tutorial-pulse'));
+      advance();
+    };
+
+    // 延遲綁定，等 DOM 更新
+    const t = setTimeout(() => {
+      const el = document.querySelector(currentStep.target);
+      if (el) {
+        el.addEventListener('click', handler, { once: true });
+        listenerRef.current = () => el.removeEventListener('click', handler);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(t);
+      listenerRef.current?.();
+      listenerRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  const advance = useCallback(() => {
     if (step >= STEPS.length - 1) {
       onComplete();
     } else {
       setStep(s => s + 1);
     }
-  };
-
-  const handleSkip = () => {
-    onComplete();
-  };
+  }, [step, onComplete]);
 
   if (!currentStep) return null;
 
-  // Spotlight clip-path: 挖洞
   const padding = 8;
   const clipPath = rect
     ? `polygon(
@@ -96,7 +139,6 @@ export function TutorialOverlay({ onComplete }: Props) {
       )`
     : undefined;
 
-  // 泡泡位置
   const bubbleStyle: React.CSSProperties = rect ? {
     position: 'fixed',
     left: Math.max(16, Math.min(rect.left, window.innerWidth - 300)),
@@ -115,14 +157,15 @@ export function TutorialOverlay({ onComplete }: Props) {
 
   return (
     <>
-      {/* 遮罩 + 挖洞 */}
+      {/* 遮罩 + 挖洞（requireClick 時不攔截點擊，讓使用者能點目標） */}
       <div
         className="fixed inset-0 z-[10000] transition-all duration-300"
         style={{
           backgroundColor: 'rgba(0,0,0,0.6)',
           clipPath,
+          pointerEvents: currentStep.requireClick ? 'none' : 'auto',
         }}
-        onClick={handleNext}
+        onClick={!currentStep.requireClick ? advance : undefined}
       />
 
       {/* 高亮邊框 */}
@@ -146,12 +189,19 @@ export function TutorialOverlay({ onComplete }: Props) {
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-slate-400">{step + 1} / {STEPS.length}</span>
           <div className="flex gap-2">
-            <button onClick={handleSkip} className="text-[11px] text-slate-400 hover:text-slate-600 px-2 py-1">
-              跳過教學
+            <button onClick={onComplete} className="text-[11px] text-slate-400 hover:text-slate-600 px-2 py-1">
+              跳過
             </button>
-            <button onClick={handleNext} className="text-[11px] font-bold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-lg transition-colors">
-              {step >= STEPS.length - 1 ? '開始遊戲！' : '下一步'}
-            </button>
+            {!currentStep.requireClick && (
+              <button onClick={advance} className="text-[11px] font-bold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-lg transition-colors">
+                {currentStep.action}
+              </button>
+            )}
+            {currentStep.requireClick && (
+              <span className="text-[11px] font-bold text-blue-400 px-3 py-1 animate-pulse">
+                {currentStep.action}
+              </span>
+            )}
           </div>
         </div>
       </div>
