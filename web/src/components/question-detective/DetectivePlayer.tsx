@@ -599,9 +599,8 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
         100% { transform: translateX(${dx}px); }
       }
       @keyframes ${kfId}-y {
-        0%   { transform: translateY(0) scale(1); opacity: 1; }
-        35%  { transform: translateY(${dy * 0.1}px) scaleX(1.6) scaleY(0.55); opacity: 1; }
-        70%  { transform: translateY(${dy * 0.72}px) scaleX(1.3) scaleY(0.7); opacity: 1; }
+        0%   { transform: translateY(0) scale(1.2); opacity: 1; }
+        30%  { transform: translateY(${dy * 0.05}px) scale(1.4); opacity: 1; }
         100% { transform: translateY(${dy}px) scale(0.25); opacity: 0; }
       }
     `;
