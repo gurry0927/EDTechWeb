@@ -580,7 +580,20 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     const kfId = `cfl-${Date.now()}`;
     const styleEl = document.createElement('style');
     styleEl.id = kfId;
-    styleEl.textContent = `
+    const isCyber = theme === 'cyber';
+    styleEl.textContent = isCyber
+      ? `
+      @keyframes ${kfId}-x {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(${dx}px); }
+      }
+      @keyframes ${kfId}-y {
+        0%   { transform: translateY(0) scale(1); opacity: 1; }
+        50%  { transform: translateY(${dy * 0.5}px) scale(0.8); opacity: 1; }
+        100% { transform: translateY(${dy}px) scale(0.3); opacity: 0; }
+      }
+    `
+      : `
       @keyframes ${kfId}-x {
         0%   { transform: translateX(0); }
         100% { transform: translateX(${dx}px); }
