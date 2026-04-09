@@ -3,18 +3,19 @@
 import { useState, useCallback, useMemo, useEffect, useRef, createContext, useContext } from 'react';
 import type { DetectiveQuestion } from './types';
 import { GAME, getDialogue, ACHIEVEMENTS, pick } from './detective-config';
-import { THEME_REGISTRY, type ThemeAvatar } from './theme-registry';
+import { THEME_REGISTRY } from './theme-registry';
 
-// ── Avatar Context（避免 prop drilling）──
-const AvatarCtx = createContext<ThemeAvatar>({ detective: '🕵️', student: '🧑‍🎓' });
+// ── Theme Context（避免 prop drilling）──
+interface ThemeCtxValue { detective: string; student: string; photoClip: string }
+const ThemeCtx = createContext<ThemeCtxValue>({ detective: '🕵️', student: '🧑‍🎓', photoClip: 'paperclip' });
 
 // ── Shared components (outside to avoid remount) ──
 const DetectiveAvatar = () => {
-  const { detective } = useContext(AvatarCtx);
+  const { detective } = useContext(ThemeCtx);
   return <span className="dt-avatar-detective w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">{detective}</span>;
 };
 const StudentAvatar = () => {
-  const { student } = useContext(AvatarCtx);
+  const { student } = useContext(ThemeCtx);
   return <span className="dt-avatar-student w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">{student}</span>;
 };
 
@@ -54,14 +55,22 @@ const PaperclipIcon = () => (
 );
 
 // 證物照片：聊天區 + 筆記本共用
-const EvidencePhoto = ({ src, maxW = 220, rotate = false, onClick }: { src: string; maxW?: number; rotate?: boolean; onClick?: () => void }) => (
-  <div className="relative">
-    <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><span className="dt-paperclip"><PaperclipIcon /></span></div>
-    <div className={`dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo ${rotate ? 'dt-photo-tilt' : ''}`} style={{ maxWidth: maxW }}>
-      <img src={src} alt="案件附圖" onClick={onClick} className="w-full rounded-sm dt-photo-blend" />
+const EvidencePhoto = ({ src, maxW = 220, rotate = false, onClick }: { src: string; maxW?: number; rotate?: boolean; onClick?: () => void }) => {
+  const { photoClip } = useContext(ThemeCtx);
+  return (
+    <div className="relative">
+      {photoClip === 'paperclip' && (
+        <div className="absolute -top-4 right-5 z-10 rotate-[-8deg]"><PaperclipIcon /></div>
+      )}
+      {photoClip !== 'paperclip' && photoClip !== 'hidden' && (
+        <div className="absolute -top-3 right-4 z-10 text-xl drop-shadow-sm">{photoClip}</div>
+      )}
+      <div className={`dt-photo p-2 pb-3 shadow-lg rounded-sm case-photo ${rotate ? 'dt-photo-tilt' : ''}`} style={{ maxWidth: maxW }}>
+        <img src={src} alt="案件附圖" onClick={onClick} className="w-full rounded-sm dt-photo-blend" />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 輔助線索命中：灰藍細邊、字稍小、斜體感 — 比正式線索輕但仍可讀
 const ContextBubble = ({ children }: { children: React.ReactNode }) => (
@@ -243,7 +252,14 @@ interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () =
 // ── Main Component ──
 export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
   const DIALOGUE = useMemo(() => getDialogue(theme, THEME_REGISTRY[theme]?.dialogue), [theme]);
-  const avatar = useMemo(() => THEME_REGISTRY[theme]?.avatar ?? { detective: '🕵️', student: '🧑‍🎓' }, [theme]);
+  const themeCtx = useMemo(() => {
+    const entry = THEME_REGISTRY[theme];
+    return {
+      detective: entry?.avatar.detective ?? '🕵️',
+      student: entry?.avatar.student ?? '🧑‍🎓',
+      photoClip: entry?.photoClip ?? 'paperclip',
+    };
+  }, [theme]);
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);
@@ -866,7 +882,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const achievement = ACHIEVEMENTS.find(a => a.check(foundClues.size, totalClues, livesLost, wrongAttempts.length, auxFoundCount, auxiliaryClues.length, gameOver));
 
   return (
-    <AvatarCtx.Provider value={avatar}>
+    <ThemeCtx.Provider value={themeCtx}>
     <div className="h-[100dvh] detective-paper text-dt-text flex flex-col overflow-hidden">
       {/* Header + Tabs + Stem card — 全體木紋底色，case-file 浮卡 */}
       <div ref={headerRef} className="shrink-0 sticky top-0 z-10 bg-transparent">
@@ -1432,6 +1448,6 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
         </span>
       ))}
     </div>
-    </AvatarCtx.Provider>
+    </ThemeCtx.Provider>
   );
 }

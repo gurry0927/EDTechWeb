@@ -19,6 +19,7 @@ export interface ThemeEntry {
   label: string;
   desc: string;
   avatar: ThemeAvatar;
+  photoClip: 'paperclip' | 'hidden' | string;  // 'paperclip'=SVG迴紋針, 'hidden'=不顯示, 其他=emoji
   dialogue: Partial<Dialogue> | null;
 }
 
@@ -177,6 +178,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     label: '📜 偵探社',
     desc: '經典牛皮紙風格',
     avatar: { detective: '🕵️', student: '🧑‍🎓' },
+    photoClip: 'paperclip',
     dialogue: null,
   },
   cyber: {
@@ -184,6 +186,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     label: '🔮 賽博',
     desc: '科技霓虹風格',
     avatar: { detective: '🤖', student: '👤' },
+    photoClip: 'hidden',
     dialogue: DIALOGUE_CYBER,
   },
   guofeng: {
@@ -191,6 +194,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     label: '🏮 江湖',
     desc: '國風古韻・袁天罡',
     avatar: { detective: '🧙‍♂️', student: '🧑‍🦱' },
+    photoClip: '⚔️',
     dialogue: DIALOGUE_GUOFENG,
   },
 };

@@ -459,8 +459,8 @@ body {
   color: var(--dt-text);
 }
 [data-dt-theme="guofeng"] .dt-bubble-student {
-  background: rgba(212,160,23,0.06);
-  border: 1px solid rgba(212,160,23,0.15);
+  background: var(--dt-card);
+  border: 1px solid rgba(60,40,20,0.15);
   color: var(--dt-text);
 }
 
@@ -558,7 +558,6 @@ body {
 }
 
 /* ── 國風: 迴紋針保留（古卷用封蠟感）── */
-/* dt-paperclip 不隱藏 */
 
 /* ── 國風: 滾動提示 — 金色 ── */
 [data-dt-theme="guofeng"] .stem-scroll-fade::after {
@@ -575,7 +574,6 @@ body {
 /* ── 照片裝飾（classic 限定） ── */
 .dt-photo-tilt { transform: rotate(-1.5deg); }
 [data-dt-theme="cyber"] .dt-photo-tilt { transform: none; }
-[data-dt-theme="cyber"] .dt-paperclip { display: none; }
 
 /* ── 按鈕 ── */
 .dt-btn-primary {
