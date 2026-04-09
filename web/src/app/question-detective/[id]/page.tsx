@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { DetectiveGamePage } from '@/components/question-detective/DetectiveGamePage';
 import { getInitialTheme } from '@/components/question-detective/theme-utils';
 import { fetchQuestionDetail } from '@/data/detective-questions/api';
@@ -9,7 +10,6 @@ import type { DetectiveQuestion } from '@/components/question-detective/types';
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [question, setQuestion] = useState<DetectiveQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -38,7 +38,7 @@ export default function Page() {
     return (
       <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col items-center justify-center gap-3" data-dt-theme={theme}>
         <div className="text-dt-text-secondary text-sm">找不到這份案件</div>
-        <button onClick={() => router.push('/question-detective')} className="text-dt-scan text-sm hover:underline">返回檔案室</button>
+        <Link href={`/question-detective?theme=${theme}`} className="text-dt-scan text-sm hover:underline">返回檔案室</Link>
       </div>
     );
   }
