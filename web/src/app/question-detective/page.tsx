@@ -20,6 +20,11 @@ export default function QuestionDetectivePage() {
   const [listLoading, setListLoading] = useState(true);
   const [theme, setThemeState] = useState<ThemeId>(getInitialTheme);
 
+  const [tutorialDone, setTutorialDone] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('dt-tutorial-done') === '1';
+  });
+
   const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);
     localStorage.setItem('dt-theme', id);
@@ -107,6 +112,26 @@ export default function QuestionDetectivePage() {
           <div className="text-center py-12 text-dt-text-muted text-sm">題庫尚無資料</div>
         ) : (
         <div className="space-y-6">
+          {/* 新手引導 */}
+          {!tutorialDone && (
+            <div className="relative case-file rounded-lg p-5 border-l-4 border-dt-scan">
+              <button onClick={() => { setTutorialDone(true); localStorage.setItem('dt-tutorial-done', '1'); }} className="absolute top-3 right-3 text-dt-text-muted hover:text-dt-text text-sm">✕</button>
+              <h3 className="font-bold text-dt-text flex items-center gap-2 mb-2">
+                <span className="text-xl">🎓</span> 第一次來？
+              </h3>
+              <p className="text-sm text-dt-text-secondary leading-relaxed mb-3">
+                這裡的每份案卷都是一道會考題。你的任務是在證詞中找出<strong>關鍵線索</strong>，完成推理，最終指認答案。
+              </p>
+              <ul className="text-xs text-dt-text-muted space-y-1.5 mb-3">
+                <li>📖 閱讀上方的<strong>案件証詞</strong></li>
+                <li>👆 點擊你覺得可疑的字詞 → 找出線索</li>
+                <li>🔍 卡住了？用<strong>掃描器</strong>高亮提示</li>
+                <li>📓 找到的線索會記入<strong>筆記本</strong></li>
+                <li>🧠 集齊線索後進入<strong>推理階段</strong></li>
+              </ul>
+              <p className="text-xs text-dt-text-muted italic">選一份案卷開始吧！此提示只顯示一次。</p>
+            </div>
+          )}
           {grouped.map(([group, groupQuestions]) => (
             <div key={group}>
               {/* Group header — folder label */}

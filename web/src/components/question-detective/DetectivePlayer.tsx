@@ -313,37 +313,15 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const stemContainerRef = useRef<HTMLDivElement>(null);
   const detailSectionRef = useRef<HTMLDivElement>(null);
 
-  // 有互動時用：清掉 shimmer，重新倒數 8 秒
-  const resetIdleTimer = useCallback((withToast = false) => {
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    setIdleShimmer(false);
-    idleTimerRef.current = setTimeout(() => {
-      setIdleShimmer(true);
-      if (withToast) showPersistToast(DIALOGUE.idlePrompt);
-    }, GAME.idleDelay);
-  }, [showPersistToast]);
-
-  // 筆記本關閉後用：不清 shimmer（若已啟動則繼續），只重啟計時器
-  const startIdleTimer = useCallback((withToast = false) => {
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    idleTimerRef.current = setTimeout(() => {
-      setIdleShimmer(true);
-      if (withToast) showPersistToast(DIALOGUE.idlePrompt);
-    }, GAME.idleDelay);
-  }, [showPersistToast]);
-
-  // 進場後啟動 idle timer（附 toast）；首次點擊或離開 clue phase 後清除
-  useEffect(() => {
-    const hasFoundAnything = foundClues.size > 0 || seenContextRegions.size > 0;
-    if (phase !== 'clue' || hasFoundAnything || isIdleDisabled) {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      setIdleShimmer(false);
-      setScaffoldPulse(false);
-      return;
-    }
-    resetIdleTimer(!hasStartedInteracting);
-    return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
-  }, [phase, foundClues.size, seenContextRegions.size, hasStartedInteracting, isIdleDisabled, resetIdleTimer]);
+  // ── 閒置提示系統（暫時停用）──
+  // 學生反饋：題目還沒讀完就跳提示，感覺煩躁。
+  // 保留程式碼，待未來改為「只觸發一次 + 延長至 30 秒」後再啟用。
+  const resetIdleTimer = useCallback((_withToast = false) => {
+    /* DISABLED — idle hints paused */
+  }, []);
+  const startIdleTimer = useCallback((_withToast = false) => {
+    /* DISABLED — idle hints paused */
+  }, []);
 
   // exitScanMode：不管 timer，交給 idle effect 統一判斷
   // persist toast（如 startHint）一併清除，避免找到線索後浮示殘留
@@ -457,25 +435,24 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     [stemScaffolding, question.scaffolding]
   );
 
-  // idleShimmer 觸發時：若有 context 鷹架且尚無任何有效互動，改為跳動鷹架（取代全文掃光）
-  useEffect(() => {
-    if (!idleShimmer) return;
-    if (firstContextScaffoldIdx !== null && foundClues.size === 0 && seenContextRegions.size === 0) {
-      setIdleShimmer(false);
-      setScaffoldPulse(true);
-    }
-  }, [idleShimmer, firstContextScaffoldIdx, foundClues.size, seenContextRegions.size]);
-
-  // 有效互動後（命中線索或 context 鷹架）→ 停止跳動；30 秒後也自動停止避免無限循環
-  useEffect(() => {
-    if (!scaffoldPulse) return;
-    if (foundClues.size > 0 || seenContextRegions.size > 0) {
-      setScaffoldPulse(false);
-      return;
-    }
-    const t = setTimeout(() => setScaffoldPulse(false), GAME.scaffoldPulseTimeout);
-    return () => clearTimeout(t);
-  }, [scaffoldPulse, foundClues.size, seenContextRegions.size]);
+  // ── 閒置跳動系統（暫時停用，與上方 idle timer 連動）──
+  // useEffect(() => {
+  //   if (!idleShimmer) return;
+  //   if (firstContextScaffoldIdx !== null && foundClues.size === 0 && seenContextRegions.size === 0) {
+  //     setIdleShimmer(false);
+  //     setScaffoldPulse(true);
+  //   }
+  // }, [idleShimmer, firstContextScaffoldIdx, foundClues.size, seenContextRegions.size]);
+  //
+  // useEffect(() => {
+  //   if (!scaffoldPulse) return;
+  //   if (foundClues.size > 0 || seenContextRegions.size > 0) {
+  //     setScaffoldPulse(false);
+  //     return;
+  //   }
+  //   const t = setTimeout(() => setScaffoldPulse(false), GAME.scaffoldPulseTimeout);
+  //   return () => clearTimeout(t);
+  // }, [scaffoldPulse, foundClues.size, seenContextRegions.size]);
 
   // stemSegs：展開 mainStem 線索的 aliases，讓題幹中出現的同義詞也能被點擊命中
   const stemSegs = useMemo(() => {
