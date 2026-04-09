@@ -968,7 +968,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                 )
               }
               <div className="stem-scroll-fade stem-only" ref={stemContainerRef}>
-                <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${stemExpanded ? 'max-h-[55dvh]' : 'max-h-[25dvh] sm:max-h-none'}`}>
+                <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${stemExpanded || isPointingPhase ? 'max-h-[55dvh]' : 'max-h-[25dvh] sm:max-h-none'}`}>
                   <p className={`text-base leading-relaxed text-dt-text whitespace-pre-line ${activeScanning ? 'stem-scan' : ''}`}>
                     {renderSegs(stemSegs)}
                   </p>
