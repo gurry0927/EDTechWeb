@@ -866,7 +866,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
             className={`folder-tab folder-tab-2 relative z-[2] -ml-2 transition-all ${notebookShakeKey > 0 ? 'animate-notebook-shake' : ''}`} key={`notebook-${notebookShakeKey}`}
           >
             <span className="whitespace-nowrap text-[11px] leading-5 font-medium text-dt-text-muted flex items-center gap-1">
-              偵探筆記本
+              {DIALOGUE.notebookTabLabel}
               {(chatEvents.length > notebookSeenCount || (!!question.figureImage && !hasOpenedNotebook)) && (
                 <span className="relative flex w-2 h-2 shrink-0">
                   <span className="absolute inset-0 rounded-full dt-badge-ping animate-ping opacity-75" />
