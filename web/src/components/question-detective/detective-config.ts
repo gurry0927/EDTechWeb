@@ -39,6 +39,7 @@ const DIALOGUE_BASE = {
   // UI 標籤
   tabLabel: '機密',
   notebookTabLabel: '偵探筆記本',
+  notebookIcon: '📓',
   stemHeader: '案件証詞',
   figureLabel: '証物細節',
   suspectListHeader: '嫌疑犯名單',
@@ -146,6 +147,7 @@ const DIALOGUE_BASE = {
 const DIALOGUE_CYBER: Partial<typeof DIALOGUE_BASE> = {
   tabLabel: '機密',
   notebookTabLabel: '資料終端',
+  notebookIcon: '💾',
   stemHeader: '攔截數據',
   figureLabel: '附件掃描',
   suspectListHeader: '目標清單',

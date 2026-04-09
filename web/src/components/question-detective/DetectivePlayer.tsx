@@ -1211,7 +1211,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
             <div className="shrink-0 max-w-xl mx-auto w-full px-6 pt-3 pb-3 border-b border-dt-border">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-xl text-dt-text flex items-center gap-2">
-                  <span className="text-2xl">📓</span> {DIALOGUE.notebookTitle}
+                  <span className="text-2xl">{DIALOGUE.notebookIcon}</span> {DIALOGUE.notebookTitle}
                 </h2>
                 <button onClick={closeNotebook}
                   className="w-8 h-8 flex items-center justify-center rounded-full dt-btn-icon">
