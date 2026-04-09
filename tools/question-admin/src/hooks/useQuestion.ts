@@ -177,12 +177,15 @@ export function useQuestion() {
 
   // ── 建立新空白題目 ──
   const createNew = useCallback(() => {
+    const ts = Date.now().toString(36); // 暫時 ID，避免空字串存 DB 衝突
     setActive({
-      id: '',
+      id: `draft-${ts}`,
       source: '',
       subject: '社會',
       difficulty: 2,
       tags: [],
+      subSubject: '歷史',
+      gradeLevel: '',
       mainStem: '',
       options: ['', '', '', ''],
       answer: 'A',

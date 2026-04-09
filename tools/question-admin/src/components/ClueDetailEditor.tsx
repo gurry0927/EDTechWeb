@@ -49,7 +49,11 @@ export function ClueDetailEditor({ question, updateQuestion, apiKeys }: Props) {
 
     try {
       const { result } = await callWithRotation(apiKeys, prompt);
-      const data = JSON.parse(result);
+      let json = result;
+      // AI 可能包在 ```json ... ``` 裡
+      const fenced = result.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (fenced) json = fenced[1];
+      const data = JSON.parse(json);
       handleUpdateClue(clueIdx, data);
     } catch (e) {
       alert('AI 生成失敗：' + (e instanceof Error ? e.message : '未知錯誤'));
@@ -59,9 +63,15 @@ export function ClueDetailEditor({ question, updateQuestion, apiKeys }: Props) {
   }
 
   async function handleAiGenerateAll() {
+    setIsGenerating('all');
     for (let i = 0; i < question.clues.length; i++) {
-      await handleAiGenerate(i);
+      try {
+        await handleAiGenerate(i);
+      } catch {
+        break; // 失敗就停
+      }
     }
+    setIsGenerating(null);
   }
 
   const fieldClass = "w-full bg-white border border-slate-200 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none";
