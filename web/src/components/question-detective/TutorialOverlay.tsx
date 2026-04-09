@@ -9,21 +9,23 @@ interface TutorialStep {
   action: string;          // 按鈕文字（引導使用者操作）
   position?: 'top' | 'bottom';
   requireClick?: boolean;  // true = 必須點擊目標元素才能進下一步
+  listenInside?: boolean;  // true = 監聽目標元素「內部」的任何點擊（用於題幹點字）
   pulseTarget?: boolean;   // true = 目標元素加跳動動畫吸引注意
 }
 
 const STEPS: TutorialStep[] = [
   {
     target: '.case-file',
-    title: '📖 案件証詞',
-    text: '這是案件的核心文字。仔細閱讀後，點擊你覺得可疑的字詞。現在先往下看說明。',
-    action: '了解！',
+    title: '👆 試著點擊証詞中的字詞',
+    text: '案件証詞裡藏著線索。注意跳動的文字——試著點擊它，或點擊任何你覺得可疑的字詞！',
+    action: '👆 請點擊証詞中的文字',
     position: 'bottom',
+    listenInside: true,
   },
   {
     target: '.dt-btn-scan',
     title: '🔍 掃描器',
-    text: '看不出線索在哪？點擊掃描器，系統會高亮可疑區域。試試看！',
+    text: '看不出線索在哪？點擊掃描器按鈕，系統會高亮可疑區域。試試看！',
     action: '👆 請點擊掃描器',
     position: 'bottom',
     requireClick: true,
@@ -40,8 +42,8 @@ const STEPS: TutorialStep[] = [
   },
   {
     target: '.case-file',
-    title: '🎯 現在輪到你了',
-    text: '關掉筆記本，回到案件証詞。點擊題幹中你認為可疑的字詞，蒐集所有關鍵線索！集齊後就能進入推理階段。',
+    title: '🎯 開始正式調查',
+    text: '關掉筆記本，回到案件。點擊題幹中的可疑字詞蒐集線索，集齊關鍵線索後就能進入推理！',
     action: '開始調查！',
     position: 'bottom',
   },
@@ -90,19 +92,18 @@ export function TutorialOverlay({ onComplete }: Props) {
     };
   }, [updateRect]);
 
-  // requireClick: 監聽目標元素的 click 事件
+  // requireClick / listenInside: 監聽目標元素的 click 事件
   useEffect(() => {
-    if (!currentStep?.requireClick) return;
+    const needsClick = currentStep?.requireClick || currentStep?.listenInside;
+    if (!needsClick) return;
 
     const handler = () => {
-      // 清跳動
       document.querySelectorAll('.tutorial-pulse').forEach(el => el.classList.remove('tutorial-pulse'));
       advance();
     };
 
-    // 延遲綁定，等 DOM 更新
     const t = setTimeout(() => {
-      const el = document.querySelector(currentStep.target);
+      const el = document.querySelector(currentStep!.target);
       if (el) {
         el.addEventListener('click', handler, { once: true });
         listenerRef.current = () => el.removeEventListener('click', handler);
@@ -163,9 +164,9 @@ export function TutorialOverlay({ onComplete }: Props) {
         style={{
           backgroundColor: 'rgba(0,0,0,0.6)',
           clipPath,
-          pointerEvents: currentStep.requireClick ? 'none' : 'auto',
+          pointerEvents: (currentStep.requireClick || currentStep.listenInside) ? 'none' : 'auto',
         }}
-        onClick={!currentStep.requireClick ? advance : undefined}
+        onClick={(!currentStep.requireClick && !currentStep.listenInside) ? advance : undefined}
       />
 
       {/* 高亮邊框 */}
@@ -192,12 +193,12 @@ export function TutorialOverlay({ onComplete }: Props) {
             <button onClick={onComplete} className="text-[11px] text-slate-400 hover:text-slate-600 px-2 py-1">
               跳過
             </button>
-            {!currentStep.requireClick && (
+            {!currentStep.requireClick && !currentStep.listenInside && (
               <button onClick={advance} className="text-[11px] font-bold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-lg transition-colors">
                 {currentStep.action}
               </button>
             )}
-            {currentStep.requireClick && (
+            {(currentStep.requireClick || currentStep.listenInside) && (
               <span className="text-[11px] font-bold text-blue-400 px-3 py-1 animate-pulse">
                 {currentStep.action}
               </span>

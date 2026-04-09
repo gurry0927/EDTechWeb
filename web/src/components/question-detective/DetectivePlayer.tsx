@@ -316,6 +316,12 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const stemContainerRef = useRef<HTMLDivElement>(null);
   const detailSectionRef = useRef<HTMLDivElement>(null);
 
+  // 教學模式：強制鷹架跳動，讓使用者看到「字可以點」
+  useEffect(() => {
+    if (showTutorial) setScaffoldPulse(true);
+    else setScaffoldPulse(false);
+  }, [showTutorial]);
+
   // ── 閒置提示系統（暫時停用）──
   // 學生反饋：題目還沒讀完就跳提示，感覺煩躁。
   // 保留程式碼，待未來改為「只觸發一次 + 延長至 30 秒」後再啟用。
