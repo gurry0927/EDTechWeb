@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
+import { getInitialTheme, applyDarkMode, type ThemeId } from '@/components/question-detective/theme-utils';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
 
 const THEMES: { id: ThemeId; label: string; desc: string }[] = [
@@ -29,6 +29,7 @@ export default function QuestionDetectivePage() {
   const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);
     localStorage.setItem('dt-theme', id);
+    applyDarkMode(id);
   }, []);
 
   useEffect(() => {
