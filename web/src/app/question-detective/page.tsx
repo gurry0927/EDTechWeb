@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
@@ -53,13 +54,13 @@ export default function QuestionDetectivePage() {
       <header className="shrink-0 case-file px-5 py-4">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <button onClick={() => router.push('/')}
+            <Link href="/"
               className="text-dt-text-secondary hover:text-dt-text text-sm flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
               首頁
-            </button>
+            </Link>
             {/* Theme switcher */}
             <div className="flex gap-1">
               {THEMES.map(t => (
@@ -126,8 +127,8 @@ export default function QuestionDetectivePage() {
               {/* Question cards */}
               <div className="space-y-2">
                 {groupQuestions.map(q => (
-                  <button key={q.id} onClick={() => router.push(`/question-detective/${q.id}`)}
-                    className="w-full text-left rounded-lg p-4 case-file hover:shadow-md transition-all group">
+                  <Link key={q.id} href={`/question-detective/${q.id}?theme=${theme}`} prefetch
+                    className="block w-full text-left rounded-lg p-4 case-file hover:shadow-md transition-all group">
                     <div className="flex items-start gap-3">
                       {/* Case number badge */}
                       <div className="w-10 h-10 rounded bg-dt-accent/10 flex items-center justify-center shrink-0 border border-dt-accent/10">
@@ -156,7 +157,7 @@ export default function QuestionDetectivePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>

@@ -16,7 +16,7 @@ export function DetectiveGamePage({ question }: { question: DetectiveQuestion })
       <DetectivePlayer
         key={gameKey}
         question={question}
-        onBack={() => router.push('/question-detective')}
+        onBack={() => router.push(`/question-detective?theme=${theme}`)}
         onRetry={() => setGameKey(k => k + 1)}
         theme={theme}
       />
