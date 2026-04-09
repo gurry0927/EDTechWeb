@@ -31,6 +31,7 @@
   --color-card-bg-hover: var(--card-bg-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-wenkai: var(--font-wenkai);
 
   /* Detective theme tokens → Tailwind utilities (text-dt-text, bg-dt-card, etc.) */
   --color-dt-bg: var(--dt-bg);
@@ -404,6 +405,17 @@ body {
   --dt-btn-text: #f5e6c8;
   --dt-surface: #ece5d0;
   --dt-surface-dim: #e0d8c2;
+}
+
+/* ── 國風: 字體 — 標題+偵探台詞用手寫楷體 ── */
+[data-dt-theme="guofeng"] .case-file-header-label,
+[data-dt-theme="guofeng"] .dt-bubble-detective,
+[data-dt-theme="guofeng"] .dt-bubble-pity,
+[data-dt-theme="guofeng"] .dt-bubble-context,
+[data-dt-theme="guofeng"] .notebook-paper h2,
+[data-dt-theme="guofeng"] .notebook-paper h3,
+[data-dt-theme="guofeng"] .dt-toast {
+  font-family: var(--font-wenkai), 'Noto Serif TC', Georgia, serif;
 }
 
 /* ── 國風: 背景 — 宣紙紋理 ── */
