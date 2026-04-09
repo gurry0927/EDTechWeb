@@ -327,26 +327,13 @@ body {
   text-shadow: 0 0 10px rgba(255,0,200,0.5);
 }
 
-/* ── Cyber: 線索飛行粒子 — 霓虹拖尾 ── */
+/* ── Cyber: 線索飛行粒子 — 霓虹輻射光暈 ── */
 [data-dt-theme="cyber"] .clue-flyer-y {
   background: #00ffaa;
   box-shadow:
-    0 0 14px rgba(0,255,170,0.8),
-    0 0 28px rgba(0,255,170,0.4),
-    0 8px 20px rgba(0,255,170,0.3),   /* 下方拖尾光暈 */
-    0 16px 30px rgba(0,255,170,0.15); /* 遠端殘影 */
-}
-/* 拖尾殘影：用 ::after 延伸 */
-[data-dt-theme="cyber"] .clue-flyer-y::after {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 6px; height: 24px;
-  transform: translate(-50%, 0);
-  background: linear-gradient(to bottom, rgba(0,255,170,0.5), transparent);
-  border-radius: 50% 50% 50% 50% / 20% 20% 80% 80%;
-  filter: blur(3px);
-  pointer-events: none;
+    0 0 8px rgba(0,255,170,0.9),
+    0 0 20px rgba(0,255,170,0.5),
+    0 0 40px rgba(0,255,170,0.2);
 }
 
 /* ── Cyber: 筆記本收到線索時綠色閃光 ── */
