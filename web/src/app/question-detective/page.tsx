@@ -3,14 +3,14 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
+import { getInitialTheme, VALID_THEMES, type ThemeId } from '@/components/question-detective/theme-utils';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
 import { ALL_QUESTIONS } from '@/data/detective-questions';
 
-const THEMES = [
+const THEMES: { id: ThemeId; label: string; desc: string }[] = [
   { id: 'classic', label: '📜 偵探社', desc: '經典牛皮紙風格' },
   { id: 'cyber', label: '🔮 賽博', desc: '科技霓虹風格' },
-] as const;
-type ThemeId = typeof THEMES[number]['id'];
+];
 
 // Extract year from source string like "114年會考-社會-第20題"
 function getYear(q: Pick<DetectiveQuestion, 'source'>): string {
@@ -24,13 +24,7 @@ export default function QuestionDetectivePage() {
   const router = useRouter();
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
   const [dbQuestions, setDbQuestions] = useState<PublicQuestion[] | null>(null);
-  const [theme, setThemeState] = useState<ThemeId>(() => {
-    if (typeof window === 'undefined') return 'classic';
-    const fromUrl = new URLSearchParams(window.location.search).get('theme') as ThemeId | null;
-    if (fromUrl && THEMES.some(t => t.id === fromUrl)) { localStorage.setItem('dt-theme', fromUrl); return fromUrl; }
-    const saved = localStorage.getItem('dt-theme') as ThemeId | null;
-    return (saved && THEMES.some(t => t.id === saved)) ? saved : 'classic';
-  });
+  const [theme, setThemeState] = useState<ThemeId>(getInitialTheme);
 
   const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);

@@ -293,7 +293,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     setIdleShimmer(false);
     idleTimerRef.current = setTimeout(() => {
       setIdleShimmer(true);
-      if (withToast) showPersistToast('👆 點擊上方証詞中可疑的字詞！');
+      if (withToast) showPersistToast(DIALOGUE.idlePrompt);
     }, GAME.idleDelay);
   }, [showPersistToast]);
 
@@ -302,7 +302,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     idleTimerRef.current = setTimeout(() => {
       setIdleShimmer(true);
-      if (withToast) showPersistToast('👆 點擊上方証詞中可疑的字詞！');
+      if (withToast) showPersistToast(DIALOGUE.idlePrompt);
     }, GAME.idleDelay);
   }, [showPersistToast]);
 
@@ -397,7 +397,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   useEffect(() => {
     if (auxFoundCount > prevAuxFoundRef.current) {
       setScanUsesLeft(prev => prev + 1);
-      showToast('🔍 +1 掃描機會（輔助線索獎勵）');
+      showToast(DIALOGUE.auxScanBonus);
     }
     prevAuxFoundRef.current = auxFoundCount;
   }, [auxFoundCount, showToast]);
@@ -1264,7 +1264,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                                 onClick={() => {
                                   if (canIdentify) return;
                                   if (criticalFoundCount < totalCritical) showToast(pick(DIALOGUE.insufficientEvidenceReactions));
-                                  else showToast('請先完成推理分析，再指認嫌疑犯！');
+                                  else showToast(DIALOGUE.identifyTooEarly);
                                 }}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all duration-500 ${
                                   canIdentify

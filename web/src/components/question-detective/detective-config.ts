@@ -77,6 +77,9 @@ const DIALOGUE_BASE = {
   auxiliaryNotebookCTA: '📓 已收進偵探筆記本，去看看嫌疑犯的情況有沒有變化。',
   reasoningWrongNotebookHint: '再去筆記本確認一下線索的分析，也許能找到方向。',
   clueLocked: '調查機會用完了。帶著目前的線索繼續推理吧。',
+  idlePrompt: '👆 點擊上方証詞中可疑的字詞！',
+  auxScanBonus: '🔍 +1 掃描機會（輔助線索獎勵）',
+  identifyTooEarly: '請先完成推理分析，再指認嫌疑犯！',
 
   // 憐憫機制
   pityCategoryHint: (tag: string) => `提示：這道題的關鍵與「${tag}」有關，試著往那個方向找。`,
@@ -183,6 +186,9 @@ const DIALOGUE_CYBER: Partial<typeof DIALOGUE_BASE> = {
   auxiliaryNotebookCTA: '📓 已載入資料終端，檢查目標狀態是否更新。',
   reasoningWrongNotebookHint: '回資料終端交叉比對數據，重新推算。',
   clueLocked: '掃描配額耗盡。用現有數據推進分析。',
+  idlePrompt: '👆 標記上方數據流中的異常節點！',
+  auxScanBonus: '🔍 +1 掃描配額（次級數據獎勵）',
+  identifyTooEarly: '請先完成邏輯驗證，再鎖定目標！',
 
   pityCategoryHint: (tag: string) => `系統提示：任務核心與「${tag}」高度相關，重新定位掃描範圍。`,
 
@@ -212,6 +218,7 @@ const DIALOGUE_CYBER: Partial<typeof DIALOGUE_BASE> = {
   gameOverTakeover: '能量耗盡。系統接管，自動完成分析。',
   solutionGameOver: '⚠️ 系統自動結案',
 
+  solutionMissedLabel: '🔍 未擷取的數據節點：',
   solutionAuxiliaryMissed: '資料庫中仍有一筆未擷取的隱藏數據…下次提升掃描效率。',
   solutionAuxiliaryFound: '所有隱藏節點均已擷取——完美的數據分析。',
 

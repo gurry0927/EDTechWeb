@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DetectiveGamePage } from '@/components/question-detective/DetectiveGamePage';
+import { getInitialTheme } from '@/components/question-detective/theme-utils';
 import { fetchQuestionDetail } from '@/data/detective-questions/api';
 import { ALL_QUESTIONS } from '@/data/detective-questions';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
@@ -13,12 +14,7 @@ export default function Page() {
   const [question, setQuestion] = useState<DetectiveQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [theme] = useState(() => {
-    if (typeof window === 'undefined') return 'classic';
-    const fromUrl = new URLSearchParams(window.location.search).get('theme');
-    if (fromUrl) { localStorage.setItem('dt-theme', fromUrl); return fromUrl; }
-    return localStorage.getItem('dt-theme') || 'classic';
-  });
+  const [theme] = useState(getInitialTheme);
 
   useEffect(() => {
     let cancelled = false;
