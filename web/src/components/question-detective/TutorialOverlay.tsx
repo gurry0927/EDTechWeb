@@ -51,9 +51,10 @@ const STEPS: TutorialStep[] = [
 
 interface Props {
   onComplete: () => void;
+  onStepChange?: (step: number) => void;
 }
 
-export function TutorialOverlay({ onComplete }: Props) {
+export function TutorialOverlay({ onComplete, onStepChange }: Props) {
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const listenerRef = useRef<(() => void) | null>(null);
@@ -122,9 +123,11 @@ export function TutorialOverlay({ onComplete }: Props) {
     if (step >= STEPS.length - 1) {
       onComplete();
     } else {
-      setStep(s => s + 1);
+      const next = step + 1;
+      setStep(next);
+      onStepChange?.(next);
     }
-  }, [step, onComplete]);
+  }, [step, onComplete, onStepChange]);
 
   if (!currentStep) return null;
 

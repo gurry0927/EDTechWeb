@@ -1434,7 +1434,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
         </span>
       ))}
     </div>
-    {showTutorial && <TutorialOverlay onComplete={() => setShowTutorial(false)} />}
+    {showTutorial && <TutorialOverlay onComplete={() => setShowTutorial(false)} onStepChange={(s) => { if (s > 0) setScaffoldPulse(false); }} />}
     </ThemeCtx.Provider>
   );
 }
