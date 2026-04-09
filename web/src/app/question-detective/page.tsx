@@ -60,8 +60,14 @@ export default function QuestionDetectivePage() {
               </svg>
               首頁
             </Link>
-            {/* Theme switcher */}
-            <div className="flex gap-1">
+            {/* Theme switcher + Tutorial */}
+            <div className="flex gap-1 items-center">
+              <Link
+                href={`/question-detective/tutorial?theme=${theme}`}
+                className="text-xs px-2 py-1 rounded-full border border-dt-scan/30 text-dt-scan hover:bg-dt-scan/10 transition-all"
+                title="教學關卡"
+              >🎓 教學</Link>
+              <div className="w-px h-4 bg-dt-border mx-1" />
               {THEME_LIST.map(t => (
                 <button
                   key={t.id}

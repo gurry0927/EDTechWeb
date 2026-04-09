@@ -7,6 +7,7 @@ import { DetectiveGamePage } from '@/components/question-detective/DetectiveGame
 import { getInitialTheme } from '@/components/question-detective/theme-utils';
 import { fetchQuestionDetail } from '@/data/detective-questions/api';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
+import tutorialData from '@/data/detective-questions/tutorial.json';
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,12 @@ export default function Page() {
   const [theme] = useState(getInitialTheme);
 
   useEffect(() => {
+    // 教學關卡用本地 JSON，不走 Supabase
+    if (id === 'tutorial') {
+      setQuestion(tutorialData as DetectiveQuestion);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     fetchQuestionDetail(id).then(q => {
       if (cancelled) return;

@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef, createContext, useCo
 import type { DetectiveQuestion } from './types';
 import { GAME, getDialogue, ACHIEVEMENTS, pick } from './detective-config';
 import { THEME_REGISTRY } from './theme-registry';
+import { TutorialOverlay } from './TutorialOverlay';
 
 // ── Theme Context（避免 prop drilling）──
 interface ThemeCtxValue { detective: string; student: string; photoClip: string }
@@ -260,6 +261,8 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
       photoClip: entry?.photoClip ?? 'paperclip',
     };
   }, [theme]);
+  const isTutorial = question.id === 'tutorial';
+  const [showTutorial, setShowTutorial] = useState(isTutorial);
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);
@@ -1425,6 +1428,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
         </span>
       ))}
     </div>
+    {showTutorial && <TutorialOverlay onComplete={() => setShowTutorial(false)} />}
     </ThemeCtx.Provider>
   );
 }
