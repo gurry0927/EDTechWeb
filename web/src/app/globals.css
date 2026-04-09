@@ -507,13 +507,16 @@ body {
 }
 [data-dt-theme="guofeng"] .dt-photo-tilt { transform: rotate(-1deg); }
 
-/* ── 國風: 掃描呼吸 — 金色光暈 ── */
+/* ── 國風: 天眼 — 反向邏輯：無關文字黯淡，線索句不高亮 ── */
 [data-dt-theme="guofeng"] .highlight-scan {
-  animation: guofeng-breathing 2s ease-in-out infinite;
+  /* 線索句：不加特效，保持原色（天眼自然看穿） */
+  animation: none;
+  background: none;
+  box-shadow: none;
 }
-@keyframes guofeng-breathing {
-  0%, 100% { background-color: rgba(180,130,20,0.06); box-shadow: 0 0 4px rgba(180,130,20,0.1); }
-  50% { background-color: rgba(180,130,20,0.15); box-shadow: 0 0 12px rgba(180,130,20,0.25); }
+[data-dt-theme="guofeng"] .scan-dim {
+  opacity: 0.25;
+  transition: opacity 0.6s ease;
 }
 
 /* ── 國風: 線索命中 — 毛筆劃線風 ── */

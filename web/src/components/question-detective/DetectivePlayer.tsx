@@ -848,15 +848,13 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
         return <span key={i} onClick={(e) => onSegTap(seg, e)} className="cursor-pointer scaffold-pulse">{seg.text}</span>;
       }
       
-      if (isInCriticalSentence) {
-        return (
-          <span key={i} onClick={(e) => onSegTap(seg, e)} className="cursor-pointer highlight-scan">
-            {seg.text}
-          </span>
-        );
+      if (scanHighlight && ranges.length > 0) {
+        // 有掃描高亮：線索句亮，非線索句暗
+        const scanCls = isInCriticalSentence ? 'highlight-scan' : 'scan-dim';
+        return <span key={i} onClick={(e) => onSegTap(seg, e)} className={`cursor-pointer ${scanCls}`}>{seg.text}</span>;
       }
-      
-      // 平時狀態：移除對掃描狀態的依賴，但在掃描時禁用 active 變色類別
+
+      // 平時狀態
       const activeCls = activeScanning ? '' : 'active:bg-dt-border';
       return <span key={i} onClick={(e) => onSegTap(seg, e)} className={`cursor-pointer transition-all duration-200 ${activeCls} ${isFound ? clsFound : ''}`}>{seg.text}</span>;
     }
