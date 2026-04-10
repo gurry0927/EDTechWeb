@@ -1030,7 +1030,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                       </div>
                       {question.figureImage && (
                         <div className="mt-3 flex justify-center">
-                          <EvidencePhoto src={question.figureImage} maxW={260} />
+                          <EvidencePhoto src={question.figureImage} maxW={260} onClick={() => showToast(DIALOGUE.stemPhotoHint)} />
                         </div>
                       )}
                     </div>

@@ -46,6 +46,7 @@ const DIALOGUE_BASE = {
   notebookTabLabel: '偵探筆記本',
   toggleExpandChat: '▼ 展開聊天室',
   toggleExpandStem: '▲ 展開卷宗',
+  stemPhotoHint: '照片僅供參考，線索藏在文字裡喔！',
   notebookIcon: '📓',
   stemHeader: '案件証詞',
   figureLabel: '証物細節',
