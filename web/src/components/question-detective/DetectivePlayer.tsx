@@ -265,13 +265,15 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const [showTutorial, setShowTutorial] = useState(isTutorial);
   // 焦點模式：default=進場分割, stem=題幹展開, chat=聊天室展開
   const [viewMode, setViewModeRaw] = useState<'default' | 'stem' | 'chat'>('default');
-  const viewTransitioning = useRef(false);
+  const [viewTransitioning, setViewTransitioning] = useState(false);
+  const viewTransitioningRef = useRef(false); // for onSegTap sync check
   const setViewMode = useCallback((next: 'default' | 'stem' | 'chat' | ((prev: 'default' | 'stem' | 'chat') => 'default' | 'stem' | 'chat')) => {
     setViewModeRaw(prev => {
       const val = typeof next === 'function' ? next(prev) : next;
       if (val !== prev) {
-        viewTransitioning.current = true;
-        setTimeout(() => { viewTransitioning.current = false; }, 700); // 配合 view-transition 動畫時間
+        viewTransitioningRef.current = true;
+        setViewTransitioning(true);
+        setTimeout(() => { viewTransitioningRef.current = false; setViewTransitioning(false); }, 700);
       }
       return val;
     });
@@ -739,7 +741,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   // 兩者皆 null        → onClueMiss（不變）
   const onSegTap = useCallback((seg: Seg, e: React.MouseEvent) => {
     // 動畫過渡中不處理點擊（防止展開/收合時誤觸扣血）
-    if (viewTransitioning.current) return;
+    if (viewTransitioningRef.current) return;
     // 首次點擊 → 隱藏首次進入的 persist toast
     if (!hasStartedInteracting) {
       setHasStartedInteracting(true);
@@ -1006,8 +1008,8 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
               }
               <div className="stem-scroll-fade stem-only" ref={stemContainerRef}>
                 <div
-                  className={`overflow-y-auto pb-6 sm:pb-0 view-transition
-                    ${viewMode === 'chat' && !stemExpanded && !isPointingPhase ? 'overflow-hidden' : ''}`}
+                  className={`pb-6 sm:pb-0 view-transition
+                    ${viewTransitioning || (viewMode === 'chat' && !stemExpanded && !isPointingPhase) ? 'overflow-hidden' : 'overflow-y-auto'}`}
                   style={{
                     maxHeight: (viewMode === 'stem' || stemExpanded || isPointingPhase) ? GAME.stemExpandedHeight
                       : viewMode === 'chat' && !stemExpanded && !isPointingPhase ? GAME.stemCollapsedHeight
