@@ -378,9 +378,10 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     if (reasoningMode === 'pointing' && isNotebookOpen) closeNotebook();
   }, [reasoningMode]);
 
-  // 進入指認階段時，題幹卡片閃一次吸引視線
+  // 進入指認階段時，展開題幹 + 閃一次吸引視線
   useEffect(() => {
     if (reasoningMode !== 'pointing') return;
+    setViewMode('stem');
     setPointingFlash(true);
     const t = setTimeout(() => setPointingFlash(false), GAME.pointingFlashDuration);
     return () => clearTimeout(t);
@@ -618,7 +619,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [phase, foundClues.size, chatEvents.length, reasoningStep, reasoningMode, reasoningWrong, evidenceWrongMsg, wrongAttempts.length, answeredCorrectly]);
   useEffect(() => { if (reasoningDone) { const t = setTimeout(() => setPhase('answer'), GAME.answerAdvanceDelay); return () => clearTimeout(t); } }, [reasoningDone]);
-  useEffect(() => { if (gameOver) { const t = setTimeout(() => setPhase('solution'), GAME.gameOverDelay); return () => clearTimeout(t); } }, [gameOver]);
+  useEffect(() => { if (gameOver) { const t = setTimeout(() => { setPhase('solution'); setViewMode('default'); }, GAME.gameOverDelay); return () => clearTimeout(t); } }, [gameOver]);
 
   // ── Handlers ──
   const [clueFlyer, setClueFlyer] = useState<{ x: number, y: number, kfId: string } | null>(null);
@@ -800,7 +801,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   // cleanup closingTimer on unmount
   useEffect(() => () => { if (closingTimerRef.current) clearTimeout(closingTimerRef.current); }, []);
 
-  const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); setViewMode('default'); }, []);
+  const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); setViewMode('chat'); }, []);
 
   // P0 fix: reasoningClues 為空時自動跳至 answer（原本用 render 內 IIFE + setTimeout，違反 React 規則）
   useEffect(() => {
@@ -868,7 +869,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const onSelectAnswer = useCallback((letter: string, e: React.MouseEvent) => {
     if (letter === question.answer) { 
       setAnsweredCorrectly(true); 
-      setTimeout(() => setPhase('solution'), GAME.answerAdvanceDelay); 
+      setTimeout(() => { setPhase('solution'); setViewMode('default'); }, GAME.answerAdvanceDelay); 
     } else { 
       setWrongAttempts(prev => [...prev, letter]); 
       setLives(prev => Math.max(0, prev - 1)); 
@@ -1038,7 +1039,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                 </div>
               </div>
               {/* 卷宗把手 — 案件卡內部底部，支援點擊 + 上下滑動 */}
-              {phase === 'clue' && !activeScanning && !stemExpanded && (
+              {phase !== 'solution' && !activeScanning && !stemExpanded && (
                 <div
                   className="w-full flex items-center justify-center gap-1.5 pt-2 pb-1 text-[11px] font-medium text-dt-text-muted hover:text-dt-text-secondary transition-all duration-200 active:scale-[0.98] border-t border-dt-border/30 mt-2 cursor-pointer select-none touch-none"
                   onClick={() => setViewMode(prev => prev === 'chat' ? 'stem' : 'chat')}
