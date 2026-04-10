@@ -1,6 +1,6 @@
 // src/app/taipei-lake-demo/page.tsx
-import { LayeredMapOrchestrator } from '@/components/layered-map-experiment/LayeredMapOrchestrator';
-import type { LayerManifest } from '@/components/layered-map-experiment/types';
+import { LayeredMapOrchestrator } from '@/components/_experiments-layered-map/LayeredMapOrchestrator';
+import type { LayerManifest } from '@/components/_experiments-layered-map/types';
 
 const TAIPEI_LAKE_LAYERS: LayerManifest[] = [
   {

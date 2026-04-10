@@ -1,6 +1,6 @@
 // src/app/layered-map-demo/page.tsx
-import { LayeredMapOrchestrator } from '@/components/layered-map-experiment/LayeredMapOrchestrator';
-import type { LayerManifest } from '@/components/layered-map-experiment/types';
+import { LayeredMapOrchestrator } from '@/components/_experiments-layered-map/LayeredMapOrchestrator';
+import type { LayerManifest } from '@/components/_experiments-layered-map/types';
 
 // 這是我們傳給簡易 AI 的 Dummy Data 設定。
 // 旨在測試它能否處理「地理輪廓(Polygon)」+「密度熱區(Heatmap)」+「斷層線段(Lines)」的疊加渲染。

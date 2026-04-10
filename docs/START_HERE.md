@@ -179,11 +179,12 @@ created_at, updated_at     -- 自動維護
 | 統計排行 | 帳號系統 | `components/stats/` |
 | 學習地圖 | 帳號系統 + 足夠題量 | 待建 |
 
-## 擱置中的實驗
+## 封存區
 
-以下功能因 D3 渲染 bug 擱置：
-- `/flooded-world-demo/`
-- `/layered-map-demo/`
-- `/taipei-lake-demo/`
+### 擱置的實驗（D3 渲染 bug）
+- 程式碼：`web/src/app/_experiments/`（Next.js `_` 前綴不產生路由）
+- 元件：`web/src/components/_experiments-layered-map/`
+- 文件：`docs/_archive/CLAUDE_HANDOVER_FLOODED_WORLD.md`
 
-詳見 `docs/CLAUDE_HANDOVER_FLOODED_WORLD.md`
+### 早期規劃文件
+- `docs/_archive/planning/` — 市場調查、架構設計、成本分析等（部分已被現有文件取代）
