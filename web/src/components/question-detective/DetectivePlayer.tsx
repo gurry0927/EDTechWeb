@@ -1028,6 +1028,11 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                           {figureSegs ? renderSegs(figureSegs, true) : question.figure}
                         </p>
                       </div>
+                      {question.figureImage && (
+                        <div className="mt-3 flex justify-center">
+                          <EvidencePhoto src={question.figureImage} maxW={260} />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
