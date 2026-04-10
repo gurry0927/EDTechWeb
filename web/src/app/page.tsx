@@ -42,7 +42,6 @@ export default function Home() {
         {activeTab === 'home' && (
           <>
             <CharacterHero themeId={theme} onThemeSwitch={cycleTheme} />
-            <div className="flex-1" /> {/* 彈性間距：把按鈕和模式推到底部 */}
             <ContinueButton themeId={theme} />
             <ModeSelector themeId={theme} />
           </>
