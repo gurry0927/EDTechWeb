@@ -10,6 +10,7 @@ export const GAME = {
   stemDefaultHeight: '25dvh',     // 進場分割模式
   stemExpandedHeight: '55dvh',    // 展開（掃描/指證/stem 模式）
   stemCollapsedHeight: '4dvh',    // chat 模式時題幹收合
+  viewTransitionMs: 700,          // 焦點模式切換動畫時間（配合 CSS .view-transition）
   toastDuration: 4000,
 
   // 階段轉場延遲
@@ -43,6 +44,8 @@ const DIALOGUE_BASE = {
   // UI 標籤
   tabLabel: '機密',
   notebookTabLabel: '偵探筆記本',
+  toggleExpandChat: '▼ 展開聊天室',
+  toggleExpandStem: '▲ 展開卷宗',
   notebookIcon: '📓',
   stemHeader: '案件証詞',
   figureLabel: '証物細節',

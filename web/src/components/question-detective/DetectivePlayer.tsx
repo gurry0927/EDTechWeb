@@ -273,7 +273,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
       if (val !== prev) {
         viewTransitioningRef.current = true;
         setViewTransitioning(true);
-        setTimeout(() => { viewTransitioningRef.current = false; setViewTransitioning(false); }, 700);
+        setTimeout(() => { viewTransitioningRef.current = false; setViewTransitioning(false); }, GAME.viewTransitionMs);
       }
       return val;
     });
@@ -1048,7 +1048,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                   }}
                 >
                   <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
-                  {viewMode === 'chat' ? '▲ 展開卷宗' : '▼ 展開聊天室'}
+                  {viewMode === 'chat' ? DIALOGUE.toggleExpandStem : DIALOGUE.toggleExpandChat}
                   <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
                 </div>
               )}
