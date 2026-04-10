@@ -14,7 +14,8 @@ export default function Page() {
   const [question, setQuestion] = useState<DetectiveQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [theme] = useState(getInitialTheme);
+  const [theme, setTheme] = useState('classic');
+  useEffect(() => { setTheme(getInitialTheme()); }, []);
 
   useEffect(() => {
     // 教學關卡用本地 JSON，不走 Supabase
@@ -35,7 +36,7 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] detective-paper text-dt-text flex items-center justify-center" data-dt-theme={theme}>
+      <div className="min-h-[100dvh] detective-paper text-dt-text flex items-center justify-center" data-dt-theme={theme} suppressHydrationWarning>
         <div className="text-dt-text-muted text-sm">載入案件中…</div>
       </div>
     );
@@ -43,7 +44,7 @@ export default function Page() {
 
   if (error || !question) {
     return (
-      <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col items-center justify-center gap-3" data-dt-theme={theme}>
+      <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col items-center justify-center gap-3" data-dt-theme={theme} suppressHydrationWarning>
         <div className="text-dt-text-secondary text-sm">找不到這份案件</div>
         <Link href={`/question-detective?theme=${theme}`} className="text-dt-scan text-sm hover:underline">返回檔案室</Link>
       </div>

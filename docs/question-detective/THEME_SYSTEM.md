@@ -72,9 +72,10 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
 
 | 檔案 | 職責 | 新增主題要改？ |
 |------|------|-------------|
-| `theme-registry.ts` | 主題 ID、名稱、描述、台詞覆寫 | ✅ 必改 |
-| `globals.css` | CSS 變數 + 元件視覺覆寫 | ✅ 必改 |
+| `theme-registry.ts` | 主題 ID、名稱、描述、台詞覆寫、演出風格 | ✅ 必改 |
+| `globals.css` | CSS 變數 + 元件視覺覆寫 + 演出動畫 | ✅ 必改 |
 | `detective-config.ts` | 基礎台詞（classic）、`getDialogue()` | ❌ |
+| `CutsceneOverlay.tsx` | 切入演出元件（讀取 registry 設定） | ❌ |
 | `theme-utils.ts` | `getInitialTheme()`、`VALID_THEME_IDS` | ❌ |
 | `DetectivePlayer.tsx` | 遊戲引擎，讀 DIALOGUE + dt-* class | ❌ |
 | `DetectiveGamePage.tsx` | 外殼，傳 theme prop | ❌ |
@@ -181,6 +182,59 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
 ```
 URL ?theme=xxx  >  localStorage dt-theme  >  'classic'
 ```
+
+## 切入演出（CutsceneOverlay）
+
+破案成功、線索齊了等關鍵節點會播放全屏/橫幅動畫演出。
+
+### 相關檔案
+
+| 檔案 | 職責 |
+|------|------|
+| `CutsceneOverlay.tsx` | 演出元件（消費端，讀取 registry 設定） |
+| `theme-registry.ts` | `cutscene: CutsceneStyle` 欄位控制每個主題的演出風格 |
+| `detective-config.ts` | `cutsceneCaseSolved` 等台詞 key + `GAME.cutsceneDuration` 時間常數 |
+| `globals.css` | `@keyframes cutscene-*` 動畫 + 主題字型特化 |
+
+### 自訂主題演出
+
+在 `theme-registry.ts` 的 `cutscene` 欄位設定：
+
+```ts
+cutscene: {
+  className: 'cutscene-cyber',           // 最外層 CSS class（可用來選取子元素）
+  flashBg: 'linear-gradient(...)',        // 覆蓋閃光背景（不填用 --dt-accent gradient）
+  solvedClass: 'cutscene-glitch-solved',  // 破案全屏演出專用 class
+  readyClass: 'cutscene-scan-ready',      // 線索齊橫幅演出專用 class
+}
+```
+
+然後在 `globals.css` 加對應樣式：
+
+```css
+/* 例：cyber 主題 glitch 特效 */
+.cutscene-cyber .cutscene-text {
+  animation: glitch-text 0.3s steps(2) 3;
+}
+@keyframes glitch-text { ... }
+```
+
+設為 `null` 則使用預設動畫（slide-in + shake）。
+
+### 台詞 key
+
+| Key | Classic 預設 | 說明 |
+|-----|-------------|------|
+| `cutsceneCaseSolved` | 破案成功 | 全屏演出主文字 |
+| `cutsceneCaseSolvedSub` | 真相只有一個。 | 副文字 |
+| `cutsceneCluesReady` | 線索齊了 | 橫幅演出主文字 |
+| `cutsceneCluesReadySub` | 開始推理吧。 | 副文字 |
+
+### 預留音效
+
+`CutsceneOverlay` 接受 `onPlaySound` prop，目前未接入。日後加音效只需在 `DetectivePlayer` 傳入 Web Audio 播放函式。
+
+---
 
 ## 未來擴充方向
 

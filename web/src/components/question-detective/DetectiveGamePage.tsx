@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DetectivePlayer } from './DetectivePlayer';
 import type { DetectiveQuestion } from './types';
@@ -9,7 +9,8 @@ import { getInitialTheme } from './theme-utils';
 export function DetectiveGamePage({ question }: { question: DetectiveQuestion }) {
   const router = useRouter();
   const [gameKey, setGameKey] = useState(0);
-  const [theme] = useState(getInitialTheme);
+  const [theme, setTheme] = useState('classic');
+  useEffect(() => { setTheme(getInitialTheme()); }, []);
 
   return (
     <div data-dt-theme={theme}>

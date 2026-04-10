@@ -5,6 +5,7 @@ import type { DetectiveQuestion } from './types';
 import { GAME, getDialogue, ACHIEVEMENTS, pick } from './detective-config';
 import { THEME_REGISTRY } from './theme-registry';
 import { TutorialOverlay } from './TutorialOverlay';
+import { CutsceneOverlay, type CutsceneVariant } from './CutsceneOverlay';
 
 // ── Theme Context（避免 prop drilling）──
 interface ThemeCtxValue { detective: string; student: string; photoClip: string }
@@ -289,6 +290,8 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const [evidenceWrongMsg, setEvidenceWrongMsg] = useState<string | null>(null);
   const [wrongAttempts, setWrongAttempts] = useState<string[]>([]);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
+  const [cutscene, setCutscene] = useState<CutsceneVariant | null>(null);
+  const prevAllCriticalRef = useRef(false);
   const [notebookSeenCount, setNotebookSeenCount] = useState(0);
   const [hasOpenedNotebook, setHasOpenedNotebook] = useState(false);
 
@@ -464,6 +467,14 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     }
     prevAuxFoundRef.current = auxFoundCount;
   }, [auxFoundCount, showToast]);
+
+  // 線索齊了 → 觸發橫幅演出
+  useEffect(() => {
+    if (allCriticalFound && !prevAllCriticalRef.current && phase === 'clue') {
+      setCutscene('cluesReady');
+    }
+    prevAllCriticalRef.current = allCriticalFound;
+  }, [allCriticalFound, phase]);
   // 推理順序：非輔助線索先，輔助線索排後（不阻擋主線，收集到才加入）
   const reasoningClues = useMemo(() => {
     const withIdx = question.clues.map((c, i) => ({ ...c, idx: i }));
@@ -865,13 +876,15 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   }, [reasoningClues, reasoningStep, triggerWrongFeedback]);
 
   const onSelectAnswer = useCallback((letter: string, e: React.MouseEvent) => {
-    if (letter === question.answer) { 
-      setAnsweredCorrectly(true); 
-      setTimeout(() => { setPhase('solution'); setViewMode('default'); }, GAME.answerAdvanceDelay); 
-    } else { 
-      setWrongAttempts(prev => [...prev, letter]); 
-      setLives(prev => Math.max(0, prev - 1)); 
-      triggerWrongFeedback(e); 
+    if (letter === question.answer) {
+      setAnsweredCorrectly(true);
+      setCutscene('caseSolved');
+      // 等演出結束後再進入 solution
+      setTimeout(() => { setPhase('solution'); setViewMode('default'); }, GAME.cutsceneDuration + GAME.answerAdvanceDelay);
+    } else {
+      setWrongAttempts(prev => [...prev, letter]);
+      setLives(prev => Math.max(0, prev - 1));
+      triggerWrongFeedback(e);
     }
   }, [question.answer, triggerWrongFeedback]);
 
@@ -921,6 +934,16 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
 
   return (
     <ThemeCtx.Provider value={themeCtx}>
+    {/* 切入演出 — 必須在 overflow-hidden 容器外面 */}
+    {cutscene && (
+      <CutsceneOverlay
+        variant={cutscene}
+        text={cutscene === 'caseSolved' ? DIALOGUE.cutsceneCaseSolved : DIALOGUE.cutsceneCluesReady}
+        subtext={cutscene === 'caseSolved' ? DIALOGUE.cutsceneCaseSolvedSub : DIALOGUE.cutsceneCluesReadySub}
+        style={THEME_REGISTRY[theme]?.cutscene}
+        onDismiss={() => setCutscene(null)}
+      />
+    )}
     <div className="h-[100dvh] detective-paper text-dt-text flex flex-col overflow-hidden">
       {/* Header + Tabs + Stem card — 全體木紋底色，case-file 浮卡 */}
       <div ref={headerRef} className="shrink-0 sticky top-0 z-10 bg-transparent">

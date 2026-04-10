@@ -14,6 +14,18 @@ export interface ThemeAvatar {
   student: string;     // 預設學生頭像（未來被帳號系統覆蓋）
 }
 
+/** 切入演出風格 — 未來替換動畫/特效只改這裡 */
+export interface CutsceneStyle {
+  /** CSS class 加在最外層容器，用於主題特化動畫（如 'cutscene-glitch', 'cutscene-ink'） */
+  className?: string;
+  /** 閃光背景覆蓋（不填則用預設 --dt-accent gradient） */
+  flashBg?: string;
+  /** caseSolved 額外 CSS class（全屏演出專用） */
+  solvedClass?: string;
+  /** cluesReady 額外 CSS class（橫幅演出專用） */
+  readyClass?: string;
+}
+
 export interface ThemeEntry {
   id: string;
   label: string;
@@ -21,6 +33,8 @@ export interface ThemeEntry {
   avatar: ThemeAvatar;
   photoClip: 'paperclip' | 'hidden' | string;  // 'paperclip'=SVG迴紋針, 'hidden'=不顯示, 其他=emoji
   dialogue: Partial<Dialogue> | null;
+  /** 切入演出風格 — null 則用預設動畫 */
+  cutscene: CutsceneStyle | null;
 }
 
 // ── Cyber 台詞 ──
@@ -82,6 +96,10 @@ const DIALOGUE_CYBER: Partial<Dialogue> = {
   answerWrongSuffix: '目標不符。重新比對數據鏈。',
   answerCorrect: '🎯 目標鎖定！',
   answerCorrectSuffix: '驗證通過。',
+  cutsceneCaseSolved: 'TARGET LOCKED',
+  cutsceneCaseSolvedSub: '驗證通過。任務完成。',
+  cutsceneCluesReady: '數據就緒',
+  cutsceneCluesReadySub: '啟動推理引擎。',
   gameOverTakeover: '能量耗盡。系統接管，自動完成分析。',
   solutionGameOver: '⚠️ 系統自動結案',
   solutionMissedLabel: '🔍 未擷取的數據節點：',
@@ -159,6 +177,10 @@ const DIALOGUE_GUOFENG: Partial<Dialogue> = {
   answerWrongSuffix: '此非正解。回頭看看你方才的推演。',
   answerCorrect: '🏮 真相大白。',
   answerCorrectSuffix: '能入本帥眼簾，你，勉強算個人才。',
+  cutsceneCaseSolved: '真相大白',
+  cutsceneCaseSolvedSub: '天網恢恢，疏而不漏。',
+  cutsceneCluesReady: '天機已現',
+  cutsceneCluesReadySub: '且看你如何推演。',
   gameOverTakeover: '庸才。既無轉乾坤之力，這殘局，便由本帥親自終結。',
   solutionGameOver: '⚠️ 天罡代為結案',
   solutionConceptLabel: '此題考的是：',
@@ -186,6 +208,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '🕵️', student: '🧑‍🎓' },
     photoClip: 'paperclip',
     dialogue: null,
+    cutscene: null,  // 預設動畫
   },
   cyber: {
     id: 'cyber',
@@ -194,6 +217,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '🤖', student: '👤' },
     photoClip: 'hidden',
     dialogue: DIALOGUE_CYBER,
+    cutscene: null,  // TODO: 未來可加 glitch 特效
   },
   guofeng: {
     id: 'guofeng',
@@ -202,6 +226,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '🧙‍♂️', student: '🧑‍🦱' },
     photoClip: 'hidden',
     dialogue: DIALOGUE_GUOFENG,
+    cutscene: null,  // TODO: 未來可加墨水潑灑特效
   },
 };
 

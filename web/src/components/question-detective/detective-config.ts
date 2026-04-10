@@ -37,6 +37,10 @@ export const GAME = {
 
   // 憐憫機制
   pityScanThreshold: 3,         // 連續失誤幾次觸發提示
+
+  // 切入動畫（CutsceneOverlay）
+  cutsceneDuration: 2000,        // 全屏演出總時長（破案）
+  cutsceneBannerDuration: 1800,  // 橫幅演出總時長（線索齊了）
 };
 
 /** 偵探台詞 — base（classic 主題） */
@@ -122,6 +126,12 @@ const DIALOGUE_BASE = {
   answerWrongSuffix: '不是正確答案。再看看線索，想想你剛才的推理。',
   answerCorrect: '🎉 破案了！',
   answerCorrectSuffix: '完全正確。',
+
+  // 切入演出
+  cutsceneCaseSolved: '破案成功',
+  cutsceneCaseSolvedSub: '真相只有一個。',
+  cutsceneCluesReady: '線索齊了',
+  cutsceneCluesReadySub: '開始推理吧。',
 
   // 偵探接管
   gameOverTakeover: '調查機會耗盡。這次就由我來替你整理案情吧。',
