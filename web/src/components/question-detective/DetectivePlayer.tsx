@@ -406,22 +406,18 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     };
   }, [phase, viewMode, activeScanning, stemExpanded]);
 
-  // 聊天室互動偵測：使用者點擊或滑動聊天室時切到 chat 模式
+  // 聊天室互動偵測：只在使用者主動觸碰時切到 chat（不含 programmatic scroll）
   useEffect(() => {
     const el = chatScrollRef.current;
-    if (!el || phase !== 'clue') return;
+    if (!el) return;
     const switchToChat = () => {
-      if (viewMode === 'stem' && !activeScanning && !stemExpanded) {
+      if (viewMode !== 'chat' && !activeScanning && !stemExpanded && !viewTransitioningRef.current) {
         setViewMode('chat');
       }
     };
-    el.addEventListener('scroll', switchToChat, { passive: true });
     el.addEventListener('touchstart', switchToChat, { passive: true });
-    el.addEventListener('click', switchToChat);
     return () => {
-      el.removeEventListener('scroll', switchToChat);
       el.removeEventListener('touchstart', switchToChat);
-      el.removeEventListener('click', switchToChat);
     };
   }, [phase, viewMode, activeScanning, stemExpanded]);
 
@@ -858,6 +854,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     if (clueIdx === current.idx) {
       setEvidenceWrongMsg(null);
       setReasoningMode('choosing');
+      setViewMode('chat');
       setTimeout(() => setReasoningStep(prev => prev + 1), GAME.reasoningAdvanceDelay);
     } else {
       setLives(prev => Math.max(0, prev - 1));
@@ -1042,7 +1039,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
               {phase !== 'solution' && !activeScanning && !stemExpanded && (
                 <div
                   className="w-full flex items-center justify-center gap-1.5 pt-2 pb-1 text-[11px] font-medium text-dt-text-muted hover:text-dt-text-secondary transition-all duration-200 active:scale-[0.98] border-t border-dt-border/30 mt-2 cursor-pointer select-none touch-none"
-                  onClick={() => setViewMode(prev => prev === 'chat' ? 'stem' : 'chat')}
+                  onClick={() => setViewMode(prev => prev === 'stem' ? 'chat' : 'stem')}
                   onTouchStart={e => { (e.currentTarget as HTMLElement).dataset.startY = String(e.touches[0].clientY); }}
                   onTouchEnd={e => {
                     const startY = Number((e.currentTarget as HTMLElement).dataset.startY || 0);
@@ -1054,7 +1051,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                   }}
                 >
                   <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
-                  {viewMode === 'chat' ? DIALOGUE.toggleExpandStem : DIALOGUE.toggleExpandChat}
+                  {viewMode === 'stem' ? DIALOGUE.toggleExpandChat : DIALOGUE.toggleExpandStem}
                   <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
                 </div>
               )}
