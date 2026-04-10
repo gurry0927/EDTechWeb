@@ -6,6 +6,10 @@ export const GAME = {
   maxLives: 5,
   typingDelay: { short: 400, medium: 700, long: 1000, intro: 1800 } as const,
   scrollDelay: 300,
+  // 焦點模式高度
+  stemDefaultHeight: '25dvh',     // 進場分割模式
+  stemExpandedHeight: '55dvh',    // 展開（掃描/指證/stem 模式）
+  stemCollapsedHeight: '4dvh',    // chat 模式時題幹收合
   toastDuration: 4000,
 
   // 階段轉場延遲

@@ -263,6 +263,8 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   }, [theme]);
   const isTutorial = question.id === 'tutorial';
   const [showTutorial, setShowTutorial] = useState(isTutorial);
+  // 焦點模式：default=進場分割, stem=題幹展開, chat=聊天室展開
+  const [viewMode, setViewMode] = useState<'default' | 'stem' | 'chat'>('default');
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);
@@ -370,6 +372,42 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     const t = setTimeout(() => setPointingFlash(false), GAME.pointingFlashDuration);
     return () => clearTimeout(t);
   }, [reasoningMode]);
+
+  // 題幹滾動偵測：使用者滑動題幹時切到 stem 模式
+  useEffect(() => {
+    const el = stemContainerRef.current;
+    if (!el || phase !== 'clue') return;
+    const onScroll = () => {
+      if (viewMode !== 'stem' && !activeScanning && !stemExpanded) {
+        setViewMode('stem');
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    el.addEventListener('touchmove', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      el.removeEventListener('touchmove', onScroll);
+    };
+  }, [phase, viewMode, activeScanning, stemExpanded]);
+
+  // 聊天室互動偵測：使用者點擊或滑動聊天室時切到 chat 模式
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (!el || phase !== 'clue') return;
+    const switchToChat = () => {
+      if (viewMode === 'stem' && !activeScanning && !stemExpanded) {
+        setViewMode('chat');
+      }
+    };
+    el.addEventListener('scroll', switchToChat, { passive: true });
+    el.addEventListener('touchstart', switchToChat, { passive: true });
+    el.addEventListener('click', switchToChat);
+    return () => {
+      el.removeEventListener('scroll', switchToChat);
+      el.removeEventListener('touchstart', switchToChat);
+      el.removeEventListener('click', switchToChat);
+    };
+  }, [phase, viewMode, activeScanning, stemExpanded]);
 
   useEffect(() => {
     if (!activeScanning) return;
@@ -745,7 +783,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   // cleanup closingTimer on unmount
   useEffect(() => () => { if (closingTimerRef.current) clearTimeout(closingTimerRef.current); }, []);
 
-  const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); }, []);
+  const enterReasoning = useCallback(() => { setPhase('reasoning'); setReasoningStep(0); setReasoningMode('choosing'); setViewMode('default'); }, []);
 
   // P0 fix: reasoningClues 為空時自動跳至 answer（原本用 render 內 IIFE + setTimeout，違反 React 規則）
   useEffect(() => {
@@ -907,7 +945,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
 
         {/* Case-file 浮卡：左右 padding 露出木紋，底部 pb 露出木紋投影 */}
         <div className="max-w-2xl mx-auto px-4 pb-4">
-          <div className={`case-file rounded-sm overflow-hidden transition-all duration-300 ${isPointingPhase ? 'ring-2 ring-dt-clue/70 ring-inset' : ''} ${pointingFlash ? 'dt-pointing-flash' : ''}`}>
+          <div className={`case-file rounded-sm overflow-hidden view-transition ${isPointingPhase ? 'ring-2 ring-dt-clue/70 ring-inset' : ''} ${pointingFlash ? 'dt-pointing-flash' : ''}`}>
             <div className="px-4 pt-3 pb-4 space-y-2">
               {isPointingPhase
                 ? (
@@ -952,7 +990,16 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                 )
               }
               <div className="stem-scroll-fade stem-only" ref={stemContainerRef}>
-                <div className={`overflow-y-auto pb-6 sm:pb-0 transition-all duration-300 ${stemExpanded || isPointingPhase ? 'max-h-[55dvh]' : 'max-h-[25dvh] sm:max-h-none'}`}>
+                <div
+                  className={`overflow-y-auto pb-6 sm:pb-0 view-transition
+                    ${viewMode === 'chat' && !stemExpanded && !isPointingPhase ? 'overflow-hidden' : ''}`}
+                  style={{
+                    maxHeight: (viewMode === 'stem' || stemExpanded || isPointingPhase) ? GAME.stemExpandedHeight
+                      : viewMode === 'chat' && !stemExpanded && !isPointingPhase ? GAME.stemCollapsedHeight
+                      : GAME.stemDefaultHeight,
+                    height: (viewMode === 'stem' || stemExpanded || isPointingPhase) ? GAME.stemExpandedHeight : undefined,
+                  }}
+                >
                   <p className={`text-base leading-relaxed text-dt-text whitespace-pre-line ${activeScanning ? 'stem-scan' : ''}`}>
                     {renderSegs(stemSegs)}
                   </p>
@@ -968,13 +1015,28 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                   )}
                 </div>
               </div>
+              {/* 卷宗把手 — 案件卡內部底部 */}
+              {phase === 'clue' && !activeScanning && !stemExpanded && (
+                <button
+                  onClick={() => setViewMode(prev => prev === 'chat' ? 'stem' : 'chat')}
+                  className="w-full flex items-center justify-center gap-1.5 pt-2 pb-1 text-[11px] font-medium text-dt-text-muted hover:text-dt-text-secondary transition-all duration-200 active:scale-[0.98] border-t border-dt-border/30 mt-2"
+                >
+                  <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
+                  {viewMode === 'chat' ? '▲ 展開卷宗' : '▼ 展開聊天室'}
+                  <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Chat — position:relative 讓 FAB 能正確 absolute 定位 */}
-      <main ref={chatScrollRef} className={`flex-1 overflow-y-auto flex flex-col relative transition-opacity duration-300 ${isPointingPhase || activeScanning || stemExpanded ? 'opacity-30 pointer-events-none' : ''}`}>
+      <main
+        ref={chatScrollRef}
+        className={`flex-1 overflow-y-auto flex flex-col relative view-transition
+          ${isPointingPhase || activeScanning || stemExpanded ? 'opacity-30 pointer-events-none' : ''}`}
+      >
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
 
         <D>{question.figureImage ? DIALOGUE.introWithFigure : DIALOGUE.intro}<br/><span className="text-dt-scan text-sm">{DIALOGUE.introHint}</span></D>
@@ -993,15 +1055,13 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
           if (event.type === 'clue') {
             const clue = question.clues[event.idx];
             const isAux = clue.isAuxiliary;
-            const hasTeaser = !!clue.teaser;
             return (
-              <div key={`chat-${i}`} className="space-y-3">
+              <div key={`chat-${i}`} className="space-y-2">
                 <S>我覺得「{clue.text}」很可疑。</S>
-                <TypedDetective delay="medium">
+                <TypedDetective delay="short">
                   {event.reaction}
                   <span className={`font-medium ${isAux ? 'text-dt-scan' : 'text-dt-clue'}`}>「{clue.text}」</span>
-                  {' — '}{hasTeaser ? <RichText text={clue.teaser} /> : <RichText text={clue.why} />}
-                  {hasTeaser && <><br/><span className="text-dt-scan text-sm">{isAux ? DIALOGUE.auxiliaryNotebookCTA : DIALOGUE.clueNotebookCTA}</span></>}
+                  <br/><span className="text-dt-scan text-sm">{isAux ? DIALOGUE.auxiliaryNotebookCTA : DIALOGUE.clueNotebookCTA}</span>
                 </TypedDetective>
               </div>
             );
@@ -1172,7 +1232,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
         <div ref={chatEndRef} />
         </div>
 
-        {/* FAB — 浮動在聊天區右下角，推理按鈕 or 結案返回 */}
+        {/* FAB — 推理按鈕 */}
         {phase === 'clue' && !gameOver && foundClues.size > 0 && (allCriticalFound || clueLocked) && (
           <div className="sticky bottom-4 flex justify-center px-4 pointer-events-none">
             <button
