@@ -373,17 +373,23 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     return () => clearTimeout(t);
   }, [reasoningMode]);
 
-  // 題幹點擊偵測：點擊題幹區域就展開（避免 scroll 回彈問題）
+  // 題幹互動偵測：點擊或滾動都展開
   useEffect(() => {
     const el = stemContainerRef.current;
     if (!el || phase !== 'clue') return;
-    const onClick = () => {
+    const expand = () => {
       if (viewMode !== 'stem' && !activeScanning && !stemExpanded) {
         setViewMode('stem');
       }
     };
-    el.addEventListener('click', onClick);
-    return () => el.removeEventListener('click', onClick);
+    el.addEventListener('click', expand);
+    el.addEventListener('touchstart', expand, { passive: true });
+    el.addEventListener('scroll', expand, { passive: true });
+    return () => {
+      el.removeEventListener('click', expand);
+      el.removeEventListener('touchstart', expand);
+      el.removeEventListener('scroll', expand);
+    };
   }, [phase, viewMode, activeScanning, stemExpanded]);
 
   // 聊天室互動偵測：使用者點擊或滑動聊天室時切到 chat 模式
