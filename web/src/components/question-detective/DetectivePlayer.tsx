@@ -373,20 +373,31 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     return () => clearTimeout(t);
   }, [reasoningMode]);
 
-  // 題幹滾動偵測：使用者滑動題幹時切到 stem 模式
+  // 題幹觸控偵測：向上滑超過 10px 就展開（避免 scroll 橡皮筋回彈問題）
   useEffect(() => {
     const el = stemContainerRef.current;
     if (!el || phase !== 'clue') return;
+    let startY = 0;
+    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
+    const onTouchMove = (e: TouchEvent) => {
+      const dy = startY - e.touches[0].clientY;
+      if (dy > 10 && viewMode !== 'stem' && !activeScanning && !stemExpanded) {
+        setViewMode('stem');
+      }
+    };
+    // 桌面用 scroll
     const onScroll = () => {
       if (viewMode !== 'stem' && !activeScanning && !stemExpanded) {
         setViewMode('stem');
       }
     };
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
     el.addEventListener('scroll', onScroll, { passive: true });
-    el.addEventListener('touchmove', onScroll, { passive: true });
     return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('scroll', onScroll);
-      el.removeEventListener('touchmove', onScroll);
     };
   }, [phase, viewMode, activeScanning, stemExpanded]);
 
