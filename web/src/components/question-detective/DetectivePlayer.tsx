@@ -1060,7 +1060,8 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
       {/* Chat — position:relative 讓 FAB 能正確 absolute 定位 */}
       <main
         ref={chatScrollRef}
-        className={`flex-1 overflow-y-auto flex flex-col relative view-transition
+        className={`flex-1 flex flex-col relative view-transition
+          ${viewTransitioning ? 'overflow-hidden' : 'overflow-y-auto'}
           ${isPointingPhase || activeScanning || stemExpanded ? 'opacity-30 pointer-events-none' : ''}`}
       >
         <div className="max-w-xl mx-auto px-4 py-4 space-y-4 mt-auto w-full">
