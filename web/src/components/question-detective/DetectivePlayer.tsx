@@ -264,7 +264,18 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   const isTutorial = question.id === 'tutorial';
   const [showTutorial, setShowTutorial] = useState(isTutorial);
   // 焦點模式：default=進場分割, stem=題幹展開, chat=聊天室展開
-  const [viewMode, setViewMode] = useState<'default' | 'stem' | 'chat'>('default');
+  const [viewMode, setViewModeRaw] = useState<'default' | 'stem' | 'chat'>('default');
+  const viewTransitioning = useRef(false);
+  const setViewMode = useCallback((next: 'default' | 'stem' | 'chat' | ((prev: 'default' | 'stem' | 'chat') => 'default' | 'stem' | 'chat')) => {
+    setViewModeRaw(prev => {
+      const val = typeof next === 'function' ? next(prev) : next;
+      if (val !== prev) {
+        viewTransitioning.current = true;
+        setTimeout(() => { viewTransitioning.current = false; }, 700); // 配合 view-transition 動畫時間
+      }
+      return val;
+    });
+  }, []);
   const [phase, setPhase] = useState<Phase>('clue');
   const [foundClues, setFoundClues] = useState<Set<number>>(new Set());
   const [chatEvents, setChatEvents] = useState<ChatEvent[]>([]);
@@ -727,6 +738,8 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
   // scaffoldIndex != null → 查 ScaffoldingRegion.type，呼叫 onContextHit 或 onNoiseMiss
   // 兩者皆 null        → onClueMiss（不變）
   const onSegTap = useCallback((seg: Seg, e: React.MouseEvent) => {
+    // 動畫過渡中不處理點擊（防止展開/收合時誤觸扣血）
+    if (viewTransitioning.current) return;
     // 首次點擊 → 隱藏首次進入的 persist toast
     if (!hasStartedInteracting) {
       setHasStartedInteracting(true);
@@ -1017,16 +1030,25 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
                   )}
                 </div>
               </div>
-              {/* 卷宗把手 — 案件卡內部底部 */}
+              {/* 卷宗把手 — 案件卡內部底部，支援點擊 + 上下滑動 */}
               {phase === 'clue' && !activeScanning && !stemExpanded && (
-                <button
+                <div
+                  className="w-full flex items-center justify-center gap-1.5 pt-2 pb-1 text-[11px] font-medium text-dt-text-muted hover:text-dt-text-secondary transition-all duration-200 active:scale-[0.98] border-t border-dt-border/30 mt-2 cursor-pointer select-none touch-none"
                   onClick={() => setViewMode(prev => prev === 'chat' ? 'stem' : 'chat')}
-                  className="w-full flex items-center justify-center gap-1.5 pt-2 pb-1 text-[11px] font-medium text-dt-text-muted hover:text-dt-text-secondary transition-all duration-200 active:scale-[0.98] border-t border-dt-border/30 mt-2"
+                  onTouchStart={e => { (e.currentTarget as HTMLElement).dataset.startY = String(e.touches[0].clientY); }}
+                  onTouchEnd={e => {
+                    const startY = Number((e.currentTarget as HTMLElement).dataset.startY || 0);
+                    const endY = e.changedTouches[0].clientY;
+                    const dy = startY - endY;
+                    if (Math.abs(dy) > 15) {
+                      setViewMode(dy > 0 ? 'chat' : 'stem'); // 上滑=聊天室, 下滑=卷宗
+                    }
+                  }}
                 >
                   <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
                   {viewMode === 'chat' ? '▲ 展開卷宗' : '▼ 展開聊天室'}
                   <span className="w-6 h-0.5 rounded-full bg-dt-text-muted/30" />
-                </button>
+                </div>
               )}
             </div>
           </div>
