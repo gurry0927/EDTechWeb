@@ -373,32 +373,17 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     return () => clearTimeout(t);
   }, [reasoningMode]);
 
-  // 題幹觸控偵測：向上滑超過 10px 就展開（避免 scroll 橡皮筋回彈問題）
+  // 題幹點擊偵測：點擊題幹區域就展開（避免 scroll 回彈問題）
   useEffect(() => {
     const el = stemContainerRef.current;
     if (!el || phase !== 'clue') return;
-    let startY = 0;
-    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
-    const onTouchMove = (e: TouchEvent) => {
-      const dy = startY - e.touches[0].clientY;
-      if (dy > 10 && viewMode !== 'stem' && !activeScanning && !stemExpanded) {
-        setViewMode('stem');
-      }
-    };
-    // 桌面用 scroll
-    const onScroll = () => {
+    const onClick = () => {
       if (viewMode !== 'stem' && !activeScanning && !stemExpanded) {
         setViewMode('stem');
       }
     };
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: true });
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove);
-      el.removeEventListener('scroll', onScroll);
-    };
+    el.addEventListener('click', onClick);
+    return () => el.removeEventListener('click', onClick);
   }, [phase, viewMode, activeScanning, stemExpanded]);
 
   // 聊天室互動偵測：使用者點擊或滑動聊天室時切到 chat 模式
