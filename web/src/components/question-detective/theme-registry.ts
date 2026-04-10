@@ -200,7 +200,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     label: '🏮 江湖',
     desc: '國風古韻・袁天罡',
     avatar: { detective: '🧙‍♂️', student: '🧑‍🦱' },
-    photoClip: '⚔️',
+    photoClip: '🗡️',
     dialogue: DIALOGUE_GUOFENG,
   },
 };
