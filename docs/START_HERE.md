@@ -2,34 +2,65 @@
 
 ## 專案定位
 
-國中社會科互動學習平台，兩條產品線：
+國中社會科互動學習平台，遊戲化學習為核心。
 
-1. **問題偵探**（主力）— 遊戲化考題分析，學生從題幹中找線索、推理、作答
-2. **互動地圖**（成熟模組）— 台灣行政區 / 原住民分布 / 公民制度視覺化
+**產品線：**
+1. **問題偵探**（主力遊戲模式）— 從題幹找線索、推理、作答
+2. **互動地圖**（成熟模組）— 台灣行政區 / 原住民分布 / 公民制度
+3. **更多遊戲模式**（規劃中）— 臥底、拆彈、解密、連連看
 
 ## 目錄結構
 
 ```
 EDTechWeb/
-├── web/                          Next.js 主站（Vercel 部署）
-│   ├── src/app/                  路由
-│   │   ├── /                     首頁（科目入口）
-│   │   ├── /[subject]/           科目詳情
-│   │   ├── /question-detective/  問題偵探列表 + 遊戲
-│   │   ├── /taiwan-map/          台灣互動地圖
-│   │   └── /civics-local-gov/    公民地方政府
-│   ├── src/components/
-│   │   ├── question-detective/   遊戲引擎（DetectivePlayer + config）
-│   │   ├── taiwan-map/           地圖核心模組（凍結）
-│   │   └── civics-map/           公民地圖
-│   ├── src/config/               科目/課程定義
-│   ├── src/data/
-│   │   └── detective-questions/  題庫 JSON + Supabase API
-│   ├── src/lessons/              地圖課程設定檔
-│   └── src/lib/supabase.ts       Supabase client
+├── web/                              Next.js 主站（Vercel 部署）
+│   ├── src/
+│   │   ├── app/                      ─── 路由 ───
+│   │   │   ├── page.tsx              首頁（遊戲入口，手遊風格）
+│   │   │   ├── [subject]/            科目詳情頁
+│   │   │   ├── question-detective/   偵探模式列表 + 遊戲
+│   │   │   ├── taiwan-map/           台灣互動地圖
+│   │   │   ├── civics-local-gov/     公民地方政府
+│   │   │   └── layout.tsx            根佈局（凍結）
+│   │   │
+│   │   ├── config/                   ─── 全站設定 ───
+│   │   │   ├── themes.ts            主題系統（classic/cyber/guofeng）
+│   │   │   ├── gameModes.ts          遊戲模式註冊表
+│   │   │   ├── subjects.ts           科目與課程定義
+│   │   │   └── types.ts              型別定義（凍結）
+│   │   │
+│   │   ├── components/               ─── 元件 ───
+│   │   │   ├── home/                 首頁元件（CharacterHero, BottomNav...）
+│   │   │   ├── question-detective/   偵探遊戲引擎
+│   │   │   ├── game-modes/           其他遊戲模式（規劃中）
+│   │   │   │   ├── spy/             臥底模式
+│   │   │   │   ├── bomb/            拆彈模式
+│   │   │   │   └── decrypt/         解密模式
+│   │   │   ├── collection/           收集冊（規劃中）
+│   │   │   ├── account/              帳號系統（規劃中）
+│   │   │   ├── stats/                統計排行（規劃中）
+│   │   │   ├── shared/               跨模組共用元件
+│   │   │   ├── taiwan-map/           地圖核心（凍結）
+│   │   │   └── civics-map/           公民地圖
+│   │   │
+│   │   ├── hooks/                    共用 React hooks（規劃中）
+│   │   ├── data/                     題庫 JSON + Supabase API
+│   │   ├── lessons/                  地圖課程設定檔
+│   │   └── lib/supabase.ts           Supabase client
+│   │
+│   └── public/
+│       ├── sw.js                     Service Worker (PWA)
+│       └── manifest.json             PWA manifest
+│
 ├── tools/
-│   └── question-admin/           題目編輯器（Vite + React）
-└── docs/                         規劃文件
+│   └── question-admin/               題目編輯器（Vite + React）
+│
+└── docs/
+    ├── START_HERE.md                 ← 你在這裡
+    ├── HOME_PAGE.md                  首頁維護手冊
+    └── question-detective/
+        ├── THEME_SYSTEM.md           主題系統維護手冊
+        └── GAME_DESIGN_NOTES.md      遊戲設計決策紀錄
 ```
 
 ## 技術棧
@@ -42,65 +73,62 @@ EDTechWeb/
 | AI | Gemini API（題目切分 / 標記，僅 admin 工具使用） |
 | 部署 | Vercel |
 
-## 產品線 1：問題偵探
+## 設定檔導向
 
-### 架構
+**加東西改 config，不改元件：**
 
+| 要做什麼 | 改哪個 config |
+|---------|--------------|
+| 新增主題 | `config/themes.ts` + `globals.css` |
+| 新增遊戲模式 | `config/gameModes.ts` + 對應元件資料夾 |
+| 新增科目/課程 | `config/subjects.ts` |
+| 新增地圖課程 | `src/lessons/*.ts` |
+| 新增偵探題目 | `tools/question-admin/` → Supabase |
+
+## 首頁（遊戲入口）
+
+手遊風格，角色驅動：
+- 角色立繪 + 台詞（點擊切換主題）
+- 「繼續調查」主按鈕
+- 遊戲模式選擇列
+- 底部 Tab（首頁/圖鑑/我的）
+
+詳見 [HOME_PAGE.md](HOME_PAGE.md)
+
+## 問題偵探（主力遊戲）
+
+### 資料流
 ```
-題目 JSON
-  → tools/question-admin/    編輯、AI 標記、切分
-  → Supabase DB              儲存
-  → web/ 列表頁              get_public_questions()（僅題幹，反爬蟲）
-  → web/ 遊戲頁              get_question_detail(id)（完整資料）
-  → DetectivePlayer.tsx       遊戲引擎
-  → detective-config.ts       所有參數 / 台詞 / 成就
+題目 JSON → tools/question-admin/ → Supabase DB
+  → 列表頁 get_public_questions()（僅題幹，反爬蟲）
+  → 遊戲頁 get_question_detail(id)（完整資料）
+  → DetectivePlayer.tsx 遊戲引擎
 ```
-
-### 關鍵檔案
-
-| 檔案 | 職責 |
-|------|------|
-| `detective-config.ts` | 遊戲參數（GAME）、台詞（DIALOGUE）、成就（ACHIEVEMENTS） |
-| `DetectivePlayer.tsx` | 遊戲狀態機：clue → reasoning → answer → solution |
-| `types.ts` | DetectiveQuestion, Clue, ScaffoldingRegion 型別 |
-| `api.ts` | Supabase RPC 封裝（公開 / 完整資料） |
 
 ### 遊戲流程
+```
+clue phase     找線索（掃描器輔助）
+  ↓
+reasoning      推理問答 + 舉證
+  ↓
+answer         指認答案
+  ↓
+solution       結案報告 + 成就 + 切入演出
+```
 
-```
-clue phase     使用者點擊題幹找線索（掃描器輔助）
-  ↓
-reasoning      依序回答推理題（每條線索一題）
-  ↓
-answer         選擇最終答案
-  ↓
-solution       結案報告 + 成就
-```
+### 主題系統
+三套皮膚（classic/cyber/guofeng），CSS 變數 + 台詞覆寫。
+詳見 [question-detective/THEME_SYSTEM.md](question-detective/THEME_SYSTEM.md)
 
 ### admin 工具
-
 ```bash
 cd tools/question-admin && npm install && npm run dev
 # localhost:5173
 ```
 
-功能：載入 JSON → 標記線索/鷹架 → AI 切分詞段 → 儲存到 Supabase
+## 互動地圖（成熟模組）
 
-## 產品線 2：互動地圖
-
-### 架構
-
-```
-src/lessons/*.ts         課程設定（區域顏色、互動行為、圖例）
-  → src/components/taiwan-map/   地圖渲染引擎（凍結）
-  → src/app/taiwan-map/          頁面路由
-```
-
-### 擴充方式
-
-1. 新增地圖課程 → 在 `src/lessons/` 加 LessonConfig
-2. 新增科目 → 修改 `src/config/subjects.ts`
-3. 新增路由 → 在 `src/app/` 建資料夾
+擴充方式：`src/lessons/` 加 LessonConfig，不改地圖核心。
 
 ## 凍結區域（禁止修改）
 
@@ -139,9 +167,23 @@ created_at, updated_at     -- 自動維護
 - `get_public_questions()` — 列表用，不含答案/線索
 - `get_question_detail(id)` — 遊戲用，完整資料
 
+## 規劃中功能
+
+| 功能 | 依賴 | 佔位資料夾 |
+|------|------|-----------|
+| 臥底模式 | 無 | `components/game-modes/spy/` |
+| 拆彈模式 | 無 | `components/game-modes/bomb/` |
+| 解密模式 | 無 | `components/game-modes/decrypt/` |
+| 收集冊 | 帳號系統（先用 localStorage） | `components/collection/` |
+| 帳號系統 | Supabase Auth | `components/account/` |
+| 統計排行 | 帳號系統 | `components/stats/` |
+| 學習地圖 | 帳號系統 + 足夠題量 | 待建 |
+
 ## 擱置中的實驗
 
-以下功能因 D3 渲染 bug 擱置，詳見 `docs/CLAUDE_HANDOVER_FLOODED_WORLD.md`：
+以下功能因 D3 渲染 bug 擱置：
 - `/flooded-world-demo/`
 - `/layered-map-demo/`
 - `/taipei-lake-demo/`
+
+詳見 `docs/CLAUDE_HANDOVER_FLOODED_WORLD.md`
