@@ -684,6 +684,7 @@ export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }
     setChatEvents(prev => [...prev, { type: 'clue', idx, reaction }]);
     setConsecutiveMisses(0);
     exitScanMode();
+    setViewMode('default');
   }, [clueLocked, foundClues, triggerFlight, question.clues, exitScanMode]);
 
   const triggerMissIncrement = useCallback(() => {
