@@ -9,7 +9,7 @@
 
 | 資料夾 | 用途 |
 |---|---|
-| `question-admin/` | 題目偵探 JSON 編輯器，含 AI 詞段切分 |
+| `question-admin/` | 題目偵探編輯器：AI 詞段切分 + 線索標記 + Supabase 同步 |
 
 ---
 
@@ -28,4 +28,12 @@
 cd tools/<tool-name>
 npm install
 npm run dev
+```
+
+## 環境設定
+
+`question-admin` 需要 Supabase 連線，在 `.env` 設定：
+```
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_xxx
 ```

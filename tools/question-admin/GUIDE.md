@@ -14,7 +14,7 @@
 4. 編輯 JSON 的其他欄位（clues、scaffolding、hints 等）
 5. 匯出最終的 JSON 檔
 
-**不需要部署、不需要登入、不需要資料庫。** 所有資料存在 localStorage 或直接匯出檔案。
+**不需要部署、不需要登入。** 題目儲存至 Supabase 資料庫，也可匯出 JSON 檔。
 
 ---
 
@@ -26,7 +26,8 @@
 | 樣式 | Tailwind CSS v4 | 與主站一致 |
 | AI | Google Gemini API（`gemini-2.0-flash`） | 免費額度夠用，延遲低 |
 | 狀態管理 | React useState / useReducer | 無需引入外部 store |
-| 持久化 | localStorage | 不需要後端 |
+| 資料庫 | Supabase (PostgreSQL + JSONB) | 與主站共用，題目即時同步 |
+| 本地暫存 | localStorage | 編輯中的草稿 |
 
 ---
 
@@ -38,16 +39,22 @@ tools/question-admin/
 ├── package.json
 ├── vite.config.ts
 ├── index.html
+├── .env                   ← Supabase 連線設定（不進 git）
 └── src/
     ├── main.tsx
     ├── App.tsx
     ├── types.ts           ← 複製自主站 types.ts（DetectiveQuestion）
     ├── gemini.ts          ← Gemini API 呼叫邏輯
     ├── tokenize.ts        ← prompt 組裝 + 結果解析
+    ├── supabase.ts        ← Supabase client 初始化
+    ├── api.ts             ← Supabase CRUD（上傳/讀取題目）
     ├── components/
+    │   ├── QuestionList.tsx    ← 題目列表（從 Supabase 讀取）
     │   ├── JsonEditor.tsx     ← 左側：原始 JSON 文字編輯器
     │   ├── StemVisualizer.tsx ← 中央：題幹視覺化 + 詞段調整
-    │   ├── FieldEditor.tsx    ← 右側：clues / scaffolding / hints 等欄位
+    │   ├── TextMarker.tsx     ← 線索/鷹架標記工具
+    │   ├── ClueDetailEditor.tsx ← 線索詳細編輯
+    │   ├── MetadataEditor.tsx ← 題目元資料編輯
     │   └── Toolbar.tsx        ← 頂部：API key 輸入、執行按鈕、匯出
     └── hooks/
         └── useQuestion.ts     ← 題目狀態的 CRUD 操作
