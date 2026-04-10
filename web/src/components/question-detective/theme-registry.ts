@@ -35,6 +35,8 @@ export interface ThemeEntry {
   dialogue: Partial<Dialogue> | null;
   /** 切入演出風格 — null 則用預設動畫 */
   cutscene: CutsceneStyle | null;
+  /** 首頁角色台詞 */
+  homepageQuote: string;
 }
 
 // ── Cyber 台詞 ──
@@ -208,7 +210,8 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '🕵️', student: '🧑‍🎓' },
     photoClip: 'paperclip',
     dialogue: null,
-    cutscene: null,  // 預設動畫
+    cutscene: null,
+    homepageQuote: '每道題都是一樁懸案，準備好了嗎？',
   },
   cyber: {
     id: 'cyber',
@@ -217,7 +220,8 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '🤖', student: '👤' },
     photoClip: 'hidden',
     dialogue: DIALOGUE_CYBER,
-    cutscene: null,  // TODO: 未來可加 glitch 特效
+    cutscene: null,
+    homepageQuote: '數據流異常偵測中…等待指令。',
   },
   guofeng: {
     id: 'guofeng',
@@ -226,7 +230,8 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '🧙‍♂️', student: '🧑‍🦱' },
     photoClip: 'hidden',
     dialogue: DIALOGUE_GUOFENG,
-    cutscene: null,  // TODO: 未來可加墨水潑灑特效
+    cutscene: null,
+    homepageQuote: '天道有序。此局，你可敢入？',
   },
 };
 

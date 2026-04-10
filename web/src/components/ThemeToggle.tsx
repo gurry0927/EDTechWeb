@@ -27,7 +27,7 @@ export function ThemeToggle() {
   };
 
   if (!mounted) return null;
-  if (IMMERSIVE_PATHS.some(p => pathname.startsWith(p))) return null;
+  if (pathname === '/' || IMMERSIVE_PATHS.some(p => pathname.startsWith(p))) return null;
 
   return (
     <button
