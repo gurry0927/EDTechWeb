@@ -500,9 +500,9 @@ body {
 
 /* ── 國風: 照片 — 墨色泛金 ── */
 [data-dt-theme="guofeng"] .case-photo {
-  --dt-photo-filter: sepia(0.7) saturate(0.4) contrast(1.15) brightness(0.8);
-  --dt-photo-overlay: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%);
-  --dt-photo-blend: multiply;
+  --dt-photo-filter: sepia(0.7) saturate(0.4) contrast(1.15) brightness(0.85);
+  --dt-photo-overlay: radial-gradient(ellipse at center, transparent 40%, rgba(200,160,80,0.08) 100%);
+  --dt-photo-blend: normal;
   border: 1px solid rgba(200,160,80,0.2);
   box-shadow: 0 0 8px rgba(200,160,80,0.08);
 }
@@ -601,6 +601,7 @@ body {
 .dt-pointing-flash { box-shadow: 0 0 0 4px color-mix(in srgb, var(--dt-clue) 50%, transparent); }
 .dt-photo-blend { mix-blend-mode: darken; }
 [data-dt-theme="cyber"] .dt-photo-blend { mix-blend-mode: normal; }
+[data-dt-theme="guofeng"] .dt-photo-blend { mix-blend-mode: normal; }
 .minus-life-pop { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 [data-dt-theme="cyber"] .minus-life-pop { text-shadow: 0 0 8px var(--dt-error), 0 2px 4px rgba(0,0,0,0.5); }
 
