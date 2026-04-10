@@ -1,21 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-
-interface GameMode {
-  id: string;
-  label: string;
-  icon: string;
-  href?: string;
-  locked: boolean;
-}
-
-const MODES: GameMode[] = [
-  { id: 'detective', label: '偵探', icon: '🔍', href: '/question-detective', locked: false },
-  { id: 'spy',       label: '臥底', icon: '🎭', locked: true },
-  { id: 'bomb',      label: '拆彈', icon: '💣', locked: true },
-  { id: 'decrypt',   label: '解密', icon: '🧩', locked: true },
-];
+import { GAME_MODES } from '@/config/gameModes';
 
 interface Props {
   themeId: string;
@@ -29,7 +15,7 @@ export function ModeSelector({ themeId }: Props) {
         遊戲模式
       </div>
       <div className="flex gap-3">
-        {MODES.map(mode => {
+        {GAME_MODES.map(mode => {
           const inner = (
             <div className={`flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all duration-200 ${
               mode.locked ? 'opacity-40 cursor-default' : 'hover:scale-105 active:scale-95 cursor-pointer'

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { THEME_LIST } from '@/components/question-detective/theme-registry';
+import { THEME_LIST } from '@/config/themes';
 
 interface Props {
   theme: string;

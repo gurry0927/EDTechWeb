@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { DetectiveGamePage } from '@/components/question-detective/DetectiveGamePage';
 import { getInitialTheme } from '@/components/question-detective/theme-utils';
+import { DEFAULT_THEME } from '@/config/themes';
 import { fetchQuestionDetail } from '@/data/detective-questions/api';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 import tutorialData from '@/data/detective-questions/tutorial.json';
@@ -14,7 +15,7 @@ export default function Page() {
   const [question, setQuestion] = useState<DetectiveQuestion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [theme, setTheme] = useState('classic');
+  const [theme, setTheme] = useState(DEFAULT_THEME);
   useEffect(() => { setTheme(getInitialTheme()); }, []);
 
   useEffect(() => {

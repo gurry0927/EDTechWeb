@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
-import { THEME_LIST } from '@/components/question-detective/theme-registry';
+import { THEME_LIST } from '@/config/themes';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
 
 // Extract year from source string like "114年會考-社會-第20題"

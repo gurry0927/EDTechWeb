@@ -1,6 +1,6 @@
 'use client';
 
-import { THEME_REGISTRY } from '@/components/question-detective/theme-registry';
+import { THEME_REGISTRY } from '@/config/themes';
 
 interface Props {
   themeId: string;

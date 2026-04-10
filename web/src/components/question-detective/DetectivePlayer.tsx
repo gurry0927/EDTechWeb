@@ -3,7 +3,8 @@
 import { useState, useCallback, useMemo, useEffect, useRef, createContext, useContext } from 'react';
 import type { DetectiveQuestion } from './types';
 import { GAME, getDialogue, ACHIEVEMENTS, pick } from './detective-config';
-import { THEME_REGISTRY } from './theme-registry';
+import { THEME_REGISTRY } from '@/config/themes';
+import { DETECTIVE_DIALOGUES } from './theme-registry';
 import { TutorialOverlay } from './TutorialOverlay';
 import { CutsceneOverlay, type CutsceneVariant } from './CutsceneOverlay';
 
@@ -253,7 +254,7 @@ interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () =
 
 // ── Main Component ──
 export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
-  const DIALOGUE = useMemo(() => getDialogue(theme, THEME_REGISTRY[theme]?.dialogue), [theme]);
+  const DIALOGUE = useMemo(() => getDialogue(theme, DETECTIVE_DIALOGUES[theme]), [theme]);
   const themeCtx = useMemo(() => {
     const entry = THEME_REGISTRY[theme];
     return {

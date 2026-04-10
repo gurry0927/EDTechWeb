@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { GAME } from './detective-config';
-import type { CutsceneStyle } from './theme-registry';
+import type { CutsceneStyle } from '@/config/themes';
 
 export type CutsceneVariant = 'caseSolved' | 'cluesReady';
 

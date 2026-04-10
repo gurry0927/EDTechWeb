@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { THEME_REGISTRY, VALID_THEME_IDS } from '@/components/question-detective/theme-registry';
+import { VALID_THEME_IDS, DEFAULT_THEME } from '@/config/themes';
 import { CharacterHero } from '@/components/home/CharacterHero';
 import { ContinueButton } from '@/components/home/ContinueButton';
 import { ModeSelector } from '@/components/home/ModeSelector';
@@ -10,7 +10,7 @@ import { AlbumPanel } from '@/components/home/AlbumPanel';
 import { MePanel } from '@/components/home/MePanel';
 
 export default function Home() {
-  const [theme, setTheme] = useState('classic');
+  const [theme, setTheme] = useState(DEFAULT_THEME);
   const [activeTab, setActiveTab] = useState<Tab>('home');
 
   // hydration-safe: 延遲讀取 localStorage

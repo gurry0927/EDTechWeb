@@ -1,43 +1,23 @@
 /**
- * 主題註冊表 — 新增主題的唯一入口（邏輯層）
+ * 偵探模組主題擴充 — 台詞覆寫層
+ *
+ * 主題的通用屬性（id, label, avatar 等）定義在 src/config/themes.ts
+ * 這裡只管偵探遊戲專屬的台詞覆寫（dialogue overlay）
  *
  * 新增主題步驟：
- * 1. 在此檔案加一筆 entry（id, label, desc, avatar, dialogue）
- * 2. 在 globals.css 加 [data-dt-theme="xxx"] { --dt-* } 變數區塊
- * 3. 完成（theme-utils, page.tsx, getDialogue 自動吃到）
+ * 1. 在 src/config/themes.ts 加 ThemeEntry
+ * 2. 在此檔案加對應的 dialogue overlay（或 null）
+ * 3. 在 globals.css 加 [data-dt-theme="xxx"] { --dt-* } 變數區塊
  */
 
 import type { Dialogue } from './detective-config';
 
-export interface ThemeAvatar {
-  detective: string;   // emoji 或未來的圖片 URL
-  student: string;     // 預設學生頭像（未來被帳號系統覆蓋）
-}
-
-/** 切入演出風格 — 未來替換動畫/特效只改這裡 */
-export interface CutsceneStyle {
-  /** CSS class 加在最外層容器，用於主題特化動畫（如 'cutscene-glitch', 'cutscene-ink'） */
-  className?: string;
-  /** 閃光背景覆蓋（不填則用預設 --dt-accent gradient） */
-  flashBg?: string;
-  /** caseSolved 額外 CSS class（全屏演出專用） */
-  solvedClass?: string;
-  /** cluesReady 額外 CSS class（橫幅演出專用） */
-  readyClass?: string;
-}
-
-export interface ThemeEntry {
-  id: string;
-  label: string;
-  desc: string;
-  avatar: ThemeAvatar;
-  photoClip: 'paperclip' | 'hidden' | string;  // 'paperclip'=SVG迴紋針, 'hidden'=不顯示, 其他=emoji
-  dialogue: Partial<Dialogue> | null;
-  /** 切入演出風格 — null 則用預設動畫 */
-  cutscene: CutsceneStyle | null;
-  /** 首頁角色台詞 */
-  homepageQuote: string;
-}
+// Re-export 全站主題系統，讓現有 import 不用全部改路徑
+export {
+  DEFAULT_THEME,
+  THEME_REGISTRY, VALID_THEME_IDS, THEME_LIST,
+  type ThemeEntry, type ThemeAvatar, type CutsceneStyle,
+} from '@/config/themes';
 
 // ── Cyber 台詞 ──
 
@@ -200,40 +180,10 @@ const DIALOGUE_GUOFENG: Partial<Dialogue> = {
   notebookEmpty: '尚未蒐得任何線索',
 };
 
-// ── Registry ──
+// ── 偵探模組台詞對照表（theme id → dialogue overlay） ──
 
-export const THEME_REGISTRY: Record<string, ThemeEntry> = {
-  classic: {
-    id: 'classic',
-    label: '📜 偵探社',
-    desc: '經典牛皮紙風格',
-    avatar: { detective: '🕵️', student: '🧑‍🎓' },
-    photoClip: 'paperclip',
-    dialogue: null,
-    cutscene: null,
-    homepageQuote: '每道題都是一樁懸案，準備好了嗎？',
-  },
-  cyber: {
-    id: 'cyber',
-    label: '🔮 賽博',
-    desc: '科技霓虹風格',
-    avatar: { detective: '🤖', student: '👤' },
-    photoClip: 'hidden',
-    dialogue: DIALOGUE_CYBER,
-    cutscene: null,
-    homepageQuote: '數據流異常偵測中…等待指令。',
-  },
-  guofeng: {
-    id: 'guofeng',
-    label: '🏮 江湖',
-    desc: '國風古韻・袁天罡',
-    avatar: { detective: '🧙‍♂️', student: '🧑‍🦱' },
-    photoClip: 'hidden',
-    dialogue: DIALOGUE_GUOFENG,
-    cutscene: null,
-    homepageQuote: '天道有序。此局，你可敢入？',
-  },
+export const DETECTIVE_DIALOGUES: Record<string, Partial<Dialogue> | null> = {
+  classic: null,
+  cyber: DIALOGUE_CYBER,
+  guofeng: DIALOGUE_GUOFENG,
 };
-
-export const VALID_THEME_IDS = Object.keys(THEME_REGISTRY);
-export const THEME_LIST = Object.values(THEME_REGISTRY);
