@@ -1230,19 +1230,38 @@ body {
   animation: notebook-slide-up-out 0.26s cubic-bezier(0.4, 0, 1, 0.8) both;
 }
 
-/* 衝擊波 — 擴散圓環 */
+/* 衝擊波 — 光暈圓環 */
 @keyframes shockwave-ring {
-  0%   { transform: translate(-50%, -50%) scale(0.1); opacity: 0.9; filter: blur(0px); }
-  60%  { opacity: 0.4; filter: blur(6px); }
-  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; filter: blur(14px); }
+  0%   {
+    transform: translate(-50%, -50%) scale(0.05);
+    opacity: 1;
+    filter: blur(2px);
+  }
+  40%  {
+    opacity: 0.7;
+    filter: blur(8px);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+    filter: blur(20px);
+  }
 }
 @keyframes shockwave-ring2 {
-  0%   { transform: translate(-50%, -50%) scale(0.1); opacity: 0.5; filter: blur(2px); }
-  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; filter: blur(18px); }
+  0%   {
+    transform: translate(-50%, -50%) scale(0.05);
+    opacity: 0.6;
+    filter: blur(6px);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.4);
+    opacity: 0;
+    filter: blur(24px);
+  }
 }
 @keyframes shockwave-flash {
   0%   { opacity: 0; }
-  8%   { opacity: 0.18; }
+  8%   { opacity: 0.12; }
   100% { opacity: 0; }
 }
 .shockwave-ring {
@@ -1250,22 +1269,30 @@ body {
   left: 50%; top: 45%;
   width: min(90vw, 420px); height: min(90vw, 420px);
   border-radius: 50%;
-  border: 3px solid rgba(255, 248, 220, 0.9);
+  /* 多層光暈，中心亮邊緣漸散 */
+  border: none;
+  box-shadow:
+    0 0 0 2px rgba(255, 245, 200, 0.6),
+    0 0 12px 6px rgba(255, 220, 120, 0.35),
+    0 0 30px 14px rgba(200, 140, 60, 0.2),
+    0 0 60px 30px rgba(150, 80, 20, 0.1);
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.1);
+  transform: translate(-50%, -50%) scale(0.05);
   opacity: 0;
 }
 .shockwave-ring.active {
-  animation: shockwave-ring 0.65s cubic-bezier(0.15, 0.8, 0.3, 1) forwards;
+  animation: shockwave-ring 0.7s cubic-bezier(0.15, 0.8, 0.3, 1) forwards;
 }
 .shockwave-ring.active.ring2 {
-  animation: shockwave-ring2 0.8s cubic-bezier(0.1, 0.7, 0.3, 1) 0.05s forwards;
-  border-width: 1px;
-  border-color: rgba(255, 248, 220, 0.5);
+  animation: shockwave-ring2 0.85s cubic-bezier(0.1, 0.7, 0.3, 1) 0.06s forwards;
+  box-shadow:
+    0 0 0 1px rgba(255, 245, 200, 0.3),
+    0 0 20px 10px rgba(200, 140, 60, 0.15),
+    0 0 50px 25px rgba(150, 80, 20, 0.08);
 }
 .shockwave-flash {
   position: absolute; inset: 0;
-  background: white;
+  background: radial-gradient(ellipse at 50% 45%, rgba(255,240,180,0.3) 0%, transparent 70%);
   pointer-events: none;
   opacity: 0;
 }

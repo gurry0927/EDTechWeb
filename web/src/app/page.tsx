@@ -43,17 +43,17 @@ export default function Home() {
     const wipe = wipeRef.current;
     if (!wipe) { router.push(href); return; }
 
-    // 300ms 讓角色轉頭 + 衝擊波展開
+    // 600ms 讓角色轉頭完成 + 衝擊波展開後，黑幕才進來
     setTimeout(() => {
       wipe.classList.remove('page-wipe-in', 'page-wipe-out');
       void wipe.offsetWidth;
       wipe.classList.add('page-wipe-in');
-    }, 300);
+    }, 600);
 
     // wipe-in 完成後跳轉
     setTimeout(() => {
       router.push(href);
-    }, 300 + 350);
+    }, 600 + 350);
   }, [router]);
 
   return (
