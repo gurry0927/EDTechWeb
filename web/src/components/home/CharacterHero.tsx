@@ -6,9 +6,10 @@ import { THEME_REGISTRY } from '@/config/themes';
 interface Props {
   themeId: string;
   onThemeSwitch: () => void;
+  hideAvatar?: boolean;
 }
 
-export function CharacterHero({ themeId, onThemeSwitch }: Props) {
+export function CharacterHero({ themeId, onThemeSwitch, hideAvatar = false }: Props) {
   const entry = THEME_REGISTRY[themeId];
   const avatar = entry?.avatar.detective ?? '🕵️';
   const quote = entry?.homepageQuote ?? '準備好了嗎？';
@@ -30,6 +31,7 @@ export function CharacterHero({ themeId, onThemeSwitch }: Props) {
       {/* 角色/象徵物 */}
       <button
         onClick={onThemeSwitch}
+        style={hideAvatar ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}
         className="relative z-10 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         title="切換主題"
       >

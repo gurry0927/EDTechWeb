@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { VALID_THEME_IDS, DEFAULT_THEME } from '@/config/themes';
-import { CharacterHero } from '@/components/home/CharacterHero';
+import { ThemeHero } from '@/components/home/ThemeHero';
 import { ContinueButton } from '@/components/home/ContinueButton';
 import { ModeSelector } from '@/components/home/ModeSelector';
 import { BottomNav, type Tab } from '@/components/home/BottomNav';
@@ -35,13 +35,13 @@ export default function Home() {
   }, []);
 
   return (
-    <div data-dt-theme={theme} className="min-h-[100dvh] flex flex-col" suppressHydrationWarning
+    <div data-dt-theme={theme} className="relative h-[100dvh] flex flex-col overflow-hidden" suppressHydrationWarning
       style={{ background: 'var(--dt-wood, #c8b49a)' }}
     >
-      <div className="flex-1 max-w-md mx-auto w-full pb-20 flex flex-col gap-4">
+      <div className="relative z-10 flex-1 max-w-md mx-auto w-full pb-20 flex flex-col gap-4 overflow-hidden">
         {activeTab === 'home' && (
           <>
-            <CharacterHero themeId={theme} onThemeSwitch={cycleTheme} />
+            <ThemeHero themeId={theme} onThemeSwitch={cycleTheme} />
             <ContinueButton themeId={theme} />
             <ModeSelector themeId={theme} />
           </>
