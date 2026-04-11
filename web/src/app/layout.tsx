@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, LXGW_WenKai_TC } from "next/font/google";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import "./globals.css";
@@ -19,11 +19,14 @@ const wenkai = LXGW_WenKai_TC({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#c2553a",
+};
+
 export const metadata: Metadata = {
   title: "EDTech — 互動教學平台",
   description: "數位互動教材，讓學習更有趣",
   manifest: "/manifest.json",
-  themeColor: "#c2553a",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
