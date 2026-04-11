@@ -14,8 +14,8 @@
 export const DEFAULT_THEME = 'classic';
 
 export interface ThemeAvatar {
-  detective: string;   // emoji 或未來的圖片 URL
-  student: string;     // 預設學生頭像（未來被帳號系統覆蓋）
+  detective: string;   // emoji 或圖片路徑
+  student: string;
 }
 
 /** 切入演出風格 — 未來替換動畫/特效只改這裡 */
@@ -59,7 +59,7 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     id: 'guofeng',
     label: '🏮 江湖',
     desc: '國風古韻・袁天罡',
-    avatar: { detective: '/avatars/kabuto.png', student: '🧑‍🦱' },
+    avatar: { detective: '/avatars/war_etsuou_kousenken.png', student: '🧑‍🦱' },
     photoClip: 'hidden',
     cutscene: null,
     homepageQuote: '天道有序。此局，你可敢入？',

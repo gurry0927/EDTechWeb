@@ -9,7 +9,7 @@ interface Props {
 
 export function ModeSelector({ themeId }: Props) {
   return (
-    <div className="px-6 mt-6 max-w-md mx-auto w-full">
+    <div className="px-6 max-w-md mx-auto w-full">
       <div className="text-[11px] font-medium tracking-wider mb-3 opacity-50"
         style={{ color: 'var(--dt-text-muted, #94a3b8)' }}>
         遊戲模式

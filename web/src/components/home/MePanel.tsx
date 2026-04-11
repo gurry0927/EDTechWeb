@@ -47,7 +47,11 @@ export function MePanel({ theme, onThemeChange }: Props) {
               '--tw-ring-color': 'var(--dt-accent, #c2553a)',
             } as React.CSSProperties}
           >
-            <span className="text-2xl">{t.avatar.detective}</span>
+            {t.avatar.detective.startsWith('/') ? (
+              <img src={t.avatar.detective} alt="" className="w-8 h-8 object-contain" />
+            ) : (
+              <span className="text-2xl">{t.avatar.detective}</span>
+            )}
             <span className="text-[11px] font-medium" style={{ color: 'var(--dt-text, #3d3426)' }}>
               {t.label}
             </span>

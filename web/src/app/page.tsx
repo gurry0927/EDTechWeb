@@ -38,7 +38,7 @@ export default function Home() {
     <div data-dt-theme={theme} className="min-h-[100dvh] flex flex-col" suppressHydrationWarning
       style={{ background: 'var(--dt-wood, #c8b49a)' }}
     >
-      <div className="flex-1 max-w-md mx-auto w-full pb-16 flex flex-col">
+      <div className="flex-1 max-w-md mx-auto w-full pb-20 flex flex-col gap-4">
         {activeTab === 'home' && (
           <>
             <CharacterHero themeId={theme} onThemeSwitch={cycleTheme} />

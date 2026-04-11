@@ -53,7 +53,7 @@ export function BottomNav({ activeTab, onTabChange }: Props) {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-2 transition-colors ${
+              className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${
                 active ? '' : 'opacity-50'
               }`}
               style={active ? { color: 'var(--dt-accent, #c2553a)' } : { color: 'var(--dt-text, #3d3426)' }}

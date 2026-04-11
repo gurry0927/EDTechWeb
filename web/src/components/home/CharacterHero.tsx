@@ -18,12 +18,8 @@ export function CharacterHero({ themeId, onThemeSwitch }: Props) {
     <div className="relative flex flex-col items-center justify-end flex-1 min-h-[200px] overflow-hidden select-none">
       {/* 頂部快捷列 — 未來放公告/每日任務/設定等 */}
       <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between px-4 pt-3">
-        <div className="flex gap-2">
-          {/* 左側預留：公告、每日任務等 */}
-        </div>
-        <div className="flex gap-2">
-          {/* 右側預留：設定、通知等 */}
-        </div>
+        <div className="flex gap-2">{/* 左側預留 */}</div>
+        <div className="flex gap-2">{/* 右側預留 */}</div>
       </div>
 
       {/* 背景裝飾 */}
@@ -80,7 +76,6 @@ export function CharacterHero({ themeId, onThemeSwitch }: Props) {
           />
         ))}
       </div>
-
     </div>
   );
 }
