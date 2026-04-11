@@ -141,7 +141,7 @@ export const ImmersiveHero = forwardRef<ImmersiveHeroHandle, Props>(function Imm
             alt=""
             style={{
               width: '100%', height: 'auto', maxWidth: 'none',
-              filter: 'drop-shadow(0 8px 64px rgba(130,50,210,0.5))',
+              filter: `drop-shadow(0 8px 64px ${config.charGlowColor ?? 'rgba(130,50,210,0.5)'})`,
               transition: 'opacity 0.6s ease',
               opacity: looking ? 0 : 1,
               position: 'relative',
@@ -156,7 +156,7 @@ export const ImmersiveHero = forwardRef<ImmersiveHeroHandle, Props>(function Imm
               style={{
                 position: 'absolute', inset: 0,
                 width: '100%', height: 'auto', maxWidth: 'none',
-                filter: 'drop-shadow(0 8px 64px rgba(130,50,210,0.7))',
+                filter: `drop-shadow(0 8px 64px ${config.charGlowColor ?? 'rgba(130,50,210,0.7)'})`,
                 transition: 'opacity 0.6s ease',
                 opacity: looking ? 1 : 0,
               }}
@@ -170,7 +170,7 @@ export const ImmersiveHero = forwardRef<ImmersiveHeroHandle, Props>(function Imm
         className="absolute inset-x-0 bottom-0 pointer-events-none z-[3]"
         style={{
           height: `${config.gradientHeightDvh}dvh`,
-          background: `linear-gradient(to bottom, transparent 0%, #12100c ${config.gradientSolidAt}%)`,
+          background: `linear-gradient(to bottom, transparent 0%, var(--dt-wood) ${config.gradientSolidAt}%)`,
         }}
       />
     </>

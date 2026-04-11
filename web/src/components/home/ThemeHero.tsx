@@ -19,7 +19,7 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
   { themeId, onThemeSwitch },
   ref
 ) {
-  const heroConfig = HERO_REGISTRY[themeId];
+  const heroConfig = HERO_REGISTRY[themeId] ?? { variant: 'simple' as const };
   const themeEntry = THEME_REGISTRY[themeId];
   const quote = themeEntry?.homepageQuote ?? '準備好了嗎？';
   const isImmersive = heroConfig?.variant === 'immersive';

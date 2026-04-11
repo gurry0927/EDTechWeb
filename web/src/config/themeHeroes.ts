@@ -26,6 +26,8 @@ export interface ImmersiveHeroConfig {
   // 漸層遮罩
   gradientHeightDvh: number;
   gradientSolidAt: number;  // 0~100，幾 % 開始完全不透明
+  // 角色光暈（drop-shadow）
+  charGlowColor?: string;   // CSS color，預設 rgba(130,50,210,0.5)
 }
 
 export type HeroConfig = SimpleHeroConfig | ImmersiveHeroConfig;
@@ -50,5 +52,6 @@ export const HERO_REGISTRY: Record<string, HeroConfig> = {
     fadeSecs: 1.5,
     gradientHeightDvh: 20,
     gradientSolidAt: 60,
+    charGlowColor: 'rgba(130,50,210,0.5)',
   },
 };

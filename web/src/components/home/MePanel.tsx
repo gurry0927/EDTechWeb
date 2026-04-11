@@ -24,7 +24,6 @@ export function MePanel({ theme, onThemeChange }: Props) {
 
   const handleThemeChange = (id: string) => {
     onThemeChange(id);
-    localStorage.setItem('dt-theme', id);
   };
 
   return (
