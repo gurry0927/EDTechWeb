@@ -1,30 +1,32 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImmersiveHeroConfig } from '@/config/themeHeroes';
 
 interface Props {
   config: ImmersiveHeroConfig;
+  onImpact?: () => void; // 通知外層觸發衝擊波
 }
 
-export function ImmersiveHero({ config }: Props) {
+export function ImmersiveHero({ config, onImpact }: Props) {
   const charRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
+  const [looking, setLooking] = useState(false);
 
+  // 視差 + 煙霧 RAF
   useEffect(() => {
     let rafId: number;
     let tx = 0, ty = 0;
     let cx = 0, cy = 0;
 
     const tick = () => {
-      cx += (tx - cx) * 0.05; // 稍慢一點，更有重量感
+      cx += (tx - cx) * 0.05;
       cy += (ty - cy) * 0.05;
 
       if (charRef.current) {
-        // 位移 + 透視傾斜：製造 2.5D 立體感
-        const rotY = (cx / 22) * 4;   // 最大 ±4deg
-        const rotX = -(cy / 10) * 2;  // 最大 ±2deg，往下看時微微仰頭
+        const rotY = (cx / 22) * 4;
+        const rotX = -(cy / 10) * 2;
         charRef.current.style.transform = [
           `translateX(calc(-50% + ${cx.toFixed(2)}px))`,
           `translateY(${cy.toFixed(2)}px)`,
@@ -34,13 +36,11 @@ export function ImmersiveHero({ config }: Props) {
         ].join(' ');
       }
 
-      // 背景反向微移，強化景深
       if (bgRef.current) {
         bgRef.current.style.transform =
           `translate(${(-cx * 0.3).toFixed(2)}px, ${(-cy * 0.3).toFixed(2)}px) scale(1.08)`;
       }
 
-      // 煙霧淡出淡入
       const vid = videoRef.current;
       if (vid && vid.duration) {
         const t = vid.currentTime;
@@ -59,7 +59,7 @@ export function ImmersiveHero({ config }: Props) {
     const onMouse = (e: MouseEvent) => {
       const hw = window.innerWidth / 2;
       const hh = window.innerHeight / 2;
-      tx = ((e.clientX - hw) / hw) * 22; // 14 → 22，位移更明顯
+      tx = ((e.clientX - hw) / hw) * 22;
       ty = ((e.clientY - hh) / hh) * 10;
     };
 
@@ -72,26 +72,17 @@ export function ImmersiveHero({ config }: Props) {
     window.addEventListener('mousemove', onMouse);
 
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
-
     const enableGyro = () => {
       window.addEventListener('deviceorientation', onOrientation);
       localStorage.setItem('gyro-permission', 'granted');
     };
-
     const tryGyro = async () => {
-      if (typeof DOE.requestPermission !== 'function') {
-        // 非 iOS，直接啟用
-        enableGyro();
-        return;
-      }
+      if (typeof DOE.requestPermission !== 'function') { enableGyro(); return; }
       try {
         const result = await DOE.requestPermission();
         if (result === 'granted') enableGyro();
-      } catch { /* user declined */ }
+      } catch { /* declined */ }
     };
-
-    // 永遠需要 user gesture 才能呼叫 requestPermission()
-    // localStorage 的作用：已授權過 → iOS 靜默回傳 granted，不跳系統彈窗
     window.addEventListener('click', tryGyro, { once: true });
 
     return () => {
@@ -101,14 +92,19 @@ export function ImmersiveHero({ config }: Props) {
     };
   }, [config]);
 
+  // 點擊角色：換圖 + 通知衝擊波
+  const handleCharClick = () => {
+    if (!config.lookImage) return;
+    setLooking(true);
+    onImpact?.();
+    // 1.8 秒後換回 idle
+    setTimeout(() => setLooking(false), 1800);
+  };
+
   return (
     <>
-      {/* 背景 video — 反向微移，scale(1.08) 防止邊緣露白 */}
-      <div
-        ref={bgRef}
-        className="absolute inset-0 pointer-events-none z-[1]"
-        style={{ willChange: 'transform' }}
-      >
+      {/* 背景 video */}
+      <div ref={bgRef} className="absolute inset-0 pointer-events-none z-[1]" style={{ willChange: 'transform' }}>
         <video
           ref={videoRef}
           autoPlay muted loop playsInline
@@ -119,29 +115,45 @@ export function ImmersiveHero({ config }: Props) {
         </video>
       </div>
 
-      {/* 角色 — perspective 讓 rotateY/X 有真實透視感 */}
+      {/* 角色 — 可點擊 */}
       <div
         ref={charRef}
-        className="absolute left-1/2 pointer-events-none z-[2]"
-        style={{
-          top: `${config.charTopDvh}dvh`,
-          marginLeft: `${config.charOffsetX}vw`,
-          willChange: 'transform',
-        }}
+        className="absolute left-1/2 z-[2] cursor-pointer"
+        style={{ top: `${config.charTopDvh}dvh`, marginLeft: `${config.charOffsetX}vw`, willChange: 'transform' }}
+        onClick={handleCharClick}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={config.idleImage}
-          alt=""
-          style={{
-            width: `min(${config.charWidthVw}vw, ${config.charMaxWidthPx}px)`,
-            maxWidth: 'none',
-            height: 'auto',
-            filter: 'drop-shadow(0 8px 64px rgba(130,50,210,0.5))',
-            transformStyle: 'preserve-3d',
-          }}
-          draggable={false}
-        />
+        <div className="relative" style={{ width: `min(${config.charWidthVw}vw, ${config.charMaxWidthPx}px)` }}>
+          {/* idle */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={config.idleImage}
+            alt=""
+            style={{
+              width: '100%', height: 'auto', maxWidth: 'none',
+              filter: 'drop-shadow(0 8px 64px rgba(130,50,210,0.5))',
+              transition: 'opacity 0.6s ease',
+              opacity: looking ? 0 : 1,
+              position: 'relative',
+            }}
+            draggable={false}
+          />
+          {/* look — 疊在上層 */}
+          {config.lookImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={config.lookImage}
+              alt=""
+              style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: 'auto', maxWidth: 'none',
+                filter: 'drop-shadow(0 8px 64px rgba(130,50,210,0.7))',
+                transition: 'opacity 0.6s ease',
+                opacity: looking ? 1 : 0,
+              }}
+              draggable={false}
+            />
+          )}
+        </div>
       </div>
 
       {/* 漸層遮罩 */}
