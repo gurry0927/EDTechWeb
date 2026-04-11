@@ -90,13 +90,9 @@ export function ImmersiveHero({ config }: Props) {
       } catch { /* user declined */ }
     };
 
-    // 已知授權 → 靜默嘗試（PWA standalone 下不會再跳彈窗）
-    if (localStorage.getItem('gyro-permission') === 'granted') {
-      tryGyro();
-    } else {
-      // 第一次：等使用者點擊任意地方
-      window.addEventListener('click', tryGyro, { once: true });
-    }
+    // 永遠需要 user gesture 才能呼叫 requestPermission()
+    // localStorage 的作用：已授權過 → iOS 靜默回傳 granted，不跳系統彈窗
+    window.addEventListener('click', tryGyro, { once: true });
 
     return () => {
       cancelAnimationFrame(rafId);
