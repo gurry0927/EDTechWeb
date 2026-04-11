@@ -70,18 +70,33 @@ export function ImmersiveHero({ config }: Props) {
     };
 
     window.addEventListener('mousemove', onMouse);
-    window.addEventListener('deviceorientation', onOrientation);
+
+    const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
+
+    const enableGyro = () => {
+      window.addEventListener('deviceorientation', onOrientation);
+      localStorage.setItem('gyro-permission', 'granted');
+    };
 
     const tryGyro = async () => {
-      const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
-      if (typeof DOE.requestPermission === 'function') {
-        try {
-          const result = await DOE.requestPermission();
-          if (result === 'granted') window.addEventListener('deviceorientation', onOrientation);
-        } catch { /* user declined */ }
+      if (typeof DOE.requestPermission !== 'function') {
+        // 非 iOS，直接啟用
+        enableGyro();
+        return;
       }
+      try {
+        const result = await DOE.requestPermission();
+        if (result === 'granted') enableGyro();
+      } catch { /* user declined */ }
     };
-    window.addEventListener('click', tryGyro, { once: true });
+
+    // 已知授權 → 靜默嘗試（PWA standalone 下不會再跳彈窗）
+    if (localStorage.getItem('gyro-permission') === 'granted') {
+      tryGyro();
+    } else {
+      // 第一次：等使用者點擊任意地方
+      window.addEventListener('click', tryGyro, { once: true });
+    }
 
     return () => {
       cancelAnimationFrame(rafId);
