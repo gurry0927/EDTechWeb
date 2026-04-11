@@ -91,6 +91,23 @@ guofeng: {
 | 點遊戲模式按鈕 | 同上 |
 | 點角色本身 | 轉頭（無衝擊波，無跳轉）|
 
+### ⚠️ 轉頭重複觸發設計（勿改）
+
+`triggerLook()` 採用**延時重置（debounce 回頭）**而非每次重新播放：
+
+```ts
+if (lookTimerRef.current) clearTimeout(lookTimerRef.current); // 清掉舊計時器
+setLooking(true);
+lookTimerRef.current = setTimeout(() => setLooking(false), 1800);
+```
+
+**為什麼這樣設計：**
+- 反覆點擊時，`setLooking(true)` 在已是 `true` 時 React 不 re-render，crossfade 不重播
+- 每次點擊只是延後「回頭」的時間，角色視覺上完全靜止
+- 停止點擊 1800ms 後才回 idle，只有一次 0.6s 的平滑 crossfade
+
+**如果改成「每次重新觸發」（先回 idle 再 look）**，反覆快點時角色會不停來回切換，造成類似 RTS 遊戲鬼畜連點的視覺感，破壞沉浸感。**請維持現有 debounce 邏輯。**
+
 ### 導航序列時序
 
 ```
