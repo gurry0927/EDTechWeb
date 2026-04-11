@@ -1,18 +1,35 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { ImmersiveHeroConfig } from '@/config/themeHeroes';
+
+export interface ImmersiveHeroHandle {
+  triggerLook: () => void;
+}
 
 interface Props {
   config: ImmersiveHeroConfig;
-  onImpact?: () => void; // 通知外層觸發衝擊波
+  onImpact?: () => void;
 }
 
-export function ImmersiveHero({ config, onImpact }: Props) {
+export const ImmersiveHero = forwardRef<ImmersiveHeroHandle, Props>(function ImmersiveHero(
+  { config, onImpact },
+  ref
+) {
   const charRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
   const [looking, setLooking] = useState(false);
+  const lookTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerLook = useCallback(() => {
+    if (!config.lookImage) return;
+    if (lookTimerRef.current) clearTimeout(lookTimerRef.current);
+    setLooking(true);
+    lookTimerRef.current = setTimeout(() => setLooking(false), 1800);
+  }, [config.lookImage]);
+
+  useImperativeHandle(ref, () => ({ triggerLook }), [triggerLook]);
 
   // 視差 + 煙霧 RAF
   useEffect(() => {
@@ -94,16 +111,12 @@ export function ImmersiveHero({ config, onImpact }: Props) {
 
   // 點擊角色：換圖 + 通知衝擊波
   const handleCharClick = () => {
-    if (!config.lookImage) return;
-    setLooking(true);
+    triggerLook();
     onImpact?.();
-    // 1.8 秒後換回 idle
-    setTimeout(() => setLooking(false), 1800);
   };
 
   return (
     <>
-      {/* 背景 video */}
       <div ref={bgRef} className="absolute inset-0 pointer-events-none z-[1]" style={{ willChange: 'transform' }}>
         <video
           ref={videoRef}
@@ -115,7 +128,6 @@ export function ImmersiveHero({ config, onImpact }: Props) {
         </video>
       </div>
 
-      {/* 角色 — 可點擊 */}
       <div
         ref={charRef}
         className="absolute left-1/2 z-[2] cursor-pointer"
@@ -123,7 +135,6 @@ export function ImmersiveHero({ config, onImpact }: Props) {
         onClick={handleCharClick}
       >
         <div className="relative" style={{ width: `min(${config.charWidthVw}vw, ${config.charMaxWidthPx}px)` }}>
-          {/* idle */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={config.idleImage}
@@ -137,7 +148,6 @@ export function ImmersiveHero({ config, onImpact }: Props) {
             }}
             draggable={false}
           />
-          {/* look — 疊在上層 */}
           {config.lookImage && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -156,7 +166,6 @@ export function ImmersiveHero({ config, onImpact }: Props) {
         </div>
       </div>
 
-      {/* 漸層遮罩 */}
       <div
         className="absolute inset-x-0 bottom-0 pointer-events-none z-[3]"
         style={{
@@ -166,4 +175,4 @@ export function ImmersiveHero({ config, onImpact }: Props) {
       />
     </>
   );
-}
+});

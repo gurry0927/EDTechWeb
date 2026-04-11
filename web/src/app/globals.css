@@ -1230,74 +1230,59 @@ body {
   animation: notebook-slide-up-out 0.26s cubic-bezier(0.4, 0, 1, 0.8) both;
 }
 
-/* 衝擊波 — 光暈圓環 */
+/* 衝擊波 — 柔邊擴散光環 */
 @keyframes shockwave-ring {
-  0%   {
-    transform: translate(-50%, -50%) scale(0.05);
-    opacity: 1;
-    filter: blur(2px);
-  }
-  40%  {
-    opacity: 0.7;
-    filter: blur(8px);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(3);
-    opacity: 0;
-    filter: blur(20px);
-  }
+  0%   { transform: translate(-50%, -50%) scale(0.05); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
 }
 @keyframes shockwave-ring2 {
-  0%   {
-    transform: translate(-50%, -50%) scale(0.05);
-    opacity: 0.6;
-    filter: blur(6px);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(2.4);
-    opacity: 0;
-    filter: blur(24px);
-  }
+  0%   { transform: translate(-50%, -50%) scale(0.05); opacity: 0.55; }
+  100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
 }
 @keyframes shockwave-flash {
   0%   { opacity: 0; }
-  8%   { opacity: 0.12; }
+  10%  { opacity: 1; }
   100% { opacity: 0; }
 }
+/* 用 radial-gradient 做環狀：中心透明 → 亮環 → 外散 */
 .shockwave-ring {
   position: absolute;
   left: 50%; top: 45%;
   width: min(90vw, 420px); height: min(90vw, 420px);
   border-radius: 50%;
-  /* 多層光暈，中心亮邊緣漸散 */
-  border: none;
-  box-shadow:
-    0 0 0 2px rgba(255, 245, 200, 0.6),
-    0 0 12px 6px rgba(255, 220, 120, 0.35),
-    0 0 30px 14px rgba(200, 140, 60, 0.2),
-    0 0 60px 30px rgba(150, 80, 20, 0.1);
+  background: radial-gradient(
+    circle,
+    transparent 35%,
+    rgba(255, 230, 140, 0.55) 48%,
+    rgba(255, 180, 60, 0.35) 58%,
+    rgba(200, 100, 20, 0.15) 70%,
+    transparent 85%
+  );
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0.05);
   opacity: 0;
 }
 .shockwave-ring.active {
-  animation: shockwave-ring 0.7s cubic-bezier(0.15, 0.8, 0.3, 1) forwards;
+  animation: shockwave-ring 0.7s cubic-bezier(0.1, 0.7, 0.25, 1) forwards;
 }
 .shockwave-ring.active.ring2 {
-  animation: shockwave-ring2 0.85s cubic-bezier(0.1, 0.7, 0.3, 1) 0.06s forwards;
-  box-shadow:
-    0 0 0 1px rgba(255, 245, 200, 0.3),
-    0 0 20px 10px rgba(200, 140, 60, 0.15),
-    0 0 50px 25px rgba(150, 80, 20, 0.08);
+  animation: shockwave-ring2 0.9s cubic-bezier(0.05, 0.6, 0.2, 1) 0.08s forwards;
+  background: radial-gradient(
+    circle,
+    transparent 40%,
+    rgba(255, 220, 100, 0.25) 52%,
+    rgba(180, 80, 10, 0.12) 68%,
+    transparent 82%
+  );
 }
 .shockwave-flash {
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 45%, rgba(255,240,180,0.3) 0%, transparent 70%);
   pointer-events: none;
   opacity: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255,240,180,0.45) 0%, transparent 65%);
 }
 .shockwave-flash.active {
-  animation: shockwave-flash 0.5s ease-out forwards;
+  animation: shockwave-flash 0.45s ease-out forwards;
 }
 
 /* 黑幕左→右轉場 */

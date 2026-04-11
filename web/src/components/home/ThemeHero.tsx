@@ -4,7 +4,7 @@ import { useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { THEME_REGISTRY } from '@/config/themes';
 import { HERO_REGISTRY } from '@/config/themeHeroes';
 import { SimpleHero } from './heroes/SimpleHero';
-import { ImmersiveHero } from './heroes/ImmersiveHero';
+import { ImmersiveHero, type ImmersiveHeroHandle } from './heroes/ImmersiveHero';
 
 export interface ThemeHeroHandle {
   triggerImpact: () => void;
@@ -27,14 +27,18 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
   const ring1Ref = useRef<HTMLDivElement>(null);
   const ring2Ref = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
+  const immersiveRef = useRef<ImmersiveHeroHandle>(null);
 
   const triggerImpact = useCallback(() => {
+    // 觸發圓環
     [ring1Ref, ring2Ref, flashRef].forEach(r => {
       if (!r.current) return;
       r.current.classList.remove('active');
-      void r.current.offsetWidth; // reflow
+      void r.current.offsetWidth;
       r.current.classList.add('active');
     });
+    // 同時觸發角色轉頭
+    immersiveRef.current?.triggerLook();
   }, []);
 
   useImperativeHandle(ref, () => ({ triggerImpact }), [triggerImpact]);
@@ -45,7 +49,7 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
     }`}>
 
       {isImmersive && heroConfig.variant === 'immersive' && (
-        <ImmersiveHero config={heroConfig} onImpact={triggerImpact} />
+        <ImmersiveHero ref={immersiveRef} config={heroConfig} onImpact={triggerImpact} />
       )}
 
       {!isImmersive && (
