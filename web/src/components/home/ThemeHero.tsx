@@ -1,34 +1,43 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { THEME_REGISTRY } from '@/config/themes';
 import { HERO_REGISTRY } from '@/config/themeHeroes';
 import { SimpleHero } from './heroes/SimpleHero';
 import { ImmersiveHero } from './heroes/ImmersiveHero';
+
+export interface ThemeHeroHandle {
+  triggerImpact: () => void;
+}
 
 interface Props {
   themeId: string;
   onThemeSwitch: () => void;
 }
 
-export function ThemeHero({ themeId, onThemeSwitch }: Props) {
+export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
+  { themeId, onThemeSwitch },
+  ref
+) {
   const heroConfig = HERO_REGISTRY[themeId];
   const themeEntry = THEME_REGISTRY[themeId];
   const quote = themeEntry?.homepageQuote ?? '準備好了嗎？';
   const isImmersive = heroConfig?.variant === 'immersive';
-  const shockwaveRef = useRef<HTMLDivElement>(null);
+
+  const ring1Ref = useRef<HTMLDivElement>(null);
+  const ring2Ref = useRef<HTMLDivElement>(null);
+  const flashRef = useRef<HTMLDivElement>(null);
 
   const triggerImpact = useCallback(() => {
-    const el = shockwaveRef.current;
-    if (!el) return;
-    // 重置 animation
-    el.style.animation = 'none';
-    void el.offsetWidth; // reflow
-    el.style.animation = '';
-    el.classList.remove('shockwave-active');
-    void el.offsetWidth;
-    el.classList.add('shockwave-active');
+    [ring1Ref, ring2Ref, flashRef].forEach(r => {
+      if (!r.current) return;
+      r.current.classList.remove('active');
+      void r.current.offsetWidth; // reflow
+      r.current.classList.add('active');
+    });
   }, []);
+
+  useImperativeHandle(ref, () => ({ triggerImpact }), [triggerImpact]);
 
   return (
     <div className={`relative flex flex-col items-center justify-end overflow-hidden select-none ${
@@ -43,12 +52,10 @@ export function ThemeHero({ themeId, onThemeSwitch }: Props) {
         <SimpleHero themeId={themeId} onThemeSwitch={onThemeSwitch} />
       )}
 
-      {/* 衝擊波 overlay */}
-      <div
-        ref={shockwaveRef}
-        className="absolute inset-0 pointer-events-none z-[8]"
-        style={{ borderRadius: 'inherit' }}
-      />
+      {/* 衝擊波圓環 */}
+      <div ref={ring1Ref} className="shockwave-ring z-[9]" />
+      <div ref={ring2Ref} className="shockwave-ring ring2 z-[9]" />
+      <div ref={flashRef} className="shockwave-flash z-[9]" />
 
       {/* 台詞氣泡 */}
       <div
@@ -81,4 +88,4 @@ export function ThemeHero({ themeId, onThemeSwitch }: Props) {
       </div>
     </div>
   );
-}
+});

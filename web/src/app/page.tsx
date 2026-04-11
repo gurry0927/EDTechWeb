@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { VALID_THEME_IDS, DEFAULT_THEME } from '@/config/themes';
-import { ThemeHero } from '@/components/home/ThemeHero';
+import { ThemeHero, type ThemeHeroHandle } from '@/components/home/ThemeHero';
 import { ContinueButton } from '@/components/home/ContinueButton';
 import { ModeSelector } from '@/components/home/ModeSelector';
 import { BottomNav, type Tab } from '@/components/home/BottomNav';
@@ -10,16 +11,17 @@ import { AlbumPanel } from '@/components/home/AlbumPanel';
 import { MePanel } from '@/components/home/MePanel';
 
 export default function Home() {
+  const router = useRouter();
   const [theme, setTheme] = useState(DEFAULT_THEME);
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const heroRef = useRef<ThemeHeroHandle>(null);
+  const wipeRef = useRef<HTMLDivElement>(null);
 
-  // hydration-safe: 延遲讀取 localStorage
   useEffect(() => {
     const stored = localStorage.getItem('dt-theme');
     if (stored && VALID_THEME_IDS.includes(stored)) setTheme(stored);
   }, []);
 
-  // 點擊角色切換主題
   const cycleTheme = useCallback(() => {
     setTheme(prev => {
       const idx = VALID_THEME_IDS.indexOf(prev);
@@ -34,16 +36,46 @@ export default function Home() {
     localStorage.setItem('dt-theme', id);
   }, []);
 
+  // 導航序列：衝擊波 → 轉頭等待 → 黑幕 wipe → 跳轉
+  const handleNavigate = useCallback((href: string) => {
+    heroRef.current?.triggerImpact();
+
+    const wipe = wipeRef.current;
+    if (!wipe) { router.push(href); return; }
+
+    // 300ms 讓角色轉頭 + 衝擊波展開
+    setTimeout(() => {
+      wipe.classList.remove('page-wipe-in', 'page-wipe-out');
+      void wipe.offsetWidth;
+      wipe.classList.add('page-wipe-in');
+    }, 300);
+
+    // wipe-in 完成後跳轉
+    setTimeout(() => {
+      router.push(href);
+    }, 300 + 350);
+  }, [router]);
+
   return (
-    <div data-dt-theme={theme} className="relative h-[100dvh] flex flex-col overflow-hidden" suppressHydrationWarning
+    <div
+      data-dt-theme={theme}
+      className="relative h-[100dvh] flex flex-col overflow-hidden"
+      suppressHydrationWarning
       style={{ background: 'var(--dt-wood, #c8b49a)' }}
     >
+      {/* 黑幕轉場 overlay */}
+      <div
+        ref={wipeRef}
+        className="fixed inset-0 z-[100] pointer-events-none"
+        style={{ background: '#0a0806', transform: 'scaleX(0)', transformOrigin: 'left' }}
+      />
+
       <div className="relative z-10 flex-1 max-w-md mx-auto w-full pb-20 flex flex-col gap-4 overflow-hidden">
         {activeTab === 'home' && (
           <>
-            <ThemeHero themeId={theme} onThemeSwitch={cycleTheme} />
-            <ContinueButton themeId={theme} />
-            <ModeSelector themeId={theme} />
+            <ThemeHero ref={heroRef} themeId={theme} onThemeSwitch={cycleTheme} />
+            <ContinueButton themeId={theme} onNavigate={handleNavigate} />
+            <ModeSelector themeId={theme} onNavigate={handleNavigate} />
           </>
         )}
         {activeTab === 'album' && <AlbumPanel />}

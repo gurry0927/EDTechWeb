@@ -1,13 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { GAME_MODES } from '@/config/gameModes';
 
 interface Props {
   themeId: string;
+  onNavigate: (href: string) => void;
 }
 
-export function ModeSelector({ themeId }: Props) {
+export function ModeSelector({ themeId, onNavigate }: Props) {
   return (
     <div className="px-6 max-w-md mx-auto w-full">
       <div className="text-[11px] font-medium tracking-wider mb-3 opacity-50"
@@ -41,9 +41,13 @@ export function ModeSelector({ themeId }: Props) {
             return <div key={mode.id} className="flex-1">{inner}</div>;
           }
           return (
-            <Link key={mode.id} href={`${mode.href}?theme=${themeId}`} className="flex-1">
+            <div
+              key={mode.id}
+              className="flex-1"
+              onClick={() => onNavigate(`${mode.href}?theme=${themeId}`)}
+            >
               {inner}
-            </Link>
+            </div>
           );
         })}
       </div>
