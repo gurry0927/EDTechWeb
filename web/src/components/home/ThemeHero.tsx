@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useCallback, useState, forwardRef, useImperativeHandle } from 'react';
 import { THEME_REGISTRY } from '@/config/themes';
 import { HERO_REGISTRY } from '@/config/themeHeroes';
 import { SimpleHero } from './heroes/SimpleHero';
@@ -21,8 +21,10 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
 ) {
   const heroConfig = HERO_REGISTRY[themeId] ?? { variant: 'simple' as const };
   const themeEntry = THEME_REGISTRY[themeId];
-  const quote = themeEntry?.homepageQuote ?? '準備好了嗎？';
+  const quotes = themeEntry?.quotes ?? ['準備好了嗎？'];
   const isImmersive = heroConfig?.variant === 'immersive';
+
+  const [quoteIdx, setQuoteIdx] = useState(0);
 
   const ring1Ref = useRef<HTMLDivElement>(null);
   const ring2Ref = useRef<HTMLDivElement>(null);
@@ -30,16 +32,20 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
   const immersiveRef = useRef<ImmersiveHeroHandle>(null);
 
   const triggerImpact = useCallback(() => {
-    // 觸發圓環
     [ring1Ref, ring2Ref, flashRef].forEach(r => {
       if (!r.current) return;
       r.current.classList.remove('active');
       void r.current.offsetWidth;
       r.current.classList.add('active');
     });
-    // 同時觸發角色轉頭
     immersiveRef.current?.triggerLook();
   }, []);
+
+  // 點角色：轉頭 + 換台詞（無衝擊波、無跳轉）
+  const handleCharClick = useCallback(() => {
+    immersiveRef.current?.triggerLook();
+    setQuoteIdx(prev => (prev + 1) % quotes.length);
+  }, [quotes.length]);
 
   useImperativeHandle(ref, () => ({ triggerImpact }), [triggerImpact]);
 
@@ -49,11 +55,11 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
     }`}>
 
       {isImmersive && heroConfig.variant === 'immersive' && (
-        <ImmersiveHero ref={immersiveRef} config={heroConfig} onImpact={triggerImpact} />
+        <ImmersiveHero ref={immersiveRef} config={heroConfig} onCharClick={handleCharClick} />
       )}
 
       {!isImmersive && (
-        <SimpleHero themeId={themeId} onThemeSwitch={onThemeSwitch} />
+        <SimpleHero themeId={themeId} onThemeSwitch={onThemeSwitch} onCharClick={handleCharClick} />
       )}
 
       {/* 衝擊波圓環 */}
@@ -70,7 +76,7 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
         }}
       >
         <p className="text-sm leading-relaxed" style={{ color: 'var(--dt-text, #3d3426)' }}>
-          「{quote}」
+          「{quotes[quoteIdx]}」
         </p>
       </div>
 

@@ -33,7 +33,7 @@ export interface ThemeEntry {
   avatar: ThemeAvatar;
   photoClip: 'paperclip' | 'hidden' | string;
   cutscene: CutsceneStyle | null;
-  homepageQuote: string;
+  quotes: string[];
 }
 
 export const THEME_REGISTRY: Record<string, ThemeEntry> = {
@@ -44,7 +44,12 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '/avatars/magnifier_mushimegane_blank.png', student: '🧑‍🎓' },
     photoClip: 'paperclip',
     cutscene: null,
-    homepageQuote: '每道題都是一樁懸案，準備好了嗎？',
+    quotes: [
+      '每道題都是一樁懸案，準備好了嗎？',
+      '線索就在眼前，你發現了嗎？',
+      '推理是一門藝術，也是一種直覺。',
+      '好偵探從不放過任何細節。',
+    ],
   },
   cyber: {
     id: 'cyber',
@@ -53,7 +58,12 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '/avatars/computer_screen_programming.png', student: '👤' },
     photoClip: 'hidden',
     cutscene: null,
-    homepageQuote: '數據流異常偵測中…等待指令。',
+    quotes: [
+      '數據流異常偵測中…等待指令。',
+      '系統掃描完畢，目標已鎖定。',
+      '邏輯是唯一的武器。',
+      '在這個世界，代碼即是真相。',
+    ],
   },
   guofeng: {
     id: 'guofeng',
@@ -62,7 +72,12 @@ export const THEME_REGISTRY: Record<string, ThemeEntry> = {
     avatar: { detective: '/avatars/war_etsuou_kousenken.png', student: '🧑‍🦱' },
     photoClip: 'hidden',
     cutscene: null,
-    homepageQuote: '天道有序。此局，你可敢入？',
+    quotes: [
+      '天道有序。此局，你可敢入？',
+      '萬象皆有因果，細察方知真相。',
+      '靜觀其變，勝在洞察。',
+      '江湖路遠，智者先行。',
+    ],
   },
 };
 

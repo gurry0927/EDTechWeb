@@ -9,11 +9,11 @@ export interface ImmersiveHeroHandle {
 
 interface Props {
   config: ImmersiveHeroConfig;
-  onImpact?: () => void;
+  onCharClick?: () => void;
 }
 
 export const ImmersiveHero = forwardRef<ImmersiveHeroHandle, Props>(function ImmersiveHero(
-  { config, onImpact },
+  { config, onCharClick },
   ref
 ) {
   const charRef = useRef<HTMLDivElement>(null);
@@ -109,10 +109,9 @@ export const ImmersiveHero = forwardRef<ImmersiveHeroHandle, Props>(function Imm
     };
   }, [config]);
 
-  // 點擊角色：換圖 + 通知衝擊波
   const handleCharClick = () => {
     triggerLook();
-    onImpact?.();
+    onCharClick?.();
   };
 
   return (
