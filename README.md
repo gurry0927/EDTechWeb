@@ -2,7 +2,7 @@
 
 這是一個關於「重新想像學習」的實驗專案。目前的 Demo 內容以**國中社會科**為樣本，但底層引擎與編輯器設計上完全支援全學科擴充。
 
-🔗 **[Live Demo](https://ed-tech-web-git-main-gurry0927s-projects.vercel.app/?theme=guofeng)**
+🔗 **[Live Demo](https://ed-tech-web-seven.vercel.app/?theme=guofeng)**
 
 <p align="center">
   <img src="docs/Demo/hero.gif" alt="問題偵探 Demo" width="320" />
