@@ -13,13 +13,21 @@ interface ThemeCtxValue { detective: string; student: string; photoClip: string 
 const ThemeCtx = createContext<ThemeCtxValue>({ detective: '🕵️', student: '🧑‍🎓', photoClip: 'paperclip' });
 
 // ── Shared components (outside to avoid remount) ──
+const AvatarContent = ({ src }: { src: string }) =>
+  src.startsWith('/') ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" className="w-full h-full object-contain" />
+  ) : (
+    <span className="text-base leading-none">{src}</span>
+  );
+
 const DetectiveAvatar = () => {
   const { detective } = useContext(ThemeCtx);
-  return <span className="dt-avatar-detective w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">{detective}</span>;
+  return <span className="dt-avatar-detective w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"><AvatarContent src={detective} /></span>;
 };
 const StudentAvatar = () => {
   const { student } = useContext(ThemeCtx);
-  return <span className="dt-avatar-student w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0">{student}</span>;
+  return <span className="dt-avatar-student w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"><AvatarContent src={student} /></span>;
 };
 
 const TypingBubble = () => (
