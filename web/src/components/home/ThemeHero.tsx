@@ -24,7 +24,7 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
   const quotes = themeEntry?.quotes ?? ['準備好了嗎？'];
   const isImmersive = heroConfig?.variant === 'immersive';
 
-  const [quoteIdx, setQuoteIdx] = useState(0);
+  const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * quotes.length));
 
   const ring1Ref = useRef<HTMLDivElement>(null);
   const ring2Ref = useRef<HTMLDivElement>(null);
@@ -44,7 +44,11 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
   // 點角色：轉頭 + 換台詞（無衝擊波、無跳轉）
   const handleCharClick = useCallback(() => {
     immersiveRef.current?.triggerLook();
-    setQuoteIdx(prev => (prev + 1) % quotes.length);
+    setQuoteIdx(prev => {
+      let next = Math.floor(Math.random() * (quotes.length - 1));
+      if (next >= prev) next++;
+      return next;
+    });
   }, [quotes.length]);
 
   useImperativeHandle(ref, () => ({ triggerImpact }), [triggerImpact]);
