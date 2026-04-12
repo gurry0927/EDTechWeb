@@ -180,6 +180,14 @@ created_at, updated_at     -- 自動維護
 | 統計排行 | 帳號系統 | `components/stats/` |
 | 學習地圖（多鄰國路線圖） | 帳號系統 + 足夠題量 | 待建 |
 
+## 技術債
+
+| 項目 | 說明 | 優先度 |
+|------|------|--------|
+| 深色模式邏輯重複 | `ThemeToggle` 和 `MePanel` 各自直接讀寫 `localStorage('theme')` + `classList`。目前不衝突（ThemeToggle 在首頁 return null），但若未來加第三個入口需整合成 hook。 | 低 |
+
+---
+
 ## 封存區
 
 ### 擱置的實驗（D3 渲染 bug）
