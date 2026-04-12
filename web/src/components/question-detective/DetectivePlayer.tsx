@@ -262,7 +262,7 @@ interface Props { question: DetectiveQuestion; onBack: () => void; onRetry: () =
 
 // ── Main Component ──
 export function DetectivePlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
-  const DIALOGUE = useMemo(() => getDialogue(theme, DETECTIVE_DIALOGUES[theme]), [theme]);
+  const DIALOGUE = useMemo(() => getDialogue(DETECTIVE_DIALOGUES[theme]), [theme]);
   const themeCtx = useMemo(() => {
     const entry = THEME_REGISTRY[theme];
     return {

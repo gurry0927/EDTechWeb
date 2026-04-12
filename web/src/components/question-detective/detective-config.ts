@@ -166,9 +166,9 @@ export const DIALOGUE_CLASSIC = {
 
 export type Dialogue = typeof DIALOGUE_CLASSIC;
 
-/** 根據主題取得台詞（overlay merge 到 classic base） */
-export function getDialogue(theme: string, overlay: Partial<Dialogue>): Dialogue {
-  return { ...DIALOGUE_CLASSIC, ...overlay };
+/** 根據主題取得台詞（overlay merge 到 classic base，undefined 自動 fallback） */
+export function getDialogue(overlay?: Partial<Dialogue>): Dialogue {
+  return { ...DIALOGUE_CLASSIC, ...(overlay ?? {}) };
 }
 
 /** 成就判定（依序檢查，第一個符合的生效）
