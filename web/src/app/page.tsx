@@ -18,8 +18,10 @@ export default function Home() {
   const wipeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('theme');
     const stored = localStorage.getItem('dt-theme');
-    if (stored && VALID_THEME_IDS.includes(stored)) setTheme(stored);
+    const resolved = [param, stored].find(t => t && VALID_THEME_IDS.includes(t!));
+    if (resolved) setTheme(resolved);
   }, []);
 
   const cycleTheme = useCallback(() => {
