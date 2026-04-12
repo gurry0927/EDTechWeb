@@ -30,7 +30,7 @@ EDTechWeb/
 │   │   │   └── types.ts              型別定義（凍結）
 │   │   │
 │   │   ├── components/               ─── 元件 ───
-│   │   │   ├── home/                 首頁元件（CharacterHero, BottomNav...）
+│   │   │   ├── home/                 首頁元件（ThemeHero, BottomNav...）
 │   │   │   ├── question-detective/   偵探遊戲引擎
 │   │   │   ├── game-modes/           其他遊戲模式（規劃中）
 │   │   │   │   ├── spy/             臥底模式
@@ -171,13 +171,14 @@ created_at, updated_at     -- 自動維護
 
 | 功能 | 依賴 | 佔位資料夾 |
 |------|------|-----------|
+| iOS 陀螺儀無感授權橫幅 | 無 | `components/home/` |
 | 臥底模式 | 無 | `components/game-modes/spy/` |
 | 拆彈模式 | 無 | `components/game-modes/bomb/` |
 | 解密模式 | 無 | `components/game-modes/decrypt/` |
 | 收集冊 | 帳號系統（先用 localStorage） | `components/collection/` |
 | 帳號系統 | Supabase Auth | `components/account/` |
 | 統計排行 | 帳號系統 | `components/stats/` |
-| 學習地圖 | 帳號系統 + 足夠題量 | 待建 |
+| 學習地圖（多鄰國路線圖） | 帳號系統 + 足夠題量 | 待建 |
 
 ## 封存區
 
