@@ -29,7 +29,9 @@
 
 這是經過多次學生實測後，反覆優化的核心解題流程：
 
-<!-- TODO: 上傳影片後替換此連結（建議用 GitHub Releases 或 YouTube） -->
+<p align="center">
+  <img src="docs/Demo/gameplay.gif" alt="核心玩法展示" width="320" />
+</p>
 
 > 從首頁沉浸式角色入場、線索收集、推理問答，到最終破案動畫，每個環節都在強化學生「找重點 → 建邏輯 → 舉證據」的思考習慣。
 
