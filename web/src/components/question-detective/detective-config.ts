@@ -44,7 +44,7 @@ export const GAME = {
 };
 
 /** 偵探台詞 — base（classic 主題） */
-const DIALOGUE_BASE = {
+export const DIALOGUE_CLASSIC = {
   // UI 標籤
   tabLabel: '機密',
   notebookTabLabel: '偵探筆記本',
@@ -164,16 +164,12 @@ const DIALOGUE_BASE = {
   notebookEmpty: '還沒有找到任何線索',
 };
 
-export type Dialogue = typeof DIALOGUE_BASE;
+export type Dialogue = typeof DIALOGUE_CLASSIC;
 
-/** 根據主題取得台詞（overlay merge 到 base） */
-export function getDialogue(theme: string, overlay?: Partial<Dialogue> | null): Dialogue {
-  if (overlay) return { ...DIALOGUE_BASE, ...overlay } as Dialogue;
-  return DIALOGUE_BASE;
+/** 根據主題取得台詞（overlay merge 到 classic base） */
+export function getDialogue(theme: string, overlay: Partial<Dialogue>): Dialogue {
+  return { ...DIALOGUE_CLASSIC, ...overlay };
 }
-
-/** 向後相容：預設 classic */
-export const DIALOGUE = DIALOGUE_BASE;
 
 /** 成就判定（依序檢查，第一個符合的生效）
  *  參數：clues=找到線索數, total=全部線索數（含輔助）, misses=失誤次數, wrongs=答錯次數,

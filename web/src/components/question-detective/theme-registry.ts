@@ -10,6 +10,7 @@
  * 3. 在 globals.css 加 [data-dt-theme="xxx"] { --dt-* } 變數區塊
  */
 
+import { DIALOGUE_CLASSIC } from './detective-config';
 import type { Dialogue } from './detective-config';
 
 // Re-export 全站主題系統，讓現有 import 不用全部改路徑
@@ -182,8 +183,8 @@ const DIALOGUE_GUOFENG: Partial<Dialogue> = {
 
 // ── 偵探模組台詞對照表（theme id → dialogue overlay） ──
 
-export const DETECTIVE_DIALOGUES: Record<string, Partial<Dialogue> | null> = {
-  classic: null,
+export const DETECTIVE_DIALOGUES: Record<string, Partial<Dialogue>> = {
+  classic: DIALOGUE_CLASSIC,
   cyber: DIALOGUE_CYBER,
   guofeng: DIALOGUE_GUOFENG,
 };
