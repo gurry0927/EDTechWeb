@@ -63,7 +63,7 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
       )}
 
       {!isImmersive && (
-        <SimpleHero themeId={themeId} onThemeSwitch={onThemeSwitch} onCharClick={handleCharClick} />
+        <SimpleHero themeId={themeId} onCharClick={handleCharClick} />
       )}
 
       {/* 衝擊波圓環 */}

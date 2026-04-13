@@ -5,17 +5,16 @@ import { THEME_REGISTRY } from '@/config/themes';
 
 interface Props {
   themeId: string;
-  onThemeSwitch: () => void;
-  onCharClick?: () => void;
+  onCharClick: () => void;
 }
 
-export function SimpleHero({ themeId, onThemeSwitch, onCharClick }: Props) {
+export function SimpleHero({ themeId, onCharClick }: Props) {
   const avatar = THEME_REGISTRY[themeId]?.avatar.detective ?? '🕵️';
   const isImage = avatar.startsWith('/');
 
   return (
     <button
-      onClick={onCharClick ?? onThemeSwitch}
+      onClick={onCharClick}
       className="relative z-10 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95 cursor-pointer"
       title="切換主題"
     >

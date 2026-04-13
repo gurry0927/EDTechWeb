@@ -106,6 +106,7 @@ export const ImmersiveHero = forwardRef<ImmersiveHeroHandle, Props>(function Imm
       cancelAnimationFrame(rafId);
       window.removeEventListener('mousemove', onMouse);
       window.removeEventListener('deviceorientation', onOrientation);
+      window.removeEventListener('click', tryGyro); // 清除未觸發的 listener
     };
   }, [config]);
 
