@@ -203,17 +203,19 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
   // 如果關押的是好人 → 在 evidence phase 標記為冤枉，直接跳過圈選
   const isCurrentDetaineeInnocent = currentEvidenceIdx !== undefined && !errorByOption.has(currentEvidenceIdx);
+  const skippedInnocent = useRef(false);
   useEffect(() => {
-    if (phase === 'evidence' && isCurrentDetaineeInnocent && !transitioning) {
-      showFeedback('這個人其實是清白的…冤枉了。', 'error');
-      setTransitioning(true);
+    if (phase === 'evidence' && isCurrentDetaineeInnocent && !skippedInnocent.current) {
+      skippedInnocent.current = true;
+      setFeedback({ msg: '這個人其實是清白的…冤枉了。', type: 'error' });
       const t = setTimeout(() => {
-        setTransitioning(false);
+        skippedInnocent.current = false;
+        setFeedback(null);
         advanceEvidence();
       }, 1500);
       return () => clearTimeout(t);
     }
-  }, [phase, isCurrentDetaineeInnocent, transitioning, showFeedback, advanceEvidence]);
+  }, [phase, isCurrentDetaineeInnocent, advanceEvidence]);
 
   // Quiz
   const onQuizAnswer = useCallback((choiceIdx: number) => {
