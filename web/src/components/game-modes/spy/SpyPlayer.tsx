@@ -317,31 +317,21 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           </div>
         )}
 
-        {/* 題幹常駐（trial + evidence 階段都顯示） */}
-        {(phase === 'trial' || phase === 'evidence') && (
-          <div className="case-file rounded-xl p-3 mb-3">
-            <details open={trialIdx === 0 && phase === 'trial'}>
-              <summary className="text-xs font-medium cursor-pointer" style={{ color: 'var(--dt-accent)' }}>
-                📋 案情
-              </summary>
-              <p className="text-sm leading-relaxed mt-2 text-dt-text-secondary">
-                {question.mainStem}
-              </p>
-            </details>
-          </div>
-        )}
-
         {/* Phase 1: Trial */}
         {phase === 'trial' && (
-          <div className="space-y-4" key={trialIdx}>
-            {trialIdx === 0 && (
+          <div className="space-y-4">
+            {/* 題幹 + 偵探開場白（常駐） */}
+            <div className="case-file rounded-xl p-4">
+              <DetectiveBubble>
+                <span className="text-dt-accent font-medium">案情：</span>{question.mainStem}
+              </DetectiveBubble>
               <DetectiveBubble>
                 {totalSpies === 1
                   ? '據報有 1 名臥底混入。逐一審問，做出你的判斷。'
                   : `據報有 ${totalSpies} 名臥底混入。逐一審問，做出你的判斷。`
                 }
               </DetectiveBubble>
-            )}
+            </div>
 
             <div className="case-file rounded-xl p-4">
               <div className="flex items-center gap-3 mb-3">
@@ -432,6 +422,13 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         {/* Phase 3: Evidence */}
         {phase === 'evidence' && currentEvidenceIdx !== undefined && !isCurrentDetaineeInnocent && (
           <div className="space-y-4" key={evidenceStep}>
+            {/* 題幹常駐 */}
+            <div className="case-file rounded-xl p-4">
+              <DetectiveBubble>
+                <span className="text-dt-accent font-medium">案情：</span>{question.mainStem}
+              </DetectiveBubble>
+            </div>
+
             <DetectiveBubble>
               你關押了嫌犯 {LETTERS[currentEvidenceIdx]}。現在，<span className="text-dt-accent font-medium">指出他的供詞哪裡有問題。</span>
             </DetectiveBubble>
