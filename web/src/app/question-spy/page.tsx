@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
 import { THEME_LIST } from '@/config/themes';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
+import spyDemoData from '@/data/detective-questions/spy-demo.json';
 
 export default function SpyListPage() {
   const [questions, setQuestions] = useState<PublicQuestion[]>([]);
@@ -15,7 +16,9 @@ export default function SpyListPage() {
 
   useEffect(() => {
     fetchPublicQuestions().then(qs => {
-      setQuestions(qs);
+      // 加入本地 demo 題目（有 optionErrors 才顯示）
+      const demo = spyDemoData as unknown as PublicQuestion;
+      setQuestions([demo, ...qs]);
       setLoading(false);
     });
   }, []);
