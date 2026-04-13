@@ -181,4 +181,37 @@ export interface DetectiveQuestion {
    *  不填：行為與舊版相同（向後相容）
    */
   caseQuestion?: string;
+
+  // ── 臥底模式用 ──
+
+  /** 選項內的錯誤標記（選填，有填才能跑臥底模式）
+   *  每個錯誤選項標記「哪段文字有問題」+「為什麼錯」
+   *  正確選項不標記（正確選項由 answer 欄位決定）
+   */
+  optionErrors?: OptionError[];
+}
+
+/** 臥底模式 — 選項中的錯誤標記 */
+export interface OptionErrorQuiz {
+  /** 測驗問題，如 "決定聲速的因素是？" */
+  prompt: string;
+  /** 選項 */
+  choices: string[];
+  /** 正確選項 index（0-based） */
+  answerIndex: number;
+}
+
+export interface OptionError {
+  /** 哪個選項（0=A, 1=B, 2=C, 3=D） */
+  optionIndex: number;
+  /** 錯誤片段原文 */
+  text: string;
+  /** 在該選項字串中的起始位置 */
+  startIndex: number;
+  /** 片段長度 */
+  length: number;
+  /** 為什麼錯（即時反饋用） */
+  why: string;
+  /** 結案測驗（選填，不填則不出蘇格拉底題） */
+  quiz?: OptionErrorQuiz;
 }
