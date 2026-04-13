@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useCallback, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { THEME_REGISTRY } from '@/config/themes';
 import { HERO_REGISTRY } from '@/config/themeHeroes';
 import { SimpleHero } from './heroes/SimpleHero';
@@ -24,7 +24,14 @@ export const ThemeHero = forwardRef<ThemeHeroHandle, Props>(function ThemeHero(
   const quotes = themeEntry?.quotes ?? ['準備好了嗎？'];
   const isImmersive = heroConfig?.variant === 'immersive';
 
-  const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * quotes.length));
+  // SSR 固定用 0，hydrate 後再隨機（避免 hydration mismatch）
+  const [quoteIdx, setQuoteIdx] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setQuoteIdx(Math.floor(Math.random() * quotes.length));
+    setMounted(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const ring1Ref = useRef<HTMLDivElement>(null);
   const ring2Ref = useRef<HTMLDivElement>(null);

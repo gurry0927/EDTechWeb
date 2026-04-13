@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, LXGW_WenKai_TC } from "next/font/google";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PageTransition } from "@/components/PageTransition";
@@ -49,12 +50,9 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}\nif('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
-          }}
-        />
       </head>
+      <Script id="init-theme" strategy="beforeInteractive">{`try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`}</Script>
+      <Script id="register-sw" strategy="afterInteractive">{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`}</Script>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <PageTransition />
         <ThemeToggle />
