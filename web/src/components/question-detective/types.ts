@@ -189,6 +189,13 @@ export interface DetectiveQuestion {
    *  正確選項不標記（正確選項由 answer 欄位決定）
    */
   optionErrors?: OptionError[];
+
+  /** 臥底模式題型（選填）
+   *  'findCorrect' = 原題問「何者正確」→ 3 個臥底 1 個好人
+   *  'findWrong'   = 原題問「何者錯誤」→ 1 個臥底 3 個好人
+   *  不填則由 optionErrors 數量自動判斷
+   */
+  spyMode?: 'findCorrect' | 'findWrong';
 }
 
 /** 臥底模式 — 選項中的錯誤標記 */
