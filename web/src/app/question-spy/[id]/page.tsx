@@ -8,7 +8,6 @@ import { getInitialTheme } from '@/components/question-detective/theme-utils';
 import { DEFAULT_THEME } from '@/config/themes';
 import { fetchQuestionDetail } from '@/data/detective-questions/api';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
-import spyDemoData from '@/data/detective-questions/spy-demo.json';
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -19,12 +18,6 @@ export default function Page() {
   useEffect(() => { setTheme(getInitialTheme()); }, []);
 
   useEffect(() => {
-    // demo 題目用本地 JSON
-    if (id === 'spy-demo-114-science-01') {
-      setQuestion(spyDemoData as DetectiveQuestion);
-      setLoading(false);
-      return;
-    }
     let cancelled = false;
     fetchQuestionDetail(id).then(q => {
       if (cancelled) return;

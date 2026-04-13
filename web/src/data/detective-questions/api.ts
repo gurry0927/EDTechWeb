@@ -27,7 +27,10 @@ export type PublicQuestion = Pick<DetectiveQuestion,
   'id' | 'source' | 'subject' | 'difficulty' | 'tags' |
   'subSubject' | 'gradeLevel' | 'mainStem' | 'figure' |
   'figureImage' | 'options' | 'caseQuestion' | 'startHint'
->;
+> & {
+  /** 是否支援臥底模式（RPC 計算，有 optionErrors 才為 true） */
+  hasOptionErrors?: boolean;
+};
 
 export async function fetchPublicQuestions(): Promise<PublicQuestion[]> {
   // 先查 cache

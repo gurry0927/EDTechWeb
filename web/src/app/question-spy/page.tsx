@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
 import { THEME_LIST } from '@/config/themes';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/detective-questions/api';
-import spyDemoData from '@/data/detective-questions/spy-demo.json';
 
 export default function SpyListPage() {
-  const [questions, setQuestions] = useState<PublicQuestion[]>([]);
+  const [allQuestions, setAllQuestions] = useState<PublicQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<ThemeId>('classic');
 
@@ -16,15 +15,16 @@ export default function SpyListPage() {
 
   useEffect(() => {
     fetchPublicQuestions().then(qs => {
-      // 加入本地 demo 題目（有 optionErrors 才顯示）
-      const demo = spyDemoData as unknown as PublicQuestion;
-      setQuestions([demo, ...qs]);
+      setAllQuestions(qs);
       setLoading(false);
     });
   }, []);
 
-  // 只顯示有 optionErrors 的題目（透過 PublicQuestion 無法判斷，先全部顯示）
-  // TODO: 加 Supabase RPC 過濾有 optionErrors 的題目
+  // 只顯示有 optionErrors 的題目
+  const questions = useMemo(
+    () => allQuestions.filter(q => q.hasOptionErrors),
+    [allQuestions]
+  );
 
   return (
     <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col" data-dt-theme={theme}>
@@ -65,7 +65,11 @@ export default function SpyListPage() {
         {loading ? (
           <div className="text-center py-12 text-dt-text-muted text-sm">載入題庫中…</div>
         ) : questions.length === 0 ? (
-          <div className="text-center py-12 text-dt-text-muted text-sm">題庫尚無資料</div>
+          <div className="text-center py-12">
+            <div className="text-3xl mb-3">🔒</div>
+            <p className="text-dt-text-muted text-sm">尚無臥底模式題目</p>
+            <p className="text-dt-text-muted text-xs mt-1">題目正在準備中，敬請期待</p>
+          </div>
         ) : (
           <div className="space-y-2">
             {questions.map(q => (
@@ -82,6 +86,11 @@ export default function SpyListPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs text-dt-text-muted">{q.source}</span>
+                      <span className="inline-flex gap-0.5">
+                        {[1, 2, 3].map(d => (
+                          <span key={d} className={`w-1.5 h-1.5 rounded-full ${d <= q.difficulty ? 'bg-dt-clue' : 'bg-dt-border'}`} />
+                        ))}
+                      </span>
                     </div>
                     <p className="text-sm text-dt-text leading-relaxed line-clamp-2 group-hover:opacity-80">
                       {q.mainStem}
