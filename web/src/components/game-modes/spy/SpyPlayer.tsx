@@ -149,11 +149,12 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
     if (v === 'innocent') {
       if (isActuallyLying) {
-        // 放走了罪犯
+        // 放走了罪犯 → 扣血，直接進圈選
         setLives(l => Math.max(0, l - 1));
         setWrongClicks(c => c + 1);
-        showFeedback('你被騙了！這個人在說謊！', 'error');
-        setVerdict(null);
+        showFeedback('你被騙了！這個人在說謊！指出哪裡有問題。', 'error');
+        setVerdict('lying');
+        setCirclePhase(true);
       } else {
         // 正確判定無辜
         setCleared(prev => new Set(prev).add(activeIdx));
