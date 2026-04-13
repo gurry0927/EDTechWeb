@@ -8,7 +8,7 @@ import { getDialogue } from '@/components/question-detective/detective-config';
 
 // ── Config ──
 const SPY = {
-  maxLives: 3,
+  maxLives: 5,
   briefingDelay: 1200,
 };
 
@@ -59,6 +59,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [verdict, setVerdict] = useState<Verdict>(null);
   const [circlePhase, setCirclePhase] = useState(false); // 進入圈選階段
+  const [circleWrongs, setCircleWrongs] = useState(0);  // 圈選階段連續失誤
   const [feedback, setFeedback] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [wrongClicks, setWrongClicks] = useState(0);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -101,8 +102,37 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     setActiveIdx(idx);
     setVerdict(null);
     setCirclePhase(false);
+    setCircleWrongs(0);
     setPhase('interrogate');
   }, [caughtSpies, cleared, gameOver]);
+
+  // 跳過此嫌犯（直接揭曉答案，不扣血但也不算揪出）
+  const skipSuspect = useCallback(() => {
+    if (activeIdx === null) return;
+    const error = errorByOption.get(activeIdx);
+    if (error) {
+      showFeedback(`答案是「${error.text}」— ${error.why}`, 'info');
+      // 標記為揪出（偵探代勞）
+      setCaughtSpies(prev => {
+        const next = new Set(prev).add(activeIdx);
+        if (next.size >= totalSpies) {
+          setTimeout(() => {
+            if (quizzes.length > 0) setPhase('quiz');
+            else setPhase('result');
+          }, 2500);
+        } else {
+          setTimeout(() => {
+            setActiveIdx(null);
+            setVerdict(null);
+            setCirclePhase(false);
+            setCircleWrongs(0);
+            setPhase('lineup');
+          }, 2500);
+        }
+        return next;
+      });
+    }
+  }, [activeIdx, errorByOption, totalSpies, quizzes.length, showFeedback]);
 
   // 回到陣容
   const backToLineup = useCallback(() => {
@@ -170,9 +200,19 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     } else {
       setLives(l => Math.max(0, l - 1));
       setWrongClicks(c => c + 1);
-      showFeedback('不是這裡，再仔細看看供詞。', 'error');
+      const newCircleWrongs = circleWrongs + 1;
+      setCircleWrongs(newCircleWrongs);
+
+      if (newCircleWrongs >= 2) {
+        // 2 次後給提示：告訴他錯誤文字的前幾個字
+        const error = errorByOption.get(activeIdx);
+        const hint = error ? `提示：留意「${error.text.slice(0, 2)}…」附近` : '再仔細看看';
+        showFeedback(hint, 'info');
+      } else {
+        showFeedback('不是這裡，再仔細看看供詞。', 'error');
+      }
     }
-  }, [activeIdx, circlePhase, errorByOption, totalSpies, quizzes.length, showFeedback, backToLineup]);
+  }, [activeIdx, circlePhase, circleWrongs, errorByOption, totalSpies, quizzes.length, showFeedback, backToLineup]);
 
   // quiz
   const onQuizAnswer = useCallback((choiceIdx: number) => {
@@ -316,14 +356,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         {/* ── Interrogate ── */}
         {phase === 'interrogate' && activeIdx !== null && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-            {/* 返回 */}
-            <button onClick={backToLineup} className="text-xs text-dt-text-muted flex items-center gap-1">
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              返回陣容
-            </button>
-
             {/* 嫌犯供詞 */}
             <div className="case-file rounded-xl p-4">
               <div className="flex items-center gap-3 mb-3">
@@ -371,9 +403,27 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 </DetectiveBubble>
               )}
               {circlePhase && (
-                <DetectiveBubble>
-                  好，既然你認為他在說謊，<span className="text-dt-accent font-medium">指出供詞中有問題的地方。</span>
-                </DetectiveBubble>
+                <>
+                  <DetectiveBubble>
+                    {circleWrongs >= 2
+                      ? '看來你需要幫忙。要我直接告訴你嗎？'
+                      : <>好，既然你認為他在說謊，<span className="text-dt-accent font-medium">指出供詞中有問題的地方。</span></>
+                    }
+                  </DetectiveBubble>
+                  {circleWrongs >= 2 && (
+                    <button
+                      onClick={skipSuspect}
+                      className="ml-10 text-xs px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                      style={{
+                        background: 'color-mix(in srgb, var(--dt-scan) 15%, var(--dt-card))',
+                        border: '1px solid var(--dt-scan)',
+                        color: 'var(--dt-scan)',
+                      }}
+                    >
+                      💡 偵探代為揭曉
+                    </button>
+                  )}
+                </>
               )}
             </div>
 
@@ -404,6 +454,14 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 </button>
               </div>
             )}
+
+            {/* 換一個嫌犯審問 */}
+            <button
+              onClick={backToLineup}
+              className="w-full text-center text-xs py-2 text-dt-text-muted opacity-60 hover:opacity-100 transition-opacity"
+            >
+              先審其他人 →
+            </button>
           </div>
         )}
 
