@@ -259,6 +259,14 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
   return (
     <div className="h-[100dvh] detective-paper text-dt-text flex flex-col overflow-hidden">
+      <style>{`
+        @keyframes cardFlipH {
+          0%   { transform: rotateX(-180deg); filter: blur(0px); }
+          45%  { transform: rotateX(-90deg);  filter: blur(4px); }
+          55%  { transform: rotateX(-90deg);  filter: blur(4px); }
+          100% { transform: rotateX(0deg);    filter: blur(0px); }
+        }
+      `}</style>
       {/* Header */}
       <header className="shrink-0 px-4 py-2 flex items-center gap-3">
         <button onClick={onBack} className="text-dt-text-secondary hover:text-dt-text text-base flex items-center gap-1">
@@ -403,8 +411,8 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                       position: 'relative',
                       height: '80px',
                       transformStyle: 'preserve-3d',
-                      transform: flipped ? 'rotateY(0deg)' : 'rotateY(-180deg)',
-                      transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: flipped ? 'rotateX(0deg)' : 'rotateX(-180deg)',
+                      animation: flipped ? 'cardFlipH 0.45s cubic-bezier(0.4, 0, 0.2, 1)' : undefined,
                     }}
                   >
                     {/* Front face — 結果 */}
@@ -432,7 +440,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     {/* Back face — 未翻開 */}
                     <div
                       onClick={() => onFlipCard(i)}
-                      style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', cursor: 'pointer' }}
+                      style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateX(180deg)', cursor: 'pointer' }}
                     >
                       <div className="h-full case-file rounded-xl p-3 flex items-center gap-3 hover:opacity-80 active:scale-[0.98] transition-all"
                         style={{ border: '2px solid var(--dt-border)' }}
