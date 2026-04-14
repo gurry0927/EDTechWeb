@@ -32,7 +32,7 @@ export default function QuestionDetectivePage() {
 
   useEffect(() => {
     fetchPublicQuestions().then(qs => {
-      setQuestions(qs);
+      setQuestions(qs.filter(q => q.hasClues));
       setListLoading(false);
     });
   }, []);

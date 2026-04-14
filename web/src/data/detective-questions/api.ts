@@ -28,7 +28,9 @@ export type PublicQuestion = Pick<DetectiveQuestion,
   'subSubject' | 'gradeLevel' | 'mainStem' | 'figure' |
   'figureImage' | 'options' | 'caseQuestion' | 'startHint'
 > & {
-  /** 是否支援臥底模式（RPC 計算，有 optionErrors 才為 true） */
+  /** 是否有 clues（偵探模式可玩） */
+  hasClues?: boolean;
+  /** 是否支援臥底模式（有 optionErrors 才為 true） */
   hasOptionErrors?: boolean;
 };
 
