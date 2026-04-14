@@ -261,9 +261,9 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     <div className="h-[100dvh] detective-paper text-dt-text flex flex-col overflow-hidden">
       <style>{`
         @keyframes cardFlipH {
-          0%   { transform: rotateX(-180deg); filter: blur(0px); }
-          45%  { transform: rotateX(-90deg);  filter: blur(4px); }
-          55%  { transform: rotateX(-90deg);  filter: blur(4px); }
+          0%   { transform: rotateX(180deg);  filter: blur(0px); }
+          45%  { transform: rotateX(90deg);   filter: blur(4px); }
+          55%  { transform: rotateX(90deg);   filter: blur(4px); }
           100% { transform: rotateX(0deg);    filter: blur(0px); }
         }
       `}</style>
@@ -411,7 +411,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                       position: 'relative',
                       height: '80px',
                       transformStyle: 'preserve-3d',
-                      transform: flipped ? 'rotateX(0deg)' : 'rotateX(-180deg)',
+                      transform: flipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
                       animation: flipped ? 'cardFlipH 0.45s cubic-bezier(0.4, 0, 0.2, 1)' : undefined,
                     }}
                   >
@@ -440,7 +440,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     {/* Back face — 未翻開 */}
                     <div
                       onClick={() => onFlipCard(i)}
-                      style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateX(180deg)', cursor: 'pointer' }}
+                      style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateX(-180deg)', cursor: 'pointer' }}
                     >
                       <div className="h-full case-file rounded-xl p-3 flex items-center gap-3 hover:opacity-80 active:scale-[0.98] transition-all"
                         style={{ border: '2px solid var(--dt-border)' }}
@@ -453,7 +453,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                           <div className="text-xs font-bold">嫌犯 {LETTERS[i]}</div>
                           <div className="text-[10px] text-dt-text-muted mt-0.5">點擊翻開</div>
                         </div>
-                        <span className="text-dt-text-muted text-lg">🃏</span>
                       </div>
                     </div>
                   </div>
