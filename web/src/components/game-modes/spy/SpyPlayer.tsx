@@ -9,7 +9,6 @@ import { getDialogue } from '@/components/question-detective/detective-config';
 const SPY = {
   maxLives: 5,
   briefingDelay: 1500,
-  revealDelay: 800,     // 開獎逐一揭曉延遲
 };
 
 // Phase 1: trial = 審訊（關押/釋放）
@@ -63,7 +62,8 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   const [trialIdx, setTrialIdx] = useState(0); // 目前審到第幾個
 
   // ── Phase 2: Reveal ──
-  const [revealIdx, setRevealIdx] = useState(-1); // 逐一揭曉
+  const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
+  const allFlipped = flippedCards.size === totalSuspects;
 
   // ── Phase 3: Evidence ──
   const [lives, setLives] = useState(SPY.maxLives);
@@ -105,30 +105,24 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     }
   }, [phase]);
 
-  // Reveal 逐一揭曉
-  useEffect(() => {
-    if (phase === 'reveal' && revealIdx < totalSuspects) {
-      const t = setTimeout(() => setRevealIdx(r => r + 1), SPY.revealDelay);
-      return () => clearTimeout(t);
+  // Reveal → 翻牌完畢後由學生手動繼續
+  const onFlipCard = useCallback((i: number) => {
+    setFlippedCards(prev => new Set(prev).add(i));
+  }, []);
+
+  const onRevealContinue = useCallback(() => {
+    const detained = Array.from(decisions.entries())
+      .filter(([, d]) => d === 'detain')
+      .map(([idx]) => idx);
+    if (detained.length > 0) {
+      setEvidenceQueue(detained);
+      setPhase('evidence');
+    } else if (quizzes.length > 0) {
+      setPhase('quiz');
+    } else {
+      setPhase('result');
     }
-    if (phase === 'reveal' && revealIdx >= totalSuspects) {
-      // 全部揭曉完 → 進入 evidence phase
-      const detained = Array.from(decisions.entries())
-        .filter(([, d]) => d === 'detain')
-        .map(([idx]) => idx);
-      const t = setTimeout(() => {
-        if (detained.length > 0) {
-          setEvidenceQueue(detained);
-          setPhase('evidence');
-        } else if (quizzes.length > 0) {
-          setPhase('quiz');
-        } else {
-          setPhase('result');
-        }
-      }, 1200);
-      return () => clearTimeout(t);
-    }
-  }, [phase, revealIdx, totalSuspects, decisions, quizzes.length]);
+  }, [decisions, quizzes.length]);
 
   // Game over
   useEffect(() => {
@@ -154,7 +148,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       setTrialIdx(t => t + 1);
     } else {
       // 全部審完 → 開獎
-      setRevealIdx(-1);
+      setFlippedCards(new Set());
       setTimeout(() => setPhase('reveal'), 600);
     }
   }, [trialIdx, totalSuspects]);
@@ -289,20 +283,25 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           {question.options.map((_, i) => {
             const decided = decisions.has(i);
             const isCurrent = phase === 'trial' && i === trialIdx;
+            const isFlipped = phase === 'reveal' && flippedCards.has(i);
+            const isSpy = errorByOption.has(i);
+            const isCorrect = (decisions.get(i) === 'detain' && isSpy) || (decisions.get(i) === 'release' && !isSpy);
+            // 開獎後才顯示綠/紅，審訊中全部用 accent/border
+            const bg = isFlipped
+              ? (isCorrect ? 'var(--dt-success)' : 'var(--dt-error)')
+              : decided
+                ? 'var(--dt-accent)'
+                : isCurrent ? 'var(--dt-accent)' : 'var(--dt-border)';
             return (
               <div key={i} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${isCurrent ? 'scale-y-150' : ''}`}
-                style={{
-                  background: decided
-                    ? decisions.get(i) === 'detain' ? 'var(--dt-error)' : 'var(--dt-success)'
-                    : isCurrent ? 'var(--dt-accent)' : 'var(--dt-border)',
-                }}
+                style={{ background: bg }}
               />
             );
           })}
         </div>
         <div className="text-[10px] text-dt-text-muted mt-1 text-right">
           {phase === 'trial' && `審訊 ${trialIdx + 1}/${totalSuspects}`}
-          {phase === 'reveal' && '結果揭曉中…'}
+          {phase === 'reveal' && `已翻 ${flippedCards.size}/${totalSuspects}`}
           {phase === 'evidence' && `指證 ${evidenceStep + 1}/${evidenceQueue.length}`}
           {phase === 'quiz' && `測驗 ${quizStep + 1}/${quizzes.length}`}
         </div>
@@ -385,39 +384,83 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           </div>
         )}
 
-        {/* Phase 2: Reveal */}
+        {/* Phase 2: Reveal — 手動翻牌 */}
         {phase === 'reveal' && (
           <div className="space-y-3">
-            <DetectiveBubble>結果揭曉——</DetectiveBubble>
+            <DetectiveBubble>
+              {allFlipped ? '審判結束。' : '點擊每位嫌犯的卡片，揭曉你的判斷是否正確。'}
+            </DetectiveBubble>
+
             {question.options.map((opt, i) => {
-              if (i > revealIdx) return null;
+              const flipped = flippedCards.has(i);
               const decision = decisions.get(i);
               const isSpy = errorByOption.has(i);
               const isCorrectDecision = (decision === 'detain' && isSpy) || (decision === 'release' && !isSpy);
               return (
-                <div key={i} className="case-file rounded-xl p-3 flex items-center gap-3 transition-all duration-500"
-                  style={{
-                    border: `2px solid ${isCorrectDecision ? 'var(--dt-success)' : 'var(--dt-error)'}`,
-                    opacity: i === revealIdx ? 1 : 0.7,
-                  }}
-                >
-                  <span className="text-2xl">{SUSPECT_EMOJI[i]}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold">嫌犯 {LETTERS[i]}</div>
-                    <p className="text-xs text-dt-text-muted truncate">{opt}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-[10px] text-dt-text-muted">
-                      你：{decision === 'detain' ? '關押' : '釋放'}
+                <div key={i} style={{ perspective: '900px' }}>
+                  <div
+                    style={{
+                      position: 'relative',
+                      height: '80px',
+                      transformStyle: 'preserve-3d',
+                      transform: flipped ? 'rotateY(0deg)' : 'rotateY(-180deg)',
+                      transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  >
+                    {/* Front face — 結果 */}
+                    <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden' }}>
+                      <div className="h-full case-file rounded-xl p-3 flex items-center gap-3"
+                        style={{ border: `2px solid ${isCorrectDecision ? 'var(--dt-success)' : 'var(--dt-error)'}` }}
+                      >
+                        <span className="text-2xl">{SUSPECT_EMOJI[i]}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold">嫌犯 {LETTERS[i]}</div>
+                          <p className="text-xs text-dt-text-muted truncate">{opt}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[10px] text-dt-text-muted">
+                            你：{decision === 'detain' ? '關押' : '釋放'}
+                          </div>
+                          <div className={`text-sm font-bold ${isCorrectDecision ? 'text-dt-success' : 'text-dt-error'}`}>
+                            {isSpy ? '🎭 臥底' : '✓ 清白'}
+                            {!isCorrectDecision && (decision === 'release' && isSpy ? ' 漏網！' : ' 冤枉！')}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className={`text-xs font-bold ${isCorrectDecision ? 'text-dt-success' : 'text-dt-error'}`}>
-                      {isSpy ? '🎭 臥底' : '✓ 清白'}
-                      {!isCorrectDecision && (decision === 'release' && isSpy ? ' — 漏網！' : ' — 冤枉！')}
+
+                    {/* Back face — 未翻開 */}
+                    <div
+                      onClick={() => onFlipCard(i)}
+                      style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', cursor: 'pointer' }}
+                    >
+                      <div className="h-full case-file rounded-xl p-3 flex items-center gap-3 hover:opacity-80 active:scale-[0.98] transition-all"
+                        style={{ border: '2px solid var(--dt-border)' }}
+                      >
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-2xl"
+                          style={{ background: 'color-mix(in srgb, var(--dt-accent) 10%, var(--dt-card))' }}>
+                          ？
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-xs font-bold">嫌犯 {LETTERS[i]}</div>
+                          <div className="text-[10px] text-dt-text-muted mt-0.5">點擊翻開</div>
+                        </div>
+                        <span className="text-dt-text-muted text-lg">🃏</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               );
             })}
+
+            {allFlipped && (
+              <button
+                onClick={onRevealContinue}
+                className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary mt-2 transition-all hover:scale-[1.01] active:scale-[0.98]"
+              >
+                繼續審訊 →
+              </button>
+            )}
           </div>
         )}
 
