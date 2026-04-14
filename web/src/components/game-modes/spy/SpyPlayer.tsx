@@ -11,12 +11,12 @@ const SPY = {
   briefingDelay: 1500,
 };
 
-// Phase 1: trial = 審訊（關押/釋放）
-// Phase 2: reveal = 開獎
-// Phase 3: evidence = 對被關押的嫌犯圈選錯誤
-// Phase 4: quiz = 蘇格拉底測驗
-// Phase 5: result = 結案報告
-type Phase = 'briefing' | 'trial' | 'reveal' | 'evidence' | 'quiz' | 'result';
+// Phase 1: trial    = 逐一審訊（含 inline 標記）
+// Phase 2: reveal   = 翻牌開獎
+// Phase 3: quiz     = 蘇格拉底確認（針對被關押者）
+// Phase 4: result   = 結案報告（含漏放臥底破綻說明）
+// Phase 5: redemption = 補救圈選（漏放臥底）
+type Phase = 'briefing' | 'trial' | 'reveal' | 'quiz' | 'result' | 'redemption';
 
 interface Props {
   question: DetectiveQuestion;
@@ -38,6 +38,18 @@ function buildOptionSegs(optionText: string, error?: OptionError) {
   return segs;
 }
 
+interface SuspectMark {
+  text: string;
+  isCorrect: boolean;
+}
+
+interface QuizItem {
+  suspectIdx: number;
+  quiz: NonNullable<OptionError['quiz']>;
+  markedCorrectly: boolean;
+  markedText?: string;
+}
+
 export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
   const DIALOGUE = useMemo(() => getDialogue(DETECTIVE_DIALOGUES[theme]), [theme]);
   const entry = THEME_REGISTRY[theme];
@@ -56,34 +68,225 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   const totalSpies = errors.length;
   const totalSuspects = question.options.length;
 
-  // ── Phase 1: Trial ──
+  // ── Phases ──
   const [phase, setPhase] = useState<Phase>('briefing');
-  const [decisions, setDecisions] = useState<Map<number, 'detain' | 'release'>>(new Map());
-  const [trialIdx, setTrialIdx] = useState(0); // 目前審到第幾個
 
-  // ── Phase 2: Reveal ──
+  // ── Trial ──
+  const [trialIdx, setTrialIdx] = useState(0);
+  const [visitedSuspects, setVisitedSuspects] = useState<Set<number>>(new Set([0]));
+  const [decisions, setDecisions] = useState<Map<number, 'detain' | 'release'>>(new Map());
+  const [suspectMarks, setSuspectMarks] = useState<Map<number, SuspectMark | null>>(new Map());
+
+  // ── Reveal ──
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const allFlipped = flippedCards.size === totalSuspects;
 
-  // ── Phase 3: Evidence ──
-  const [lives, setLives] = useState(SPY.maxLives);
-  const [evidenceQueue, setEvidenceQueue] = useState<number[]>([]); // 被關押的嫌犯 idx
-  const [evidenceStep, setEvidenceStep] = useState(0);
-  const [circleWrongs, setCircleWrongs] = useState(0);
-  const [evidenceFound, setEvidenceFound] = useState<Set<number>>(new Set());
-  const [feedback, setFeedback] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [transitioning, setTransitioning] = useState(false);
-  const feedbackTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  // ── Phase 4: Quiz ──
-  const quizzes = useMemo(() => errors.filter(e => e.quiz).map(e => e.quiz!), [errors]);
+  // ── Quiz ──
+  const [quizItems, setQuizItems] = useState<QuizItem[]>([]);
   const [quizStep, setQuizStep] = useState(0);
   const [quizAnswered, setQuizAnswered] = useState(false);
   const [quizCorrect, setQuizCorrect] = useState(false);
 
+  // ── Lives ──
+  const [lives, setLives] = useState(SPY.maxLives);
   const gameOver = lives <= 0;
 
-  // 計算評價
+  // ── Redemption ──
+  const [redemptionQueue, setRedemptionQueue] = useState<number[]>([]);
+  const [redemptionStep, setRedemptionStep] = useState(0);
+  const [redemptionResults, setRedemptionResults] = useState<Map<number, boolean>>(new Map());
+  const [redemptionTransitioning, setRedemptionTransitioning] = useState(false);
+  const [redemptionCircleWrongs, setRedemptionCircleWrongs] = useState(0);
+
+  // ── Feedback toast ──
+  const [feedback, setFeedback] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const showFeedback = useCallback((msg: string, type: 'success' | 'error' | 'info' = 'info') => {
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    setFeedback({ msg, type });
+    feedbackTimer.current = setTimeout(() => setFeedback(null), 2800);
+  }, []);
+
+  // Briefing → Trial
+  useEffect(() => {
+    if (phase === 'briefing') {
+      const t = setTimeout(() => setPhase('trial'), SPY.briefingDelay);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
+  // ── Trial: derived ──
+  const allDecided = useMemo(() => {
+    for (let i = 0; i < totalSuspects; i++) {
+      if (!decisions.has(i)) return false;
+    }
+    return true;
+  }, [decisions, totalSuspects]);
+
+  const allVisited = visitedSuspects.size === totalSuspects;
+
+  // 可以導覽到的條件：已看過，或是下一個未看過且當前已有決定
+  const canNavigateTo = useCallback((idx: number) => {
+    if (visitedSuspects.has(idx)) return true;
+    // 找下一個未看過的
+    let nextUnvisited = -1;
+    for (let i = 0; i < totalSuspects; i++) {
+      if (!visitedSuspects.has(i)) { nextUnvisited = i; break; }
+    }
+    return idx === nextUnvisited && decisions.has(trialIdx);
+  }, [visitedSuspects, totalSuspects, decisions, trialIdx]);
+
+  const navigateToSuspect = useCallback((idx: number) => {
+    setTrialIdx(idx);
+    setVisitedSuspects(prev => new Set(prev).add(idx));
+  }, []);
+
+  // 決定關押或釋放；第一次決定後自動前進到下一位未看過的嫌犯
+  const onDecide = useCallback((decision: 'detain' | 'release') => {
+    const isFirstDecision = !decisions.has(trialIdx);
+    setDecisions(prev => new Map(prev).set(trialIdx, decision));
+
+    if (isFirstDecision) {
+      let next = -1;
+      for (let i = 0; i < totalSuspects; i++) {
+        if (!visitedSuspects.has(i)) { next = i; break; }
+      }
+      if (next !== -1) {
+        setTrialIdx(next);
+        setVisitedSuspects(prev => new Set(prev).add(next));
+      }
+    }
+  }, [decisions, trialIdx, totalSuspects, visitedSuspects]);
+
+  // 標記可疑片段（點同一段取消，點別段替換）
+  const onMark = useCallback((text: string, isCorrect: boolean) => {
+    setSuspectMarks(prev => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(trialIdx);
+      if (existing && existing.text === text) {
+        newMap.set(trialIdx, null); // 取消標記
+      } else {
+        newMap.set(trialIdx, { text, isCorrect });
+      }
+      return newMap;
+    });
+  }, [trialIdx]);
+
+  const onProceedToReveal = useCallback(() => {
+    setFlippedCards(new Set());
+    setPhase('reveal');
+  }, []);
+
+  // ── Reveal ──
+  const onFlipCard = useCallback((i: number) => {
+    setFlippedCards(prev => new Set(prev).add(i));
+  }, []);
+
+  const onRevealContinue = useCallback(() => {
+    const items: QuizItem[] = [];
+    let livesDeduction = 0;
+
+    decisions.forEach((decision, idx) => {
+      const isSpy = errorByOption.has(idx);
+      const error = errorByOption.get(idx);
+      if (decision === 'detain' && isSpy && error?.quiz) {
+        const mark = suspectMarks.get(idx);
+        const markedCorrectly = mark?.isCorrect ?? false;
+        if (!markedCorrectly) livesDeduction++; // 無充分證據就關押
+        items.push({
+          suspectIdx: idx,
+          quiz: error.quiz,
+          markedCorrectly,
+          markedText: mark?.text,
+        });
+      }
+    });
+
+    setLives(l => Math.max(0, l - livesDeduction));
+    setQuizItems(items);
+    setQuizStep(0);
+    setQuizAnswered(false);
+    setQuizCorrect(false);
+
+    if (items.length > 0) {
+      setPhase('quiz');
+    } else {
+      setPhase('result');
+    }
+  }, [decisions, errorByOption, suspectMarks]);
+
+  // ── Quiz ──
+  const onQuizAnswer = useCallback((choiceIdx: number) => {
+    if (quizAnswered) return;
+    const correct = choiceIdx === quizItems[quizStep].quiz.answerIndex;
+    setQuizCorrect(correct);
+    setQuizAnswered(true);
+    if (!correct) setLives(l => Math.max(0, l - 1));
+  }, [quizAnswered, quizItems, quizStep]);
+
+  const onQuizNext = useCallback(() => {
+    if (quizStep + 1 < quizItems.length) {
+      setQuizStep(s => s + 1);
+      setQuizAnswered(false);
+      setQuizCorrect(false);
+    } else {
+      setPhase('result');
+    }
+  }, [quizStep, quizItems.length]);
+
+  // ── Redemption ──
+  const missedSpyIndices = useMemo(() => (
+    Array.from({ length: totalSuspects }, (_, i) => i).filter(i =>
+      errorByOption.has(i) && decisions.get(i) === 'release'
+    )
+  ), [totalSuspects, errorByOption, decisions]);
+
+  const startRedemption = useCallback(() => {
+    setRedemptionQueue(missedSpyIndices);
+    setRedemptionStep(0);
+    setRedemptionCircleWrongs(0);
+    setRedemptionTransitioning(false);
+    setPhase('redemption');
+  }, [missedSpyIndices]);
+
+  const currentRedemptionIdx = redemptionQueue[redemptionStep];
+  const currentRedemptionError = currentRedemptionIdx !== undefined
+    ? errorByOption.get(currentRedemptionIdx)
+    : undefined;
+
+  const advanceRedemption = useCallback(() => {
+    if (redemptionStep + 1 < redemptionQueue.length) {
+      setRedemptionStep(s => s + 1);
+      setRedemptionCircleWrongs(0);
+      setRedemptionTransitioning(false);
+    } else {
+      setPhase('result');
+    }
+  }, [redemptionStep, redemptionQueue.length]);
+
+  const onRedemptionCircle = useCallback((isErrorSeg: boolean) => {
+    if (redemptionTransitioning) return;
+    if (isErrorSeg) {
+      setRedemptionResults(prev => new Map(prev).set(currentRedemptionIdx, true));
+      showFeedback('找到了！', 'success');
+      setRedemptionTransitioning(true);
+      setTimeout(advanceRedemption, 1500);
+    } else {
+      const newWrongs = redemptionCircleWrongs + 1;
+      setRedemptionCircleWrongs(newWrongs);
+      if (newWrongs >= 2) {
+        setRedemptionResults(prev => new Map(prev).set(currentRedemptionIdx, false));
+        showFeedback('這次沒找到，繼續加油。', 'info');
+        setRedemptionTransitioning(true);
+        setTimeout(advanceRedemption, 1800);
+      } else {
+        showFeedback('不是這裡，再看看。', 'error');
+      }
+    }
+  }, [redemptionTransitioning, currentRedemptionIdx, redemptionCircleWrongs, showFeedback, advanceRedemption]);
+
+  // ── Score & Rating ──
   const score = useMemo(() => {
     let correct = 0;
     let missedSpies = 0;
@@ -94,142 +297,10 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       if (decision === 'release' && isSpy) missedSpies++;
       if (decision === 'detain' && !isSpy) wrongDetains++;
     });
-    return { correct, missedSpies, wrongDetains };
-  }, [decisions, errorByOption]);
+    const redemptionCorrect = Array.from(redemptionResults.values()).filter(Boolean).length;
+    return { correct, missedSpies, wrongDetains, redemptionCorrect };
+  }, [decisions, errorByOption, redemptionResults]);
 
-  // Briefing → Trial
-  useEffect(() => {
-    if (phase === 'briefing') {
-      const t = setTimeout(() => setPhase('trial'), SPY.briefingDelay);
-      return () => clearTimeout(t);
-    }
-  }, [phase]);
-
-  // Reveal → 翻牌完畢後由學生手動繼續
-  const onFlipCard = useCallback((i: number) => {
-    setFlippedCards(prev => new Set(prev).add(i));
-  }, []);
-
-  const onRevealContinue = useCallback(() => {
-    const detained = Array.from(decisions.entries())
-      .filter(([, d]) => d === 'detain')
-      .map(([idx]) => idx);
-    if (detained.length > 0) {
-      setEvidenceQueue(detained);
-      setPhase('evidence');
-    } else if (quizzes.length > 0) {
-      setPhase('quiz');
-    } else {
-      setPhase('result');
-    }
-  }, [decisions, quizzes.length]);
-
-  // Game over
-  useEffect(() => {
-    if (gameOver && phase === 'evidence') {
-      const t = setTimeout(() => {
-        if (quizzes.length > 0) setPhase('quiz');
-        else setPhase('result');
-      }, 1500);
-      return () => clearTimeout(t);
-    }
-  }, [gameOver, phase, quizzes.length]);
-
-  const showFeedback = useCallback((msg: string, type: 'success' | 'error' | 'info' = 'info') => {
-    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-    setFeedback({ msg, type });
-    feedbackTimer.current = setTimeout(() => setFeedback(null), 2800);
-  }, []);
-
-  // Phase 1: 關押或釋放
-  const onDecide = useCallback((decision: 'detain' | 'release') => {
-    setDecisions(prev => new Map(prev).set(trialIdx, decision));
-    if (trialIdx + 1 < totalSuspects) {
-      setTrialIdx(t => t + 1);
-    } else {
-      // 全部審完 → 開獎
-      setFlippedCards(new Set());
-      setTimeout(() => setPhase('reveal'), 600);
-    }
-  }, [trialIdx, totalSuspects]);
-
-  // Phase 3: 圈選
-  const currentEvidenceIdx = evidenceQueue[evidenceStep];
-  const currentError = currentEvidenceIdx !== undefined ? errorByOption.get(currentEvidenceIdx) : undefined;
-
-  const advanceEvidence = useCallback(() => {
-    if (evidenceStep + 1 < evidenceQueue.length) {
-      setEvidenceStep(s => s + 1);
-      setCircleWrongs(0);
-      setTransitioning(false);
-    } else {
-      if (quizzes.length > 0) setPhase('quiz');
-      else setPhase('result');
-    }
-  }, [evidenceStep, evidenceQueue.length, quizzes.length]);
-
-  const onCircle = useCallback((isErrorSeg: boolean) => {
-    if (transitioning || gameOver) return;
-    if (isErrorSeg) {
-      setEvidenceFound(prev => new Set(prev).add(currentEvidenceIdx));
-      showFeedback(currentError?.why ?? '指證成功！', 'success');
-      setTransitioning(true);
-      setTimeout(advanceEvidence, 1800);
-    } else {
-      setLives(l => Math.max(0, l - 1));
-      const newWrongs = circleWrongs + 1;
-      setCircleWrongs(newWrongs);
-      if (newWrongs >= 2) {
-        showFeedback(`提示：留意「${currentError?.text.slice(0, 2)}…」附近`, 'info');
-      } else {
-        showFeedback('不是這裡，再看看供詞。', 'error');
-      }
-    }
-  }, [transitioning, gameOver, currentEvidenceIdx, currentError, circleWrongs, showFeedback, advanceEvidence]);
-
-  const skipEvidence = useCallback(() => {
-    if (transitioning || !currentError) return;
-    setEvidenceFound(prev => new Set(prev).add(currentEvidenceIdx));
-    showFeedback(`答案是「${currentError.text}」— ${currentError.why}`, 'info');
-    setTransitioning(true);
-    setTimeout(advanceEvidence, 2800);
-  }, [transitioning, currentEvidenceIdx, currentError, showFeedback, advanceEvidence]);
-
-  // 如果關押的是好人 → 在 evidence phase 標記為冤枉，直接跳過圈選
-  const isCurrentDetaineeInnocent = currentEvidenceIdx !== undefined && !errorByOption.has(currentEvidenceIdx);
-  const skippedInnocent = useRef(false);
-  useEffect(() => {
-    if (phase === 'evidence' && isCurrentDetaineeInnocent && !skippedInnocent.current) {
-      skippedInnocent.current = true;
-      setFeedback({ msg: '這個人其實是清白的…冤枉了。', type: 'error' });
-      const t = setTimeout(() => {
-        skippedInnocent.current = false;
-        setFeedback(null);
-        advanceEvidence();
-      }, 1500);
-      return () => clearTimeout(t);
-    }
-  }, [phase, isCurrentDetaineeInnocent, advanceEvidence]);
-
-  // Quiz
-  const onQuizAnswer = useCallback((choiceIdx: number) => {
-    if (quizAnswered) return;
-    setQuizCorrect(choiceIdx === quizzes[quizStep].answerIndex);
-    setQuizAnswered(true);
-    if (choiceIdx !== quizzes[quizStep].answerIndex) setLives(l => Math.max(0, l - 1));
-  }, [quizStep, quizzes, quizAnswered]);
-
-  const onQuizNext = useCallback(() => {
-    if (quizStep + 1 < quizzes.length) {
-      setQuizStep(s => s + 1);
-      setQuizAnswered(false);
-      setQuizCorrect(false);
-    } else {
-      setPhase('result');
-    }
-  }, [quizStep, quizzes.length]);
-
-  // 最終評價
   const rating = useMemo(() => {
     if (gameOver) return { label: '審訊失敗', emoji: '💀' };
     if (score.missedSpies === 0 && score.wrongDetains === 0 && lives === SPY.maxLives)
@@ -238,10 +309,12 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       return { label: '明察秋毫', emoji: '⭐' };
     if (score.missedSpies === 0)
       return { label: '臥底全數落網', emoji: '🎯' };
+    if (redemptionResults.size > 0 && score.redemptionCorrect === missedSpyIndices.length)
+      return { label: '亡羊補牢', emoji: '🔍' };
     return { label: '有漏網之魚', emoji: '😰' };
-  }, [gameOver, score, lives]);
+  }, [gameOver, score, lives, redemptionResults, missedSpyIndices.length]);
 
-  // ── Render ──
+  // ── Render helpers ──
   const DetectiveAvatar = () => isImageAvatar
     ? <img src={avatar} alt="" className="w-8 h-8 object-contain shrink-0" />
     : <span className="text-2xl shrink-0">{avatar}</span>;
@@ -257,6 +330,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     </div>
   );
 
+  // ── Render ──
   return (
     <div className="h-[100dvh] detective-paper text-dt-text flex flex-col overflow-hidden">
       <style>{`
@@ -267,6 +341,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           100% { transform: rotateX(0deg);    filter: blur(0px); }
         }
       `}</style>
+
       {/* Header */}
       <header className="shrink-0 px-4 py-2 flex items-center gap-3">
         <button onClick={onBack} className="text-dt-text-secondary hover:text-dt-text text-base flex items-center gap-1">
@@ -287,32 +362,79 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
       {/* 進度 */}
       <div className="px-4 pb-2">
-        <div className="flex gap-1">
-          {question.options.map((_, i) => {
-            const decided = decisions.has(i);
-            const isCurrent = phase === 'trial' && i === trialIdx;
-            const isFlipped = phase === 'reveal' && flippedCards.has(i);
-            const isSpy = errorByOption.has(i);
-            const isCorrect = (decisions.get(i) === 'detain' && isSpy) || (decisions.get(i) === 'release' && !isSpy);
-            // 開獎後才顯示綠/紅，審訊中全部用 accent/border
-            const bg = isFlipped
-              ? (isCorrect ? 'var(--dt-success)' : 'var(--dt-error)')
-              : decided
-                ? 'var(--dt-accent)'
-                : isCurrent ? 'var(--dt-accent)' : 'var(--dt-border)';
-            return (
-              <div key={i} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${isCurrent ? 'scale-y-150' : ''}`}
-                style={{ background: bg }}
-              />
-            );
-          })}
-        </div>
-        <div className="text-[10px] text-dt-text-muted mt-1 text-right">
-          {phase === 'trial' && `審訊 ${trialIdx + 1}/${totalSuspects}`}
-          {phase === 'reveal' && `已翻 ${flippedCards.size}/${totalSuspects}`}
-          {phase === 'evidence' && `指證 ${evidenceStep + 1}/${evidenceQueue.length}`}
-          {phase === 'quiz' && `測驗 ${quizStep + 1}/${quizzes.length}`}
-        </div>
+        {phase === 'trial' ? (
+          <>
+            {/* 審訊導覽點 */}
+            <div className="flex gap-3 justify-center mb-1">
+              {question.options.map((_, i) => {
+                const visited = visitedSuspects.has(i);
+                const isCurrent = i === trialIdx;
+                const decided = decisions.has(i);
+                const canNav = canNavigateTo(i);
+                const decisionMade = decisions.get(i);
+                return (
+                  <button
+                    key={i}
+                    disabled={!canNav}
+                    onClick={() => canNav && navigateToSuspect(i)}
+                    className={`flex flex-col items-center gap-0.5 transition-all ${canNav ? 'cursor-pointer' : 'cursor-default'}`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                        isCurrent ? 'scale-110' : visited ? '' : 'opacity-30'
+                      }`}
+                      style={{
+                        background: isCurrent
+                          ? 'var(--dt-accent)'
+                          : decided
+                            ? 'color-mix(in srgb, var(--dt-accent) 25%, var(--dt-card))'
+                            : 'var(--dt-border)',
+                        color: isCurrent ? 'white' : 'var(--dt-text)',
+                        outline: isCurrent ? '2px solid var(--dt-accent)' : undefined,
+                        outlineOffset: isCurrent ? '2px' : undefined,
+                      }}
+                    >
+                      {LETTERS[i]}
+                    </div>
+                    {decided && (
+                      <div className="text-[9px] font-medium" style={{
+                        color: decisionMade === 'detain' ? 'var(--dt-error)' : 'var(--dt-success)',
+                      }}>
+                        {decisionMade === 'detain' ? '關押' : '釋放'}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="text-[10px] text-dt-text-muted text-right">
+              {allVisited && allDecided ? '所有人審訊完畢，可以開獎' : `已看 ${visitedSuspects.size}/${totalSuspects}`}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex gap-1">
+              {question.options.map((_, i) => {
+                const isSpy = errorByOption.has(i);
+                const decision = decisions.get(i);
+                const isFlipped = phase === 'reveal' && flippedCards.has(i);
+                const isCorrect = (decision === 'detain' && isSpy) || (decision === 'release' && !isSpy);
+                const bg = phase === 'reveal' && isFlipped
+                  ? (isCorrect ? 'var(--dt-success)' : 'var(--dt-error)')
+                  : 'var(--dt-accent)';
+                return (
+                  <div key={i} className="flex-1 h-1.5 rounded-full transition-all duration-500"
+                    style={{ background: bg }} />
+                );
+              })}
+            </div>
+            <div className="text-[10px] text-dt-text-muted mt-1 text-right">
+              {phase === 'reveal' && `已翻 ${flippedCards.size}/${totalSuspects}`}
+              {phase === 'quiz' && `測驗 ${quizStep + 1}/${quizItems.length}`}
+              {phase === 'redemption' && `補救 ${redemptionStep + 1}/${redemptionQueue.length}`}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main */}
@@ -327,72 +449,127 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         )}
 
         {/* Phase 1: Trial */}
-        {phase === 'trial' && (
-          <div className="space-y-4">
-            {/* 題幹 + 偵探開場白（常駐） */}
-            <div className="case-file rounded-xl p-4">
-              <DetectiveBubble>
-                <span className="text-dt-accent font-medium">案情：</span>{question.mainStem}
-              </DetectiveBubble>
-              <DetectiveBubble>
-                {totalSpies === 1
-                  ? '據報有 1 名臥底混入。逐一審問，做出你的判斷。'
-                  : `據報有 ${totalSpies} 名臥底混入。逐一審問，做出你的判斷。`
-                }
-              </DetectiveBubble>
-            </div>
+        {phase === 'trial' && (() => {
+          const error = errorByOption.get(trialIdx);
+          const mark = suspectMarks.get(trialIdx);
+          const segs = buildOptionSegs(question.options[trialIdx], error);
+          const currentDecision = decisions.get(trialIdx);
+          return (
+            <div className="space-y-4">
+              {/* 題幹常駐 */}
+              <div className="case-file rounded-xl p-4">
+                <DetectiveBubble>
+                  <span className="text-dt-accent font-medium">案情：</span>{question.mainStem}
+                </DetectiveBubble>
+                <DetectiveBubble>
+                  {totalSpies === 1
+                    ? '據報有 1 名臥底混入。逐一審問，可標記可疑之處，再做出判斷。'
+                    : `據報有 ${totalSpies} 名臥底混入。逐一審問，可標記可疑之處，再做出判斷。`}
+                </DetectiveBubble>
+              </div>
 
-            <div className="case-file rounded-xl p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">{SUSPECT_EMOJI[trialIdx]}</span>
-                <div>
-                  <div className="text-sm font-bold" style={{ color: 'var(--dt-accent)' }}>
-                    嫌犯 {LETTERS[trialIdx]} 的供詞
+              {/* 當前嫌犯供詞 */}
+              <div className="case-file rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl">{SUSPECT_EMOJI[trialIdx]}</span>
+                  <div>
+                    <div className="text-sm font-bold" style={{ color: 'var(--dt-accent)' }}>
+                      嫌犯 {LETTERS[trialIdx]} 的供詞
+                    </div>
+                    <div className="text-[10px] text-dt-text-muted">
+                      {mark ? `已標記「${mark.text.slice(0, 8)}${mark.text.length > 8 ? '…' : ''}」` : '可點選供詞標記可疑片段（選填）'}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-dt-text-muted">第 {trialIdx + 1}/{totalSuspects} 位</div>
+                </div>
+
+                <div className="rounded-lg p-3 mb-3" style={{
+                  background: 'color-mix(in srgb, var(--dt-bg) 80%, transparent)',
+                  border: '1px solid var(--dt-border)',
+                }}>
+                  <p className="text-base leading-loose">
+                    {segs.map((seg, si) => {
+                      const isMarked = mark?.text === seg.text;
+                      return (
+                        <span
+                          key={si}
+                          onClick={() => onMark(seg.text, seg.isError)}
+                          className="cursor-pointer rounded px-0.5 transition-all select-none"
+                          style={{
+                            background: isMarked
+                              ? 'color-mix(in srgb, var(--dt-scan) 25%, transparent)'
+                              : undefined,
+                            textDecoration: isMarked ? 'underline' : undefined,
+                            textDecorationStyle: isMarked ? 'dotted' : undefined,
+                            textDecorationColor: 'var(--dt-scan)',
+                          }}
+                        >
+                          {seg.text}
+                        </span>
+                      );
+                    })}
+                  </p>
+                </div>
+
+                {mark && (
+                  <div className="text-[11px] px-2.5 py-1.5 rounded-lg mb-3 flex items-center gap-1.5"
+                    style={{
+                      background: 'color-mix(in srgb, var(--dt-scan) 10%, transparent)',
+                      color: 'var(--dt-scan)',
+                      border: '1px solid color-mix(in srgb, var(--dt-scan) 40%, transparent)',
+                    }}>
+                    🔍 已標記：「{mark.text}」（審訊後將進一步確認）
+                  </div>
+                )}
+
+                <DetectiveBubble>
+                  你覺得這個人的供詞可信嗎？
+                </DetectiveBubble>
+
+                <div className="flex gap-3 mt-1">
+                  <button
+                    onClick={() => onDecide('release')}
+                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    style={{
+                      background: currentDecision === 'release'
+                        ? 'color-mix(in srgb, var(--dt-success) 22%, var(--dt-card))'
+                        : 'color-mix(in srgb, var(--dt-success) 10%, var(--dt-card))',
+                      border: `2px solid var(--dt-success)`,
+                      color: 'var(--dt-success)',
+                      fontWeight: currentDecision === 'release' ? 900 : undefined,
+                    }}
+                  >
+                    ✓ 釋放{currentDecision === 'release' ? ' ●' : ''}
+                  </button>
+                  <button
+                    onClick={() => onDecide('detain')}
+                    className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    style={{
+                      background: currentDecision === 'detain'
+                        ? 'color-mix(in srgb, var(--dt-error) 22%, var(--dt-card))'
+                        : 'color-mix(in srgb, var(--dt-error) 10%, var(--dt-card))',
+                      border: `2px solid var(--dt-error)`,
+                      color: 'var(--dt-error)',
+                      fontWeight: currentDecision === 'detain' ? 900 : undefined,
+                    }}
+                  >
+                    ✕ 關押{currentDecision === 'detain' ? ' ●' : ''}
+                  </button>
                 </div>
               </div>
 
-              <div className="rounded-lg p-3 mb-3" style={{
-                background: 'color-mix(in srgb, var(--dt-bg) 80%, transparent)',
-                border: '1px solid var(--dt-border)',
-              }}>
-                <p className="text-base leading-loose">「{question.options[trialIdx]}」</p>
-              </div>
-
-              <DetectiveBubble>
-                你覺得這個人的供詞可信嗎？
-              </DetectiveBubble>
+              {allVisited && allDecided && (
+                <button
+                  onClick={onProceedToReveal}
+                  className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary transition-all hover:scale-[1.01] active:scale-[0.98]"
+                >
+                  審訊完畢，進入開獎 →
+                </button>
+              )}
             </div>
+          );
+        })()}
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => onDecide('release')}
-                className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  background: 'color-mix(in srgb, var(--dt-success) 12%, var(--dt-card))',
-                  border: '2px solid var(--dt-success)',
-                  color: 'var(--dt-success)',
-                }}
-              >
-                ✓ 釋放
-              </button>
-              <button
-                onClick={() => onDecide('detain')}
-                className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  background: 'color-mix(in srgb, var(--dt-error) 12%, var(--dt-card))',
-                  border: '2px solid var(--dt-error)',
-                  color: 'var(--dt-error)',
-                }}
-              >
-                ✕ 關押
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Phase 2: Reveal — 手動翻牌 */}
+        {/* Phase 2: Reveal */}
         {phase === 'reveal' && (
           <div className="space-y-3">
             <DetectiveBubble>
@@ -406,20 +583,15 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               const isCorrectDecision = (decision === 'detain' && isSpy) || (decision === 'release' && !isSpy);
               return (
                 <div key={i} style={{ perspective: '900px' }}>
-                  <div
-                    style={{
-                      position: 'relative',
-                      height: '80px',
-                      transformStyle: 'preserve-3d',
-                      transform: flipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
-                      animation: flipped ? 'cardFlipH 0.45s cubic-bezier(0.4, 0, 0.2, 1)' : undefined,
-                    }}
-                  >
-                    {/* Front face — 結果 */}
+                  <div style={{
+                    position: 'relative', height: '80px', transformStyle: 'preserve-3d',
+                    transform: flipped ? 'rotateX(0deg)' : 'rotateX(180deg)',
+                    animation: flipped ? 'cardFlipH 0.45s cubic-bezier(0.4, 0, 0.2, 1)' : undefined,
+                  }}>
+                    {/* Front — 結果 */}
                     <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden' }}>
                       <div className="h-full case-file rounded-xl p-3 flex items-center gap-3"
-                        style={{ border: `2px solid ${isCorrectDecision ? 'var(--dt-success)' : 'var(--dt-error)'}` }}
-                      >
+                        style={{ border: `2px solid ${isCorrectDecision ? 'var(--dt-success)' : 'var(--dt-error)'}` }}>
                         <span className="text-2xl">{SUSPECT_EMOJI[i]}</span>
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-bold">嫌犯 {LETTERS[i]}</div>
@@ -436,15 +608,13 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                         </div>
                       </div>
                     </div>
-
-                    {/* Back face — 未翻開 */}
+                    {/* Back — 未翻開 */}
                     <div
                       onClick={() => onFlipCard(i)}
                       style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateX(-180deg)', cursor: 'pointer' }}
                     >
                       <div className="h-full case-file rounded-xl p-3 flex items-center gap-3 hover:opacity-80 active:scale-[0.98] transition-all"
-                        style={{ border: '2px solid var(--dt-border)' }}
-                      >
+                        style={{ border: '2px solid var(--dt-border)' }}>
                         <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-2xl"
                           style={{ background: 'color-mix(in srgb, var(--dt-accent) 10%, var(--dt-card))' }}>
                           ？
@@ -461,116 +631,67 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
             })}
 
             {allFlipped && (
-              <button
-                onClick={onRevealContinue}
-                className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary mt-2 transition-all hover:scale-[1.01] active:scale-[0.98]"
-              >
+              <button onClick={onRevealContinue}
+                className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary mt-2 transition-all hover:scale-[1.01] active:scale-[0.98]">
                 繼續審訊 →
               </button>
             )}
           </div>
         )}
 
-        {/* Phase 3: Evidence */}
-        {phase === 'evidence' && currentEvidenceIdx !== undefined && !isCurrentDetaineeInnocent && (
-          <div className="space-y-4" key={evidenceStep}>
-            {/* 題幹常駐 */}
-            <div className="case-file rounded-xl p-4">
-              <DetectiveBubble>
-                <span className="text-dt-accent font-medium">案情：</span>{question.mainStem}
-              </DetectiveBubble>
-            </div>
+        {/* Phase 3: Quiz */}
+        {phase === 'quiz' && quizItems[quizStep] && (() => {
+          const item = quizItems[quizStep];
+          return (
+            <div className="space-y-4">
+              <div className="case-file rounded-xl p-4">
+                <DetectiveBubble>
+                  <span className="text-dt-accent font-medium">結案確認</span>
+                  {' '}({quizStep + 1}/{quizItems.length})
+                </DetectiveBubble>
 
-            <DetectiveBubble>
-              你關押了嫌犯 {LETTERS[currentEvidenceIdx]}。現在，<span className="text-dt-accent font-medium">指出他的供詞哪裡有問題。</span>
-            </DetectiveBubble>
-
-            <div className="case-file rounded-xl p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">{SUSPECT_EMOJI[currentEvidenceIdx]}</span>
-                <div>
-                  <div className="text-sm font-bold" style={{ color: 'var(--dt-accent)' }}>
-                    嫌犯 {LETTERS[currentEvidenceIdx]}
-                  </div>
-                  <div className="text-[10px] text-dt-text-muted">指出供詞的破綻</div>
-                </div>
-              </div>
-
-              <div className="rounded-lg p-3 mb-3" style={{
-                background: 'color-mix(in srgb, var(--dt-bg) 80%, transparent)',
-                border: '1px solid var(--dt-border)',
-              }}>
-                <p className="text-base leading-loose">
-                  {buildOptionSegs(question.options[currentEvidenceIdx], errorByOption.get(currentEvidenceIdx)).map((seg, si) => (
-                    <span
-                      key={si}
-                      onClick={() => !transitioning && onCircle(seg.isError)}
-                      className={`cursor-pointer rounded px-0.5 transition-colors ${
-                        transitioning ? 'pointer-events-none' :
-                        seg.isError ? 'hover:bg-dt-error/30 underline decoration-dotted decoration-dt-error/50' : 'hover:bg-dt-clue/15'
-                      }`}
-                    >
-                      {seg.text}
-                    </span>
-                  ))}
-                </p>
-              </div>
-
-              {circleWrongs >= 2 && (
-                <>
-                  <DetectiveBubble>
-                    看來你需要幫忙。要我直接告訴你嗎？
-                  </DetectiveBubble>
-                  <button onClick={skipEvidence}
-                    className="ml-10 text-xs px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                {item.markedCorrectly && item.markedText && (
+                  <div className="text-[11px] px-2.5 py-1.5 rounded-lg mb-3 ml-10"
                     style={{
-                      background: 'color-mix(in srgb, var(--dt-scan) 15%, var(--dt-card))',
-                      border: '1px solid var(--dt-scan)',
+                      background: 'color-mix(in srgb, var(--dt-scan) 10%, transparent)',
                       color: 'var(--dt-scan)',
+                      border: '1px solid color-mix(in srgb, var(--dt-scan) 40%, transparent)',
                     }}>
-                    💡 偵探代為揭曉
+                    你標出了「{item.markedText}」，說說看這裡哪裡有問題：
+                  </div>
+                )}
+
+                <p className="text-sm mb-3 leading-relaxed pl-10">{item.quiz.prompt}</p>
+                <div className="space-y-2 pl-10">
+                  {item.quiz.choices.map((choice, ci) => {
+                    const isAnswer = ci === item.quiz.answerIndex;
+                    return (
+                      <button key={ci} onClick={() => onQuizAnswer(ci)} disabled={quizAnswered}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
+                          quizAnswered && isAnswer ? 'ring-2' : ''
+                        } dt-choice ${quizAnswered ? '' : 'cursor-pointer'}`}
+                        style={quizAnswered && isAnswer ? { '--tw-ring-color': 'var(--dt-success)' } as React.CSSProperties : {}}>
+                        <span className="dt-choice-letter w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
+                          {String.fromCharCode(65 + ci)}
+                        </span>
+                        <span>{choice}</span>
+                        {quizAnswered && isAnswer && <span className="ml-auto text-dt-success">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {quizAnswered && (
+                  <button onClick={onQuizNext} className="mt-3 w-full py-2 rounded-lg text-sm font-medium dt-btn-primary">
+                    {quizStep + 1 < quizItems.length ? '下一題' : '查看結果'}
                   </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Phase 4: Quiz */}
-        {phase === 'quiz' && quizzes[quizStep] && (
-          <div className="space-y-4">
-            <div className="case-file rounded-xl p-4">
-              <DetectiveBubble>
-                <span className="text-dt-accent font-medium">結案確認</span> ({quizStep + 1}/{quizzes.length})
-              </DetectiveBubble>
-              <p className="text-sm mb-3 leading-relaxed pl-10">{quizzes[quizStep].prompt}</p>
-              <div className="space-y-2 pl-10">
-                {quizzes[quizStep].choices.map((choice, ci) => {
-                  const isAnswer = ci === quizzes[quizStep].answerIndex;
-                  return (
-                    <button key={ci} onClick={() => onQuizAnswer(ci)} disabled={quizAnswered}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
-                        quizAnswered && isAnswer ? 'ring-2' : ''} dt-choice ${quizAnswered ? '' : 'cursor-pointer'}`}
-                      style={quizAnswered && isAnswer ? { '--tw-ring-color': 'var(--dt-success)' } as React.CSSProperties : {}}>
-                      <span className="dt-choice-letter w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                        {String.fromCharCode(65 + ci)}
-                      </span>
-                      <span>{choice}</span>
-                      {quizAnswered && isAnswer && <span className="ml-auto text-dt-success">✓</span>}
-                    </button>
-                  );
-                })}
+                )}
               </div>
-              {quizAnswered && (
-                <button onClick={onQuizNext} className="mt-3 w-full py-2 rounded-lg text-sm font-medium dt-btn-primary">
-                  {quizStep + 1 < quizzes.length ? '下一題' : '查看結果'}
-                </button>
-              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
-        {/* Phase 5: Result */}
+        {/* Phase 4: Result */}
         {phase === 'result' && (
           <div className="space-y-4">
             <div className="text-center py-4">
@@ -581,13 +702,15 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               <p className="text-sm text-dt-text-muted mt-1">
                 正確答案：({question.answer}) {question.options[correctIdx]}
               </p>
-              <div className="flex justify-center gap-4 mt-2 text-xs text-dt-text-muted">
+              <div className="flex justify-center flex-wrap gap-3 mt-2 text-xs text-dt-text-muted">
                 <span>關押正確 {score.correct}/{totalSpies}</span>
                 {score.missedSpies > 0 && <span className="text-dt-error">漏放 {score.missedSpies}</span>}
                 {score.wrongDetains > 0 && <span className="text-dt-error">冤枉 {score.wrongDetains}</span>}
+                {score.redemptionCorrect > 0 && <span className="text-dt-success">補救成功 {score.redemptionCorrect}</span>}
               </div>
             </div>
 
+            {/* 審訊紀錄 */}
             <div className="case-file rounded-xl p-4">
               <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--dt-accent)' }}>審訊紀錄</h3>
               <div className="space-y-3">
@@ -595,6 +718,8 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   const isSpy = errorByOption.has(i);
                   const error = errorByOption.get(i);
                   const decision = decisions.get(i);
+                  const isCorrectDecision = (decision === 'detain' && isSpy) || (decision === 'release' && !isSpy);
+                  const redemptionResult = redemptionResults.get(i);
                   return (
                     <div key={i} className="text-sm">
                       <div className="flex items-center gap-2">
@@ -603,11 +728,14 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                         <span className={`text-[10px] ${isSpy ? 'text-dt-error' : 'text-dt-success'}`}>
                           {isSpy ? '🎭 臥底' : '✓ 清白'}
                         </span>
-                        <span className={`text-[10px] ml-auto ${
-                          (decision === 'detain' && isSpy) || (decision === 'release' && !isSpy) ? 'text-dt-success' : 'text-dt-error'
-                        }`}>
+                        <span className={`text-[10px] ml-auto ${isCorrectDecision ? 'text-dt-success' : 'text-dt-error'}`}>
                           你：{decision === 'detain' ? '關押' : '釋放'}
                         </span>
+                        {redemptionResult !== undefined && (
+                          <span className={`text-[10px] ${redemptionResult ? 'text-dt-success' : 'text-dt-text-muted'}`}>
+                            {redemptionResult ? '補救✓' : '補救✗'}
+                          </span>
+                        )}
                       </div>
                       {error && (
                         <p className="text-dt-text-muted mt-0.5 pl-8 text-xs">
@@ -620,6 +748,22 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </div>
             </div>
 
+            {/* 補救按鈕（只在尚未補救且有漏放時顯示） */}
+            {missedSpyIndices.length > 0 && redemptionResults.size === 0 && (
+              <button
+                onClick={startRedemption}
+                className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.01] active:scale-[0.98]"
+                style={{
+                  background: 'color-mix(in srgb, var(--dt-scan) 10%, var(--dt-card))',
+                  border: '2px solid var(--dt-scan)',
+                  color: 'var(--dt-scan)',
+                }}
+              >
+                🔍 你漏放了 {missedSpyIndices.length} 名臥底，要補救嗎？
+              </button>
+            )}
+
+            {/* 知識點 */}
             <div className="case-file rounded-xl p-4">
               <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--dt-scan)' }}>
                 {question.concept.unit}
@@ -638,6 +782,56 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
             </div>
           </div>
         )}
+
+        {/* Phase 5: Redemption */}
+        {phase === 'redemption' && currentRedemptionIdx !== undefined && currentRedemptionError && (
+          <div className="space-y-4">
+            <div className="case-file rounded-xl p-4">
+              <DetectiveBubble>
+                <span className="text-dt-accent font-medium">補救機會</span>
+                {' '}({redemptionStep + 1}/{redemptionQueue.length})
+              </DetectiveBubble>
+              <DetectiveBubble>
+                你放走了嫌犯 {LETTERS[currentRedemptionIdx]}。
+                你剛才看過結案報告了——<span className="text-dt-accent font-medium">能在供詞裡找到破綻嗎？</span>
+              </DetectiveBubble>
+            </div>
+
+            <div className="case-file rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-3xl">{SUSPECT_EMOJI[currentRedemptionIdx]}</span>
+                <div>
+                  <div className="text-sm font-bold" style={{ color: 'var(--dt-accent)' }}>
+                    嫌犯 {LETTERS[currentRedemptionIdx]}
+                  </div>
+                  <div className="text-[10px] text-dt-text-muted">點選有問題的片段</div>
+                </div>
+              </div>
+              <div className="rounded-lg p-3" style={{
+                background: 'color-mix(in srgb, var(--dt-bg) 80%, transparent)',
+                border: '1px solid var(--dt-border)',
+              }}>
+                <p className="text-base leading-loose">
+                  {buildOptionSegs(question.options[currentRedemptionIdx], currentRedemptionError).map((seg, si) => (
+                    <span
+                      key={si}
+                      onClick={() => !redemptionTransitioning && onRedemptionCircle(seg.isError)}
+                      className={`cursor-pointer rounded px-0.5 transition-colors select-none ${
+                        redemptionTransitioning ? 'pointer-events-none' :
+                        seg.isError
+                          ? 'hover:bg-dt-error/30 underline decoration-dotted decoration-dt-error/50'
+                          : 'hover:bg-dt-clue/15'
+                      }`}
+                    >
+                      {seg.text}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
 
       {/* Feedback toast */}
@@ -646,13 +840,12 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           <div className={`px-4 py-2.5 rounded-xl text-sm max-w-sm text-center shadow-lg ${
             feedback.type === 'success' ? 'ring-1 ring-dt-success' :
             feedback.type === 'error' ? 'ring-1 ring-dt-error' : ''
-          }`}
-            style={{
-              background: 'var(--dt-card)',
-              border: '1px solid var(--dt-border)',
-              color: feedback.type === 'success' ? 'var(--dt-success)' :
-                     feedback.type === 'error' ? 'var(--dt-error)' : 'var(--dt-text)',
-            }}>
+          }`} style={{
+            background: 'var(--dt-card)',
+            border: '1px solid var(--dt-border)',
+            color: feedback.type === 'success' ? 'var(--dt-success)' :
+                   feedback.type === 'error' ? 'var(--dt-error)' : 'var(--dt-text)',
+          }}>
             {feedback.msg}
           </div>
         </div>
