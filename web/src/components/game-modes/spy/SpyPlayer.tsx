@@ -185,7 +185,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
   const onRevealContinue = useCallback(() => {
     const items: QuizItem[] = [];
-    let livesDeduction = 0;
 
     decisions.forEach((decision, idx) => {
       const isSpy = errorByOption.has(idx);
@@ -193,7 +192,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       if (decision === 'detain' && isSpy && error?.quiz) {
         const mark = suspectMarks.get(idx);
         const markedCorrectly = mark?.isCorrect ?? false;
-        if (!markedCorrectly) livesDeduction++; // 無充分證據就關押
         items.push({
           suspectIdx: idx,
           quiz: error.quiz,
@@ -203,7 +201,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       }
     });
 
-    setLives(l => Math.max(0, l - livesDeduction));
     setQuizItems(items);
     setQuizStep(0);
     setQuizAnswered(false);
@@ -291,28 +288,40 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     let correct = 0;
     let missedSpies = 0;
     let wrongDetains = 0;
+    let detainedWithEvidence = 0; // 關押且有正確標記
     decisions.forEach((decision, idx) => {
       const isSpy = errorByOption.has(idx);
-      if (decision === 'detain' && isSpy) correct++;
+      if (decision === 'detain' && isSpy) {
+        correct++;
+        const mark = suspectMarks.get(idx);
+        if (mark?.isCorrect) detainedWithEvidence++;
+      }
       if (decision === 'release' && isSpy) missedSpies++;
       if (decision === 'detain' && !isSpy) wrongDetains++;
     });
     const redemptionCorrect = Array.from(redemptionResults.values()).filter(Boolean).length;
-    return { correct, missedSpies, wrongDetains, redemptionCorrect };
-  }, [decisions, errorByOption, redemptionResults]);
+    return { correct, missedSpies, wrongDetains, detainedWithEvidence, redemptionCorrect };
+  }, [decisions, errorByOption, suspectMarks, redemptionResults]);
 
   const rating = useMemo(() => {
     if (gameOver) return { label: '審訊失敗', emoji: '💀' };
-    if (score.missedSpies === 0 && score.wrongDetains === 0 && lives === SPY.maxLives)
+    const allCaught = score.missedSpies === 0;
+    const noWrongDetains = score.wrongDetains === 0;
+    const allWithEvidence = score.detainedWithEvidence === totalSpies;
+    const anyWithEvidence = score.detainedWithEvidence > 0;
+
+    if (allCaught && noWrongDetains && allWithEvidence && lives === SPY.maxLives)
       return { label: '完美審判', emoji: '🏆' };
-    if (score.missedSpies === 0 && score.wrongDetains === 0)
-      return { label: '明察秋毫', emoji: '⭐' };
-    if (score.missedSpies === 0)
-      return { label: '臥底全數落網', emoji: '🎯' };
+    if (allCaught && noWrongDetains && allWithEvidence)
+      return { label: '有理有據', emoji: '⭐' };
+    if (allCaught && noWrongDetains && anyWithEvidence)
+      return { label: '臥底落網', emoji: '🎯' };
+    if (allCaught && noWrongDetains)
+      return { label: '全數逮捕', emoji: '🔒' };
     if (redemptionResults.size > 0 && score.redemptionCorrect === missedSpyIndices.length)
       return { label: '亡羊補牢', emoji: '🔍' };
     return { label: '有漏網之魚', emoji: '😰' };
-  }, [gameOver, score, lives, redemptionResults, missedSpyIndices.length]);
+  }, [gameOver, score, lives, totalSpies, redemptionResults, missedSpyIndices.length]);
 
   // ── Render helpers ──
   const DetectiveAvatar = () => isImageAvatar
@@ -650,7 +659,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   {' '}({quizStep + 1}/{quizItems.length})
                 </DetectiveBubble>
 
-                {item.markedCorrectly && item.markedText && (
+                {item.markedCorrectly && item.markedText ? (
                   <div className="text-[11px] px-2.5 py-1.5 rounded-lg mb-3 ml-10"
                     style={{
                       background: 'color-mix(in srgb, var(--dt-scan) 10%, transparent)',
@@ -658,6 +667,15 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                       border: '1px solid color-mix(in srgb, var(--dt-scan) 40%, transparent)',
                     }}>
                     你標出了「{item.markedText}」，說說看這裡哪裡有問題：
+                  </div>
+                ) : (
+                  <div className="text-[11px] px-2.5 py-1.5 rounded-lg mb-3 ml-10"
+                    style={{
+                      background: 'color-mix(in srgb, var(--dt-error) 8%, transparent)',
+                      color: 'var(--dt-text-muted)',
+                      border: '1px solid color-mix(in srgb, var(--dt-error) 25%, transparent)',
+                    }}>
+                    你關押了嫌犯 {LETTERS[item.suspectIdx]}，但沒有標出理由。說說看供詞哪裡有問題：
                   </div>
                 )}
 
@@ -704,6 +722,11 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </p>
               <div className="flex justify-center flex-wrap gap-3 mt-2 text-xs text-dt-text-muted">
                 <span>關押正確 {score.correct}/{totalSpies}</span>
+                {score.correct > 0 && (
+                  <span className={score.detainedWithEvidence === score.correct ? 'text-dt-success' : 'text-dt-text-muted'}>
+                    有理有據 {score.detainedWithEvidence}/{score.correct}
+                  </span>
+                )}
                 {score.missedSpies > 0 && <span className="text-dt-error">漏放 {score.missedSpies}</span>}
                 {score.wrongDetains > 0 && <span className="text-dt-error">冤枉 {score.wrongDetains}</span>}
                 {score.redemptionCorrect > 0 && <span className="text-dt-success">補救成功 {score.redemptionCorrect}</span>}
@@ -786,6 +809,13 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         {/* Phase 5: Redemption */}
         {phase === 'redemption' && currentRedemptionIdx !== undefined && currentRedemptionError && (
           <div className="space-y-4">
+            {/* 題幹常駐 */}
+            <div className="case-file rounded-xl p-4">
+              <DetectiveBubble>
+                <span className="text-dt-accent font-medium">案情：</span>{question.mainStem}
+              </DetectiveBubble>
+            </div>
+
             <div className="case-file rounded-xl p-4">
               <DetectiveBubble>
                 <span className="text-dt-accent font-medium">補救機會</span>
