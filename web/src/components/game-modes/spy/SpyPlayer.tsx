@@ -577,21 +577,19 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   background: 'color-mix(in srgb, var(--dt-bg) 80%, transparent)',
                   border: '1px solid var(--dt-border)',
                 }}>
-                  <p className="text-base leading-loose">
+                  <p className="text-base leading-loose select-none">
                     {segs.map((seg, si) => {
                       const isMarked = mark?.text === seg.text;
                       return (
                         <span
                           key={si}
                           onClick={() => onMark(seg.text, seg.isError)}
-                          className="cursor-pointer rounded px-0.5 transition-all select-none"
+                          className="cursor-pointer transition-colors"
                           style={{
-                            background: isMarked
-                              ? 'color-mix(in srgb, var(--dt-scan) 25%, transparent)'
-                              : undefined,
-                            textDecoration: isMarked ? 'underline' : undefined,
-                            textDecorationStyle: isMarked ? 'dotted' : undefined,
-                            textDecorationColor: 'var(--dt-scan)',
+                            borderBottom: isMarked
+                              ? '2px solid var(--dt-scan)'
+                              : '2px solid transparent',
+                            color: isMarked ? 'var(--dt-scan)' : undefined,
                           }}
                         >
                           {seg.text}
@@ -967,17 +965,12 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 background: 'color-mix(in srgb, var(--dt-bg) 80%, transparent)',
                 border: '1px solid var(--dt-border)',
               }}>
-                <p className="text-base leading-loose">
+                <p className="text-base leading-loose select-none">
                   {buildOptionSegs(question.options[currentRedemptionIdx], currentRedemptionError).map((seg, si) => (
                     <span
                       key={si}
                       onClick={() => !redemptionTransitioning && onRedemptionCircle(seg.isError)}
-                      className={`cursor-pointer rounded px-0.5 transition-colors select-none ${
-                        redemptionTransitioning ? 'pointer-events-none' :
-                        seg.isError
-                          ? 'hover:bg-dt-error/30 underline decoration-dotted decoration-dt-error/50'
-                          : 'hover:bg-dt-clue/15'
-                      }`}
+                      className={`cursor-pointer transition-colors ${redemptionTransitioning ? 'pointer-events-none' : ''}`}
                     >
                       {seg.text}
                     </span>
