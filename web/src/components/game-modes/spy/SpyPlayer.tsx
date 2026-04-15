@@ -193,7 +193,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     setVisitedSuspects(prev => new Set(prev).add(idx));
   }, []);
 
-  // 決定關押或釋放；第一次決定後自動前進到下一位未看過的嫌犯
+  // 決定關押或釋放；顯示台詞後留在原嫌犯，讓學生自己點導覽點前進
   const onDecide = useCallback((decision: 'detain' | 'release') => {
     const isFirstDecision = !decisions.has(trialIdx);
     setDecisions(prev => new Map(prev).set(trialIdx, decision));
@@ -205,13 +205,12 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         : pickLine(RELEASE_LINES, seed);
       setSuspectReactions(prev => new Map(prev).set(trialIdx, line));
 
-      let next = -1;
+      // 把下一個未看過的嫌犯加入 visited，讓導覽點解鎖（但不自動跳）
       for (let i = 0; i < totalSuspects; i++) {
-        if (!visitedSuspects.has(i)) { next = i; break; }
-      }
-      if (next !== -1) {
-        setTrialIdx(next);
-        setVisitedSuspects(prev => new Set(prev).add(next));
+        if (!visitedSuspects.has(i)) {
+          setVisitedSuspects(prev => new Set(prev).add(i));
+          break;
+        }
       }
     }
   }, [decisions, trialIdx, totalSuspects, visitedSuspects]);
