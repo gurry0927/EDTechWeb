@@ -10,8 +10,12 @@ export default function SpyListPage() {
   const [allQuestions, setAllQuestions] = useState<PublicQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<ThemeId>('classic');
+  const [tipDone, setTipDone] = useState(true); // 預設 true 避免 SSR 閃爍
 
-  useEffect(() => { setTheme(getInitialTheme()); }, []);
+  useEffect(() => {
+    setTheme(getInitialTheme());
+    setTipDone(localStorage.getItem('spy-tip-done') === '1');
+  }, []);
 
   useEffect(() => {
     fetchPublicQuestions().then(qs => {
@@ -72,6 +76,29 @@ export default function SpyListPage() {
           </div>
         ) : (
           <div className="space-y-2">
+            {/* 新手引導 */}
+            {!tipDone && (
+              <div className="relative case-file rounded-lg p-5 border-l-4 border-dt-scan mb-4">
+                <button
+                  onClick={() => { setTipDone(true); localStorage.setItem('spy-tip-done', '1'); }}
+                  className="absolute top-3 right-3 text-dt-text-muted hover:text-dt-text text-sm"
+                >✕</button>
+                <h3 className="font-bold text-dt-text flex items-center gap-2 mb-2">
+                  <span className="text-xl">🎭</span> 第一次來？
+                </h3>
+                <p className="text-sm text-dt-text-secondary leading-relaxed mb-3">
+                  四個選項裡混入了臥底。你的任務是找出說謊的供詞，揪出真相。
+                </p>
+                <ul className="text-xs text-dt-text-muted space-y-1.5 mb-3">
+                  <li>👀 逐一閱讀每位嫌犯的供詞</li>
+                  <li>🔍 標記你覺得有問題的片段（選填）</li>
+                  <li>⚖️ 對每位嫌犯做出判斷：釋放或關押</li>
+                  <li>🃏 全部審完後翻牌開獎，看你判斷對了幾個</li>
+                  <li>🏆 有標出理由才能拿到最高評級</li>
+                </ul>
+                <p className="text-xs text-dt-text-muted italic">選一份案卷開始吧！此提示只顯示一次。</p>
+              </div>
+            )}
             {questions.map(q => (
               <Link
                 key={q.id}
