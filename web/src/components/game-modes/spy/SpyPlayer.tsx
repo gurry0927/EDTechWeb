@@ -12,7 +12,7 @@ const SPY = {
 };
 
 // Phase 1: trial    = 逐一審訊（含 inline 標記）
-// Phase 2: reveal   = 翻牌開獎
+// Phase 2: reveal   = 翻牌宣判
 // Phase 3: quiz     = 蘇格拉底確認（針對被關押者）
 // Phase 4: result   = 結案報告（含漏放臥底破綻說明）
 // Phase 5: redemption = 補救圈選（漏放臥底）
@@ -79,12 +79,32 @@ function pickLine(lines: string[], seed: number) {
 }
 
 function buildOptionSegs(optionText: string, error?: OptionError) {
-  if (!error) return [{ text: optionText, isError: false }];
+  // 切成 2-3 字的小塊，讓錯誤片段無法靠長度辨認
+  const tokens: string[] = [];
+  let i = 0;
+  while (i < optionText.length) {
+    if (/[，。？！、；：「」『』（）【】]/.test(optionText[i])) {
+      tokens.push(optionText[i]);
+      i += 1;
+    } else {
+      const remaining = optionText.length - i;
+      const chunkSize = remaining >= 3 ? 3 : remaining;
+      tokens.push(optionText.slice(i, i + chunkSize));
+      i += chunkSize;
+    }
+  }
+
+  // 標記每個 token 是否完全落在 error 範圍內
   const segs: { text: string; isError: boolean }[] = [];
-  const { startIndex, length } = error;
-  if (startIndex > 0) segs.push({ text: optionText.slice(0, startIndex), isError: false });
-  segs.push({ text: optionText.slice(startIndex, startIndex + length), isError: true });
-  if (startIndex + length < optionText.length) segs.push({ text: optionText.slice(startIndex + length), isError: false });
+  let pos = 0;
+  for (const token of tokens) {
+    const end = pos + token.length;
+    const isError = error
+      ? pos >= error.startIndex && end <= error.startIndex + error.length
+      : false;
+    segs.push({ text: token, isError });
+    pos = end;
+  }
   return segs;
 }
 
@@ -479,7 +499,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               })}
             </div>
             <div className="text-[10px] text-dt-text-muted text-right">
-              {allVisited && allDecided ? '所有人審訊完畢，可以開獎' : `已看 ${visitedSuspects.size}/${totalSuspects}`}
+              {allVisited && allDecided ? '所有人審訊完畢，可以宣判' : `已看 ${visitedSuspects.size}/${totalSuspects}`}
             </div>
           </>
         ) : (
@@ -677,7 +697,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   onClick={onProceedToReveal}
                   className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary transition-all hover:scale-[1.01] active:scale-[0.98]"
                 >
-                  審訊完畢，進入開獎 →
+                  審訊完畢，進行宣判 →
                 </button>
               )}
             </div>
