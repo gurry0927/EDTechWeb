@@ -3,8 +3,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { DetectiveQuestion, OptionError } from '@/components/question-detective/types';
 import { THEME_REGISTRY } from '@/config/themes';
-import { DETECTIVE_DIALOGUES } from '@/components/question-detective/theme-registry';
-import { getDialogue } from '@/components/question-detective/detective-config';
 
 const SPY = {
   maxLives: 5,
@@ -26,7 +24,17 @@ interface Props {
 }
 
 const LETTERS = ['A', 'B', 'C', 'D'];
-const SUSPECT_EMOJI = ['🤵', '👩‍💼', '🧑‍🔬', '👨‍💻'];
+const SUSPECT_AVATARS = [
+  '/avatars/figure_fashion_color_blue.png',
+  '/avatars/figure_fashion_color_green.png',
+  '/avatars/figure_fashion_color_purple.png',
+  '/avatars/figure_fashion_color_red.png',
+];
+
+const SuspectIcon = ({ idx, size = 'md' }: { idx: number; size?: 'sm' | 'md' | 'lg' }) => {
+  const cls = size === 'lg' ? 'w-16 h-16' : size === 'sm' ? 'w-6 h-6' : 'w-10 h-10';
+  return <img src={SUSPECT_AVATARS[idx]} alt={`嫌犯 ${LETTERS[idx]}`} className={`${cls} object-contain`} />;
+};
 
 const DETAIN_LINES = [
   '冤枉啊！我什麼都沒做！',
@@ -121,7 +129,7 @@ interface QuizItem {
 }
 
 export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
-  const DIALOGUE = useMemo(() => getDialogue(DETECTIVE_DIALOGUES[theme]), [theme]);
+
   const entry = THEME_REGISTRY[theme];
   const avatar = entry?.avatar.detective ?? '🕵️';
   const isImageAvatar = avatar.startsWith('/');
@@ -156,7 +164,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   const [quizItems, setQuizItems] = useState<QuizItem[]>([]);
   const [quizStep, setQuizStep] = useState(0);
   const [quizAnswered, setQuizAnswered] = useState(false);
-  const [quizCorrect, setQuizCorrect] = useState(false);
+  const [, setQuizCorrect] = useState(false);
 
   // ── Lives ──
   const [lives, setLives] = useState(SPY.maxLives);
@@ -562,7 +570,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               {/* 當前嫌犯供詞 */}
               <div className="case-file rounded-xl p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl">{SUSPECT_EMOJI[trialIdx]}</span>
+                  <SuspectIcon idx={trialIdx} size="lg" />
                   <div>
                     <div className="text-sm font-bold" style={{ color: 'var(--dt-accent)' }}>
                       嫌犯 {LETTERS[trialIdx]} 的供詞
@@ -648,7 +656,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 {/* 嫌犯反應台詞 */}
                 {suspectReactions.has(trialIdx) && (
                   <div className="mt-3 flex items-start gap-2">
-                    <span className="text-xl shrink-0">{SUSPECT_EMOJI[trialIdx]}</span>
+                    <SuspectIcon idx={trialIdx} size="sm" />
                     <div className="text-xs px-3 py-2 rounded-xl rounded-tl-sm italic"
                       style={{
                         background: 'color-mix(in srgb, var(--dt-border) 40%, var(--dt-card))',
@@ -725,7 +733,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden' }}>
                       <div className="h-full case-file rounded-xl p-3 flex items-center gap-3"
                         style={{ border: `2px solid ${isCorrectDecision ? 'var(--dt-success)' : 'var(--dt-error)'}` }}>
-                        <span className="text-2xl">{SUSPECT_EMOJI[i]}</span>
+                        <SuspectIcon idx={i} size="md" />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-bold">嫌犯 {LETTERS[i]}</div>
                           <p className="text-xs text-dt-text-muted truncate">{opt}</p>
@@ -861,7 +869,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
             <div className="case-file rounded-xl p-4">
               <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--dt-accent)' }}>審訊紀錄</h3>
               <div className="space-y-3">
-                {question.options.map((opt, i) => {
+                {question.options.map((_, i) => {
                   const isSpy = errorByOption.has(i);
                   const error = errorByOption.get(i);
                   const decision = decisions.get(i);
@@ -870,7 +878,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   return (
                     <div key={i} className="text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">{SUSPECT_EMOJI[i]}</span>
+                        <SuspectIcon idx={i} size="sm" />
                         <span className="text-xs font-bold">嫌犯 {LETTERS[i]}</span>
                         <span className={`text-[10px] ${isSpy ? 'text-dt-error' : 'text-dt-success'}`}>
                           {isSpy ? '🎭 臥底' : '✓ 清白'}
@@ -953,7 +961,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
             <div className="case-file rounded-xl p-4">
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">{SUSPECT_EMOJI[currentRedemptionIdx]}</span>
+                <SuspectIcon idx={currentRedemptionIdx} size="lg" />
                 <div>
                   <div className="text-sm font-bold" style={{ color: 'var(--dt-accent)' }}>
                     嫌犯 {LETTERS[currentRedemptionIdx]}
