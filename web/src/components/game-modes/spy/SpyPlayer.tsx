@@ -641,6 +641,35 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     </div>
                   </div>
                 )}
+
+                {/* 上一個 / 下一個導覽 */}
+                {(() => {
+                  const hasPrev = trialIdx > 0;
+                  // 下一個：已 visited 的下一位，或已決定當前且有下一個未 visited
+                  const nextVisited = trialIdx + 1 < totalSuspects && visitedSuspects.has(trialIdx + 1);
+                  const nextUnlocked = decisions.has(trialIdx) && trialIdx + 1 < totalSuspects && !visitedSuspects.has(trialIdx + 1);
+                  const hasNext = nextVisited || nextUnlocked;
+                  if (!hasPrev && !hasNext) return null;
+                  return (
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        disabled={!hasPrev}
+                        onClick={() => hasPrev && navigateToSuspect(trialIdx - 1)}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1 transition-all disabled:opacity-30"
+                        style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}
+                      >
+                        ← 上一位
+                      </button>
+                      <button
+                        disabled={!hasNext}
+                        onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1 transition-all disabled:opacity-30 dt-btn-primary"
+                      >
+                        下一位 →
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
 
               {allVisited && allDecided && (
