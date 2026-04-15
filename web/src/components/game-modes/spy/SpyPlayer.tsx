@@ -28,6 +28,56 @@ interface Props {
 const LETTERS = ['A', 'B', 'C', 'D'];
 const SUSPECT_EMOJI = ['🤵', '👩‍💼', '🧑‍🔬', '👨‍💻'];
 
+const DETAIN_LINES = [
+  '冤枉啊！我什麼都沒做！',
+  '你一定搞錯了，我是清白的！',
+  '長官，再想想！別衝動！',
+  '我有不在場證明的！',
+  '這不公平！憑什麼！',
+  '放手！我要見律師！',
+  '我可以解釋！給我一個機會！',
+  '別相信你看到的，事情沒那麼簡單。',
+  '我、我真的沒有……',
+  '你這樣會害了自己的！',
+  '等一下，先聽我說完！',
+  '我只是說錯話了，不代表我有問題！',
+  '憑什麼？你有證據嗎！',
+  '哼，走著瞧。',
+  '你不會找到任何東西的。',
+  '……好吧，隨你。',
+  '長官英明……（苦笑）',
+  '我認識你們長官的長官……',
+  '你真的確定嗎？再想想。',
+  '這個誤會，遲早會還我清白的。',
+];
+
+const RELEASE_LINES = [
+  '謝謝！我就知道你有眼光！',
+  '感謝長官明察！',
+  '終於！嚇死我了。',
+  '呼……差點出事。',
+  '你真是個聰明的人。',
+  '我就說嘛，清清白白的！',
+  '哈，我就知道你看得出來。',
+  '嘿嘿……謝謝你。',
+  '運氣真好呢，是不是？',
+  '你放心，我不會讓你失望的。',
+  '長官英明！',
+  '咦，就這樣？那我走了？',
+  '太好了！家人還在等我！',
+  '你做了正確的選擇。',
+  '呵呵，多謝招待。',
+  '我早說我沒問題的！',
+  '哼，總算有人識貨。',
+  '謝謝，我……我真的很感激。',
+  '好的好的，我這就走。',
+  '希望我們不會再見面。',
+];
+
+function pickLine(lines: string[], seed: number) {
+  return lines[seed % lines.length];
+}
+
 function buildOptionSegs(optionText: string, error?: OptionError) {
   if (!error) return [{ text: optionText, isError: false }];
   const segs: { text: string; isError: boolean }[] = [];
@@ -76,6 +126,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   const [visitedSuspects, setVisitedSuspects] = useState<Set<number>>(new Set([0]));
   const [decisions, setDecisions] = useState<Map<number, 'detain' | 'release'>>(new Map());
   const [suspectMarks, setSuspectMarks] = useState<Map<number, SuspectMark | null>>(new Map());
+  const [suspectReactions, setSuspectReactions] = useState<Map<number, string>>(new Map());
 
   // ── Reveal ──
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
@@ -148,6 +199,12 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     setDecisions(prev => new Map(prev).set(trialIdx, decision));
 
     if (isFirstDecision) {
+      const seed = Math.floor(Math.random() * 1000);
+      const line = decision === 'detain'
+        ? pickLine(DETAIN_LINES, seed)
+        : pickLine(RELEASE_LINES, seed);
+      setSuspectReactions(prev => new Map(prev).set(trialIdx, line));
+
       let next = -1;
       for (let i = 0; i < totalSuspects; i++) {
         if (!visitedSuspects.has(i)) { next = i; break; }
@@ -309,6 +366,8 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     const noWrongDetains = score.wrongDetains === 0;
     const allWithEvidence = score.detainedWithEvidence === totalSpies;
     const anyWithEvidence = score.detainedWithEvidence > 0;
+    const hasWrongDetains = score.wrongDetains > 0;
+    const hasMissed = score.missedSpies > 0;
 
     if (allCaught && noWrongDetains && allWithEvidence && lives === SPY.maxLives)
       return { label: '完美審判', emoji: '🏆' };
@@ -318,6 +377,10 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       return { label: '臥底落網', emoji: '🎯' };
     if (allCaught && noWrongDetains)
       return { label: '全數逮捕', emoji: '🔒' };
+    if (allCaught && hasWrongDetains)
+      return { label: '矯枉過正', emoji: '⚖️' };
+    if (hasMissed && hasWrongDetains)
+      return { label: '雙重失誤', emoji: '💔' };
     if (redemptionResults.size > 0 && score.redemptionCorrect === missedSpyIndices.length)
       return { label: '亡羊補牢', emoji: '🔍' };
     return { label: '有漏網之魚', emoji: '😰' };
@@ -564,6 +627,21 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     ✕ 關押{currentDecision === 'detain' ? ' ●' : ''}
                   </button>
                 </div>
+
+                {/* 嫌犯反應台詞 */}
+                {suspectReactions.has(trialIdx) && (
+                  <div className="mt-3 flex items-start gap-2">
+                    <span className="text-xl shrink-0">{SUSPECT_EMOJI[trialIdx]}</span>
+                    <div className="text-xs px-3 py-2 rounded-xl rounded-tl-sm italic"
+                      style={{
+                        background: 'color-mix(in srgb, var(--dt-border) 40%, var(--dt-card))',
+                        color: 'var(--dt-text-secondary)',
+                        border: '1px solid var(--dt-border)',
+                      }}>
+                      「{suspectReactions.get(trialIdx)}」
+                    </div>
+                  </div>
+                )}
               </div>
 
               {allVisited && allDecided && (
