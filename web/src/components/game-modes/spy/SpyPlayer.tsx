@@ -603,21 +603,22 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           return (
             <div className="relative h-full -mx-4 -mb-4 overflow-hidden">
 
-              {/* 角色立繪 — 居中，頂端對齊題幹下方，下半身漸層消失 */}
-              <div className="absolute inset-0 flex justify-center pointer-events-none">
+              {/* 角色立繪 — top:70px 避開題幹，下半身漸層消失 */}
+              <div className="absolute left-0 right-0 bottom-0 flex justify-center pointer-events-none"
+                style={{ top: '70px' }}>
                 <img
                   src={SUSPECT_AVATARS[trialIdx]}
                   alt=""
                   className="h-full object-contain object-top transition-all duration-300"
                   style={{
                     filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.2))',
-                    maskImage: 'linear-gradient(to bottom, black 45%, transparent 75%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 45%, transparent 75%)',
+                    maskImage: 'linear-gradient(to bottom, black 40%, transparent 70%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 70%)',
                   }}
                 />
               </div>
 
-              {/* ① 題幹 — 固定展開，頂部 */}
+              {/* ① 題幹 — 頂部固定 */}
               <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-2">
                 <div className="text-xs text-dt-text-secondary leading-relaxed p-2.5 rounded-lg"
                   style={{
@@ -630,53 +631,53 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 </div>
               </div>
 
-              {/* ② 反應台詞 — 角色手部位置（距底部 48%），固定高度 */}
-              <div className="absolute left-4 right-4 z-20 h-10 flex items-center" style={{ bottom: '42%' }}>
-                {suspectReactions.has(trialIdx) && (() => {
-                  const reaction = suspectReactions.get(trialIdx)!;
-                  const m = reaction.mood;
-                  const anim = m === 'angry' ? 'moodShake 0.4s ease'
-                    : m === 'plead' ? 'moodTremble 0.3s ease 2'
-                    : m === 'smug' ? 'moodBounce 0.4s ease'
-                    : 'none';
-                  const borderColor = m === 'angry' ? 'var(--dt-error)'
-                    : m === 'smug' ? '#c8a84e'
-                    : m === 'grateful' ? 'var(--dt-success)'
-                    : 'var(--dt-border)';
-                  const textColor = m === 'angry' ? 'var(--dt-error)'
-                    : m === 'cold' ? 'var(--dt-text-muted)'
-                    : m === 'smug' ? '#c8a84e'
-                    : 'var(--dt-text-secondary)';
-                  const fontStyle = (m === 'cold' || m === 'smug') ? 'italic' as const : 'normal' as const;
-                  const fontWeight = m === 'angry' ? 700 : 400;
-                  const clipPath = m === 'angry'
-                    ? 'polygon(0% 4%, 3% 0%, 6% 5%, 10% 1%, 14% 4%, 18% 0%, 22% 3%, 26% 0%, 30% 4%, 34% 1%, 38% 3%, 42% 0%, 46% 4%, 50% 0%, 54% 3%, 58% 1%, 62% 4%, 66% 0%, 70% 3%, 74% 1%, 78% 4%, 82% 0%, 86% 3%, 90% 1%, 94% 4%, 97% 0%, 100% 4%, 100% 96%, 97% 100%, 94% 96%, 90% 99%, 86% 97%, 82% 100%, 78% 96%, 74% 99%, 70% 97%, 66% 100%, 62% 96%, 58% 99%, 54% 97%, 50% 100%, 46% 96%, 42% 100%, 38% 97%, 34% 99%, 30% 96%, 26% 100%, 22% 97%, 18% 100%, 14% 96%, 10% 99%, 6% 95%, 3% 100%, 0% 96%)'
-                    : 'none';
-                  return (
-                    <div className="w-full" style={{ animation: anim }}>
-                      <div className="text-xs px-3 py-1.5 rounded-xl"
-                        style={{
-                          background: 'color-mix(in srgb, var(--dt-card) 92%, transparent)',
-                          border: `${m === 'angry' ? '2px' : '1px'} solid ${borderColor}`,
-                          color: textColor, fontStyle, fontWeight, clipPath,
-                          backdropFilter: 'blur(8px)',
-                        }}>
-                        「{reaction.text}」
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* ③ 下方面板：證詞 + 按鈕 + 導覽 — 底部固定，漸層背景 */}
+              {/* ② 底部面板：反應 → 證詞 → 按鈕 → 導覽（全部綁在一起） */}
               <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pt-4"
                 style={{
-                  background: 'linear-gradient(to top, var(--dt-bg) 70%, transparent)',
+                  background: 'linear-gradient(to top, var(--dt-bg) 65%, transparent)',
                   paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
                 }}>
 
-                {/* 證詞 — 蓋住膝蓋大腿 */}
-                <div className="rounded-xl p-3 mb-3"
+                {/* 反應台詞（固定 h-10，緊貼證詞上方） */}
+                <div className="h-10 mb-1 flex items-center">
+                  {suspectReactions.has(trialIdx) && (() => {
+                    const reaction = suspectReactions.get(trialIdx)!;
+                    const m = reaction.mood;
+                    const anim = m === 'angry' ? 'moodShake 0.4s ease'
+                      : m === 'plead' ? 'moodTremble 0.3s ease 2'
+                      : m === 'smug' ? 'moodBounce 0.4s ease'
+                      : 'none';
+                    const borderColor = m === 'angry' ? 'var(--dt-error)'
+                      : m === 'smug' ? '#c8a84e'
+                      : m === 'grateful' ? 'var(--dt-success)'
+                      : 'var(--dt-border)';
+                    const textColor = m === 'angry' ? 'var(--dt-error)'
+                      : m === 'cold' ? 'var(--dt-text-muted)'
+                      : m === 'smug' ? '#c8a84e'
+                      : 'var(--dt-text-secondary)';
+                    const fontStyle = (m === 'cold' || m === 'smug') ? 'italic' as const : 'normal' as const;
+                    const fontWeight = m === 'angry' ? 700 : 400;
+                    const clipPath = m === 'angry'
+                      ? 'polygon(0% 4%, 3% 0%, 6% 5%, 10% 1%, 14% 4%, 18% 0%, 22% 3%, 26% 0%, 30% 4%, 34% 1%, 38% 3%, 42% 0%, 46% 4%, 50% 0%, 54% 3%, 58% 1%, 62% 4%, 66% 0%, 70% 3%, 74% 1%, 78% 4%, 82% 0%, 86% 3%, 90% 1%, 94% 4%, 97% 0%, 100% 4%, 100% 96%, 97% 100%, 94% 96%, 90% 99%, 86% 97%, 82% 100%, 78% 96%, 74% 99%, 70% 97%, 66% 100%, 62% 96%, 58% 99%, 54% 97%, 50% 100%, 46% 96%, 42% 100%, 38% 97%, 34% 99%, 30% 96%, 26% 100%, 22% 97%, 18% 100%, 14% 96%, 10% 99%, 6% 95%, 3% 100%, 0% 96%)'
+                      : 'none';
+                    return (
+                      <div className="w-full" style={{ animation: anim }}>
+                        <div className="text-xs px-3 py-1.5 rounded-xl"
+                          style={{
+                            background: 'color-mix(in srgb, var(--dt-card) 92%, transparent)',
+                            border: `${m === 'angry' ? '2px' : '1px'} solid ${borderColor}`,
+                            color: textColor, fontStyle, fontWeight, clipPath,
+                            backdropFilter: 'blur(8px)',
+                          }}>
+                          「{reaction.text}」
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* 證詞 */}
+                <div className="rounded-xl p-3 mb-2"
                   style={{
                     background: 'color-mix(in srgb, var(--dt-card) 95%, transparent)',
                     border: '2px solid var(--dt-border)',
