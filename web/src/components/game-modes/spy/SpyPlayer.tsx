@@ -504,7 +504,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         {phase === 'trial' ? (
           <>
             {/* 審訊導覽點 */}
-            <div className="flex gap-3 justify-center mb-1">
+            <div className="flex gap-3 justify-center mb-1" style={{ minHeight: '48px' }}>
               {question.options.map((_, i) => {
                 const visited = visitedSuspects.has(i);
                 const isCurrent = i === trialIdx;
@@ -517,6 +517,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     disabled={!canNav}
                     onClick={() => canNav && navigateToSuspect(i)}
                     className={`flex flex-col items-center gap-0.5 transition-all ${canNav ? 'cursor-pointer' : 'cursor-default'}`}
+                    style={{ minHeight: '48px' }}
                   >
                     <div
                       className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
@@ -535,13 +536,14 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     >
                       {LETTERS[i]}
                     </div>
-                    {decided && (
-                      <div className="text-[9px] font-medium" style={{
-                        color: decisionMade === 'detain' ? 'var(--dt-error)' : 'var(--dt-success)',
-                      }}>
-                        {decisionMade === 'detain' ? '關押' : '釋放'}
-                      </div>
-                    )}
+                    {/* 永遠預留文字空間，避免出現關押/釋放時推擠 */}
+                    <div className="text-[9px] font-medium" style={{
+                      color: decided
+                        ? (decisionMade === 'detain' ? 'var(--dt-error)' : 'var(--dt-success)')
+                        : 'transparent',
+                    }}>
+                      {decided ? (decisionMade === 'detain' ? '關押' : '釋放') : '未定'}
+                    </div>
                   </button>
                 );
               })}
@@ -603,7 +605,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
               {/* 角色立繪 — 居中，頂端對齊題幹下方，下半身漸層消失 */}
               <div className="absolute left-0 right-0 flex justify-center pointer-events-none"
-                style={{ top: '8%', bottom: '30%' }}>
+                style={{ top: '2%', bottom: '32%' }}>
                 <img
                   src={SUSPECT_AVATARS[trialIdx]}
                   alt=""
@@ -630,7 +632,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </div>
 
               {/* ② 反應台詞 — 角色手部位置（距底部 48%），固定高度 */}
-              <div className="absolute left-4 right-4 z-20 h-10 flex items-center" style={{ bottom: '48%' }}>
+              <div className="absolute left-4 right-4 z-20 h-10 flex items-center" style={{ bottom: '38%' }}>
                 {suspectReactions.has(trialIdx) && (() => {
                   const reaction = suspectReactions.get(trialIdx)!;
                   const m = reaction.mood;
@@ -668,8 +670,11 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </div>
 
               {/* ③ 下方面板：證詞 + 按鈕 + 導覽 — 底部固定，漸層背景 */}
-              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-4 pt-6"
-                style={{ background: 'linear-gradient(to top, var(--dt-bg) 70%, transparent)' }}>
+              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pt-6"
+                style={{
+                  background: 'linear-gradient(to top, var(--dt-bg) 70%, transparent)',
+                  paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+                }}>
 
                 {/* 證詞 — 蓋住膝蓋大腿 */}
                 <div className="rounded-xl p-3 mb-3"
