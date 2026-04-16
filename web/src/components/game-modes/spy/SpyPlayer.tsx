@@ -603,17 +603,17 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           return (
             <div className="relative h-full -mx-4 -mb-4 overflow-hidden">
 
-              {/* 角色立繪 — top:70px 避開題幹，下半身漸層消失 */}
+              {/* 角色立繪 — top:80px 避開題幹，頂部與底部都淡入/淡出 */}
               <div className="absolute left-0 right-0 bottom-0 flex justify-center pointer-events-none"
-                style={{ top: '70px' }}>
+                style={{ top: '80px' }}>
                 <img
                   src={SUSPECT_AVATARS[trialIdx]}
                   alt=""
                   className="h-full object-contain object-top transition-all duration-300"
                   style={{
                     filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.2))',
-                    maskImage: 'linear-gradient(to bottom, black 40%, transparent 70%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 70%)',
+                    maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 45%, transparent 72%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 45%, transparent 72%)',
                   }}
                 />
               </div>
@@ -632,10 +632,10 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </div>
 
               {/* ② 底部面板：反應 → 證詞 → 按鈕 → 導覽（全部綁在一起） */}
-              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pt-4"
+              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pt-3"
                 style={{
-                  background: 'linear-gradient(to top, var(--dt-bg) 65%, transparent)',
-                  paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+                  background: 'linear-gradient(to top, var(--dt-bg) 70%, transparent)',
+                  paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))',
                 }}>
 
                 {/* 反應台詞（固定 h-10，緊貼證詞上方） */}
@@ -677,7 +677,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 </div>
 
                 {/* 證詞 */}
-                <div className="rounded-xl p-3 mb-2"
+                <div className="rounded-xl p-3 mb-1.5"
                   style={{
                     background: 'color-mix(in srgb, var(--dt-card) 95%, transparent)',
                     border: '2px solid var(--dt-border)',
@@ -710,9 +710,9 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 </div>
 
                 {/* 釋放/關押 */}
-                <div className="flex gap-3 mb-2">
+                <div className="flex gap-3 mb-1.5">
                   <button onClick={() => onDecide('release')}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+                    className="flex-1 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
                     style={{
                       background: currentDecision === 'release'
                         ? 'color-mix(in srgb, var(--dt-success) 22%, var(--dt-card))'
@@ -723,7 +723,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     ✓ 釋放{currentDecision === 'release' ? ' ●' : ''}
                   </button>
                   <button onClick={() => onDecide('detain')}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+                    className="flex-1 py-2 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
                     style={{
                       background: currentDecision === 'detain'
                         ? 'color-mix(in srgb, var(--dt-error) 22%, var(--dt-card))'
