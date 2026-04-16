@@ -36,53 +36,61 @@ const SuspectIcon = ({ idx, size = 'md' }: { idx: number; size?: 'sm' | 'md' | '
   return <img src={SUSPECT_AVATARS[idx]} alt={`嫌犯 ${LETTERS[idx]}`} className={`${cls} object-contain`} />;
 };
 
-const DETAIN_LINES = [
-  '冤枉啊！我什麼都沒做！',
-  '你一定搞錯了，我是清白的！',
-  '長官，再想想！別衝動！',
-  '我有不在場證明的！',
-  '這不公平！憑什麼！',
-  '放手！我要見律師！',
-  '我可以解釋！給我一個機會！',
-  '別相信你看到的，事情沒那麼簡單。',
-  '我、我真的沒有……',
-  '你這樣會害了自己的！',
-  '等一下，先聽我說完！',
-  '我只是說錯話了，不代表我有問題！',
-  '憑什麼？你有證據嗎！',
-  '哼，走著瞧。',
-  '你不會找到任何東西的。',
-  '……好吧，隨你。',
-  '長官英明……（苦笑）',
-  '我認識你們長官的長官……',
-  '你真的確定嗎？再想想。',
-  '這個誤會，遲早會還我清白的。',
+type Mood = 'angry' | 'plead' | 'cold' | 'smug' | 'grateful';
+interface ReactionLine { text: string; mood: Mood }
+
+const DETAIN_LINES: ReactionLine[] = [
+  // angry — 震動 + 粗體 + 紅色尖刺邊框
+  { text: '冤枉啊！我什麼都沒做！', mood: 'angry' },
+  { text: '這不公平！憑什麼！', mood: 'angry' },
+  { text: '放手！我要見律師！', mood: 'angry' },
+  { text: '憑什麼？你有證據嗎！', mood: 'angry' },
+  { text: '哼，走著瞧。', mood: 'angry' },
+  { text: '你這樣會害了自己的！', mood: 'angry' },
+  // plead — 輕顫 + 正常字
+  { text: '你一定搞錯了，我是清白的！', mood: 'plead' },
+  { text: '長官，再想想！別衝動！', mood: 'plead' },
+  { text: '我有不在場證明的！', mood: 'plead' },
+  { text: '我可以解釋！給我一個機會！', mood: 'plead' },
+  { text: '等一下，先聽我說完！', mood: 'plead' },
+  { text: '我只是說錯話了，不代表我有問題！', mood: 'plead' },
+  { text: '我、我真的沒有……', mood: 'plead' },
+  { text: '這個誤會，遲早會還我清白的。', mood: 'plead' },
+  // cold — 無動畫，斜體，詭異
+  { text: '別相信你看到的，事情沒那麼簡單。', mood: 'cold' },
+  { text: '你不會找到任何東西的。', mood: 'cold' },
+  { text: '……好吧，隨你。', mood: 'cold' },
+  { text: '長官英明……（苦笑）', mood: 'cold' },
+  { text: '我認識你們長官的長官……', mood: 'cold' },
+  { text: '你真的確定嗎？再想想。', mood: 'cold' },
 ];
 
-const RELEASE_LINES = [
-  '謝謝！我就知道你有眼光！',
-  '感謝長官明察！',
-  '終於！嚇死我了。',
-  '呼……差點出事。',
-  '你真是個聰明的人。',
-  '我就說嘛，清清白白的！',
-  '哈，我就知道你看得出來。',
-  '嘿嘿……謝謝你。',
-  '運氣真好呢，是不是？',
-  '你放心，我不會讓你失望的。',
-  '長官英明！',
-  '咦，就這樣？那我走了？',
-  '太好了！家人還在等我！',
-  '你做了正確的選擇。',
-  '呵呵，多謝招待。',
-  '我早說我沒問題的！',
-  '哼，總算有人識貨。',
-  '謝謝，我……我真的很感激。',
-  '好的好的，我這就走。',
-  '希望我們不會再見面。',
+const RELEASE_LINES: ReactionLine[] = [
+  // grateful — 無震動，綠邊
+  { text: '謝謝！我就知道你有眼光！', mood: 'grateful' },
+  { text: '感謝長官明察！', mood: 'grateful' },
+  { text: '終於！嚇死我了。', mood: 'grateful' },
+  { text: '呼……差點出事。', mood: 'grateful' },
+  { text: '我就說嘛，清清白白的！', mood: 'grateful' },
+  { text: '太好了！家人還在等我！', mood: 'grateful' },
+  { text: '謝謝，我……我真的很感激。', mood: 'grateful' },
+  { text: '我早說我沒問題的！', mood: 'grateful' },
+  { text: '長官英明！', mood: 'grateful' },
+  // smug — 斜體 + 金邊 + 微彈
+  { text: '你真是個聰明的人。', mood: 'smug' },
+  { text: '哈，我就知道你看得出來。', mood: 'smug' },
+  { text: '嘿嘿……謝謝你。', mood: 'smug' },
+  { text: '運氣真好呢，是不是？', mood: 'smug' },
+  { text: '你做了正確的選擇。', mood: 'smug' },
+  { text: '呵呵，多謝招待。', mood: 'smug' },
+  { text: '好的好的，我這就走。', mood: 'smug' },
+  { text: '希望我們不會再見面。', mood: 'smug' },
+  { text: '你放心，我不會讓你失望的。', mood: 'smug' },
+  { text: '咦，就這樣？那我走了？', mood: 'smug' },
+  { text: '哼，總算有人識貨。', mood: 'smug' },
 ];
 
-function pickLine(lines: string[], seed: number) {
+function pickLine(lines: ReactionLine[], seed: number): ReactionLine {
   return lines[seed % lines.length];
 }
 
@@ -164,7 +172,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   const [visitedSuspects, setVisitedSuspects] = useState<Set<number>>(new Set([0]));
   const [decisions, setDecisions] = useState<Map<number, 'detain' | 'release'>>(new Map());
   const [suspectMarks, setSuspectMarks] = useState<Map<number, SuspectMark | null>>(new Map());
-  const [suspectReactions, setSuspectReactions] = useState<Map<number, string>>(new Map());
+  const [suspectReactions, setSuspectReactions] = useState<Map<number, ReactionLine>>(new Map());
 
   // ── Reveal ──
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
@@ -238,10 +246,10 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
     if (isFirstDecision) {
       const seed = Math.floor(Math.random() * 1000);
-      const line = decision === 'detain'
+      const reaction = decision === 'detain'
         ? pickLine(DETAIN_LINES, seed)
         : pickLine(RELEASE_LINES, seed);
-      setSuspectReactions(prev => new Map(prev).set(trialIdx, line));
+      setSuspectReactions(prev => new Map(prev).set(trialIdx, reaction));
 
       // 把下一個未看過的嫌犯加入 visited，讓導覽點解鎖（但不自動跳）
       for (let i = 0; i < totalSuspects; i++) {
@@ -448,6 +456,28 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           45%  { transform: rotateX(90deg);   filter: blur(4px); }
           55%  { transform: rotateX(90deg);   filter: blur(4px); }
           100% { transform: rotateX(0deg);    filter: blur(0px); }
+        }
+        @keyframes moodShake {
+          0%, 100% { transform: translateX(0); }
+          10% { transform: translateX(-6px); }
+          20% { transform: translateX(6px); }
+          30% { transform: translateX(-5px); }
+          40% { transform: translateX(5px); }
+          50% { transform: translateX(-3px); }
+          60% { transform: translateX(3px); }
+          70% { transform: translateX(-2px); }
+          80% { transform: translateX(2px); }
+        }
+        @keyframes moodTremble {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-2px); }
+          50% { transform: translateX(1px); }
+          75% { transform: translateX(-1px); }
+        }
+        @keyframes moodBounce {
+          0%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-4px); }
+          60% { transform: translateY(-2px); }
         }
       `}</style>
 
@@ -663,20 +693,55 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   </button>
                 </div>
 
-                {/* 嫌犯反應台詞 */}
-                {suspectReactions.has(trialIdx) && (
-                  <div className="mt-3 flex items-start gap-2">
-                    <SuspectIcon idx={trialIdx} size="sm" />
-                    <div className="text-xs px-3 py-2 rounded-xl rounded-tl-sm italic"
-                      style={{
-                        background: 'color-mix(in srgb, var(--dt-border) 40%, var(--dt-card))',
-                        color: 'var(--dt-text-secondary)',
-                        border: '1px solid var(--dt-border)',
-                      }}>
-                      「{suspectReactions.get(trialIdx)}」
+                {/* 嫌犯反應台詞 — 逆轉裁判風格 */}
+                {suspectReactions.has(trialIdx) && (() => {
+                  const reaction = suspectReactions.get(trialIdx)!;
+                  const m = reaction.mood;
+                  const anim = m === 'angry' ? 'moodShake 0.4s ease'
+                    : m === 'plead' ? 'moodTremble 0.3s ease 2'
+                    : m === 'smug' ? 'moodBounce 0.4s ease'
+                    : 'none';
+                  const borderColor = m === 'angry' ? 'var(--dt-error)'
+                    : m === 'smug' ? '#c8a84e'
+                    : m === 'grateful' ? 'var(--dt-success)'
+                    : 'var(--dt-border)';
+                  const borderWidth = m === 'angry' ? '2px' : '1px';
+                  const borderStyle = m === 'angry' ? 'solid' : 'solid';
+                  const textColor = m === 'angry' ? 'var(--dt-error)'
+                    : m === 'cold' ? 'var(--dt-text-muted)'
+                    : m === 'smug' ? '#c8a84e'
+                    : 'var(--dt-text-secondary)';
+                  const fontStyle = (m === 'cold' || m === 'smug') ? 'italic' as const : 'normal' as const;
+                  const fontWeight = m === 'angry' ? 700 : 400;
+                  const textShadow = m === 'angry' ? '1px 1px 0 rgba(0,0,0,0.15)' : 'none';
+                  // 尖刺邊框 — angry 用 clip-path 做鋸齒
+                  const clipPath = m === 'angry'
+                    ? 'polygon(0% 4%, 3% 0%, 6% 5%, 10% 1%, 14% 4%, 18% 0%, 22% 3%, 26% 0%, 30% 4%, 34% 1%, 38% 3%, 42% 0%, 46% 4%, 50% 0%, 54% 3%, 58% 1%, 62% 4%, 66% 0%, 70% 3%, 74% 1%, 78% 4%, 82% 0%, 86% 3%, 90% 1%, 94% 4%, 97% 0%, 100% 4%, 100% 96%, 97% 100%, 94% 96%, 90% 99%, 86% 97%, 82% 100%, 78% 96%, 74% 99%, 70% 97%, 66% 100%, 62% 96%, 58% 99%, 54% 97%, 50% 100%, 46% 96%, 42% 100%, 38% 97%, 34% 99%, 30% 96%, 26% 100%, 22% 97%, 18% 100%, 14% 96%, 10% 99%, 6% 95%, 3% 100%, 0% 96%)'
+                    : 'none';
+                  return (
+                    <div className="mt-3 flex items-start gap-2"
+                      style={{ animation: anim }}>
+                      <SuspectIcon idx={trialIdx} size="sm" />
+                      <div className="text-sm px-3 py-2 rounded-xl rounded-tl-sm"
+                        style={{
+                          background: m === 'angry'
+                            ? 'color-mix(in srgb, var(--dt-error) 12%, var(--dt-card))'
+                            : m === 'smug'
+                              ? 'color-mix(in srgb, #c8a84e 8%, var(--dt-card))'
+                              : 'color-mix(in srgb, var(--dt-border) 40%, var(--dt-card))',
+                          border: `${borderWidth} ${borderStyle} ${borderColor}`,
+                          color: textColor,
+                          fontStyle,
+                          fontWeight,
+                          textShadow,
+                          clipPath,
+                          padding: m === 'angry' ? '10px 14px' : undefined,
+                        }}>
+                        「{reaction.text}」
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* 上一個 / 下一個導覽 */}
                 {(() => {
