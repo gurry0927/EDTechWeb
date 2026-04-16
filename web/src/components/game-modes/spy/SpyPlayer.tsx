@@ -587,46 +587,90 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           </div>
         )}
 
-        {/* Phase 1: Trial */}
+        {/* Phase 1: Trial — VN 風格 */}
         {phase === 'trial' && (() => {
           const error = errorByOption.get(trialIdx);
           const mark = suspectMarks.get(trialIdx);
           const segs = buildOptionSegs(question.options[trialIdx], error);
           const currentDecision = decisions.get(trialIdx);
+          const hasPrev = trialIdx > 0;
+          const nextVisited = trialIdx + 1 < totalSuspects && visitedSuspects.has(trialIdx + 1);
+          const nextUnlocked = decisions.has(trialIdx) && trialIdx + 1 < totalSuspects && !visitedSuspects.has(trialIdx + 1);
+          const hasNext = nextVisited || nextUnlocked;
+
           return (
-            <div className="space-y-4">
-              {/* 題幹常駐 */}
-              <div className="case-file rounded-xl p-4">
-                <DetectiveBubble>
-                  <span className="text-dt-accent font-medium">案情：</span>{question.mainStem}
-                </DetectiveBubble>
-                <DetectiveBubble>
-                  {totalSpies === 1
-                    ? '據報有 1 名臥底混入。逐一審問，可標記可疑之處，再做出判斷。'
-                    : `據報有 ${totalSpies} 名臥底混入。逐一審問，可標記可疑之處，再做出判斷。`}
-                </DetectiveBubble>
+            <div className="flex flex-col h-full -mx-4 -mb-4">
+
+              {/* ── 上半：角色立繪區 ── */}
+              <div className="relative flex-shrink-0 flex items-end justify-center overflow-hidden"
+                style={{ height: '28vh', background: 'color-mix(in srgb, var(--dt-accent) 6%, var(--dt-bg))' }}>
+                {/* 角色圖 */}
+                <img
+                  src={SUSPECT_AVATARS[trialIdx]}
+                  alt={`嫌犯 ${LETTERS[trialIdx]}`}
+                  className="h-full object-contain relative z-10 transition-all duration-300"
+                  style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}
+                />
+                {/* 底部漸層融解 */}
+                <div className="absolute bottom-0 left-0 right-0 h-16 z-20"
+                  style={{ background: 'linear-gradient(to top, var(--dt-bg), transparent)' }} />
+                {/* 嫌犯名牌 */}
+                <div className="absolute bottom-2 left-4 z-30 flex items-center gap-2">
+                  <div className="px-3 py-1 rounded-lg text-xs font-bold"
+                    style={{
+                      background: 'color-mix(in srgb, var(--dt-accent) 85%, transparent)',
+                      color: 'white',
+                      backdropFilter: 'blur(8px)',
+                    }}>
+                    嫌犯 {LETTERS[trialIdx]}
+                  </div>
+                  {mark && (
+                    <div className="px-2 py-1 rounded-lg text-[10px]"
+                      style={{
+                        background: 'color-mix(in srgb, var(--dt-scan) 80%, transparent)',
+                        color: 'white',
+                      }}>
+                      🔍 已標記
+                    </div>
+                  )}
+                </div>
+                {/* 右下角：案情提示 */}
+                <div className="absolute bottom-2 right-4 z-30 text-[10px] px-2 py-1 rounded-lg"
+                  style={{
+                    background: 'color-mix(in srgb, var(--dt-card) 85%, transparent)',
+                    color: 'var(--dt-text-muted)',
+                    backdropFilter: 'blur(8px)',
+                  }}>
+                  臥底 {totalSpies} 名
+                </div>
               </div>
 
-              {/* 當前嫌犯供詞 */}
-              <div className="case-file rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <SuspectIcon idx={trialIdx} size="lg" />
-                  <div>
-                    <div className="text-sm font-bold" style={{ color: 'var(--dt-accent)' }}>
-                      嫌犯 {LETTERS[trialIdx]} 的供詞
-                    </div>
-                    <div className="text-[10px] text-dt-text-muted">
-                      {mark ? `已標記「${mark.text.slice(0, 8)}${mark.text.length > 8 ? '…' : ''}」` : '可點選供詞標記可疑片段（選填）'}
-                    </div>
-                  </div>
-                </div>
+              {/* ── 下半：對話框區 ── */}
+              <div className="flex-1 flex flex-col overflow-y-auto px-4 pt-3 pb-4">
 
-                <div className="rounded-lg p-3 mb-3" style={{
-                  background: 'color-mix(in srgb, var(--dt-bg) 80%, transparent)',
-                  border: '1px solid var(--dt-border)',
-                }}>
+                {/* 案情（可收合） */}
+                <details className="mb-3">
+                  <summary className="text-[11px] text-dt-accent cursor-pointer font-medium">
+                    📋 案情摘要
+                  </summary>
+                  <div className="mt-1 text-xs text-dt-text-secondary leading-relaxed p-2 rounded-lg"
+                    style={{ background: 'color-mix(in srgb, var(--dt-accent) 5%, var(--dt-card))' }}>
+                    {question.mainStem}
+                  </div>
+                </details>
+
+                {/* 供詞對話框 */}
+                <div className="rounded-xl p-4 mb-3"
+                  style={{
+                    background: 'var(--dt-card)',
+                    border: '2px solid var(--dt-border)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  }}>
+                  <div className="text-[10px] text-dt-text-muted mb-2">
+                    {mark ? `已標記「${mark.text.slice(0, 8)}${mark.text.length > 8 ? '…' : ''}」` : '點選供詞可標記可疑之處'}
+                  </div>
                   <p className="text-base leading-loose select-none">
-                    {segs.map((seg, si) => {
+                    「{segs.map((seg, si) => {
                       const isMarked = mark?.text === seg.text;
                       return (
                         <span
@@ -643,26 +687,57 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                           {seg.text}
                         </span>
                       );
-                    })}
+                    })}」
                   </p>
                 </div>
 
-                {mark && (
-                  <div className="text-[11px] px-2.5 py-1.5 rounded-lg mb-3 flex items-center gap-1.5"
-                    style={{
-                      background: 'color-mix(in srgb, var(--dt-scan) 10%, transparent)',
-                      color: 'var(--dt-scan)',
-                      border: '1px solid color-mix(in srgb, var(--dt-scan) 40%, transparent)',
-                    }}>
-                    🔍 已標記：「{mark.text}」（審訊後將進一步確認）
-                  </div>
-                )}
+                {/* 嫌犯反應台詞 — 逆轉裁判風格 */}
+                {suspectReactions.has(trialIdx) && (() => {
+                  const reaction = suspectReactions.get(trialIdx)!;
+                  const m = reaction.mood;
+                  const anim = m === 'angry' ? 'moodShake 0.4s ease'
+                    : m === 'plead' ? 'moodTremble 0.3s ease 2'
+                    : m === 'smug' ? 'moodBounce 0.4s ease'
+                    : 'none';
+                  const borderColor = m === 'angry' ? 'var(--dt-error)'
+                    : m === 'smug' ? '#c8a84e'
+                    : m === 'grateful' ? 'var(--dt-success)'
+                    : 'var(--dt-border)';
+                  const textColor = m === 'angry' ? 'var(--dt-error)'
+                    : m === 'cold' ? 'var(--dt-text-muted)'
+                    : m === 'smug' ? '#c8a84e'
+                    : 'var(--dt-text-secondary)';
+                  const fontStyle = (m === 'cold' || m === 'smug') ? 'italic' as const : 'normal' as const;
+                  const fontWeight = m === 'angry' ? 700 : 400;
+                  const textShadow = m === 'angry' ? '1px 1px 0 rgba(0,0,0,0.15)' : 'none';
+                  const clipPath = m === 'angry'
+                    ? 'polygon(0% 4%, 3% 0%, 6% 5%, 10% 1%, 14% 4%, 18% 0%, 22% 3%, 26% 0%, 30% 4%, 34% 1%, 38% 3%, 42% 0%, 46% 4%, 50% 0%, 54% 3%, 58% 1%, 62% 4%, 66% 0%, 70% 3%, 74% 1%, 78% 4%, 82% 0%, 86% 3%, 90% 1%, 94% 4%, 97% 0%, 100% 4%, 100% 96%, 97% 100%, 94% 96%, 90% 99%, 86% 97%, 82% 100%, 78% 96%, 74% 99%, 70% 97%, 66% 100%, 62% 96%, 58% 99%, 54% 97%, 50% 100%, 46% 96%, 42% 100%, 38% 97%, 34% 99%, 30% 96%, 26% 100%, 22% 97%, 18% 100%, 14% 96%, 10% 99%, 6% 95%, 3% 100%, 0% 96%)'
+                    : 'none';
+                  return (
+                    <div className="mb-3" style={{ animation: anim }}>
+                      <div className="text-sm px-4 py-2.5 rounded-xl"
+                        style={{
+                          background: m === 'angry'
+                            ? 'color-mix(in srgb, var(--dt-error) 12%, var(--dt-card))'
+                            : m === 'smug'
+                              ? 'color-mix(in srgb, #c8a84e 8%, var(--dt-card))'
+                              : 'color-mix(in srgb, var(--dt-border) 40%, var(--dt-card))',
+                          border: `${m === 'angry' ? '2px' : '1px'} solid ${borderColor}`,
+                          color: textColor,
+                          fontStyle,
+                          fontWeight,
+                          textShadow,
+                          clipPath,
+                          padding: m === 'angry' ? '10px 14px' : undefined,
+                        }}>
+                        「{reaction.text}」
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                <DetectiveBubble>
-                  你覺得這個人的供詞可信嗎？
-                </DetectiveBubble>
-
-                <div className="flex gap-3 mt-1">
+                {/* 釋放/關押按鈕 */}
+                <div className="flex gap-3 mb-3">
                   <button
                     onClick={() => onDecide('release')}
                     className="flex-1 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -693,94 +768,36 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   </button>
                 </div>
 
-                {/* 嫌犯反應台詞 — 逆轉裁判風格 */}
-                {suspectReactions.has(trialIdx) && (() => {
-                  const reaction = suspectReactions.get(trialIdx)!;
-                  const m = reaction.mood;
-                  const anim = m === 'angry' ? 'moodShake 0.4s ease'
-                    : m === 'plead' ? 'moodTremble 0.3s ease 2'
-                    : m === 'smug' ? 'moodBounce 0.4s ease'
-                    : 'none';
-                  const borderColor = m === 'angry' ? 'var(--dt-error)'
-                    : m === 'smug' ? '#c8a84e'
-                    : m === 'grateful' ? 'var(--dt-success)'
-                    : 'var(--dt-border)';
-                  const borderWidth = m === 'angry' ? '2px' : '1px';
-                  const borderStyle = m === 'angry' ? 'solid' : 'solid';
-                  const textColor = m === 'angry' ? 'var(--dt-error)'
-                    : m === 'cold' ? 'var(--dt-text-muted)'
-                    : m === 'smug' ? '#c8a84e'
-                    : 'var(--dt-text-secondary)';
-                  const fontStyle = (m === 'cold' || m === 'smug') ? 'italic' as const : 'normal' as const;
-                  const fontWeight = m === 'angry' ? 700 : 400;
-                  const textShadow = m === 'angry' ? '1px 1px 0 rgba(0,0,0,0.15)' : 'none';
-                  // 尖刺邊框 — angry 用 clip-path 做鋸齒
-                  const clipPath = m === 'angry'
-                    ? 'polygon(0% 4%, 3% 0%, 6% 5%, 10% 1%, 14% 4%, 18% 0%, 22% 3%, 26% 0%, 30% 4%, 34% 1%, 38% 3%, 42% 0%, 46% 4%, 50% 0%, 54% 3%, 58% 1%, 62% 4%, 66% 0%, 70% 3%, 74% 1%, 78% 4%, 82% 0%, 86% 3%, 90% 1%, 94% 4%, 97% 0%, 100% 4%, 100% 96%, 97% 100%, 94% 96%, 90% 99%, 86% 97%, 82% 100%, 78% 96%, 74% 99%, 70% 97%, 66% 100%, 62% 96%, 58% 99%, 54% 97%, 50% 100%, 46% 96%, 42% 100%, 38% 97%, 34% 99%, 30% 96%, 26% 100%, 22% 97%, 18% 100%, 14% 96%, 10% 99%, 6% 95%, 3% 100%, 0% 96%)'
-                    : 'none';
-                  return (
-                    <div className="mt-3 flex items-start gap-2"
-                      style={{ animation: anim }}>
-                      <SuspectIcon idx={trialIdx} size="sm" />
-                      <div className="text-sm px-3 py-2 rounded-xl rounded-tl-sm"
-                        style={{
-                          background: m === 'angry'
-                            ? 'color-mix(in srgb, var(--dt-error) 12%, var(--dt-card))'
-                            : m === 'smug'
-                              ? 'color-mix(in srgb, #c8a84e 8%, var(--dt-card))'
-                              : 'color-mix(in srgb, var(--dt-border) 40%, var(--dt-card))',
-                          border: `${borderWidth} ${borderStyle} ${borderColor}`,
-                          color: textColor,
-                          fontStyle,
-                          fontWeight,
-                          textShadow,
-                          clipPath,
-                          padding: m === 'angry' ? '10px 14px' : undefined,
-                        }}>
-                        「{reaction.text}」
-                      </div>
-                    </div>
-                  );
-                })()}
+                {/* 上一位 / 下一位導覽 */}
+                {(hasPrev || hasNext) && (
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      disabled={!hasPrev}
+                      onClick={() => hasPrev && navigateToSuspect(trialIdx - 1)}
+                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all disabled:opacity-30"
+                      style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}
+                    >
+                      ← 上一位
+                    </button>
+                    <button
+                      disabled={!hasNext}
+                      onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
+                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all disabled:opacity-30 dt-btn-primary"
+                    >
+                      下一位 →
+                    </button>
+                  </div>
+                )}
 
-                {/* 上一個 / 下一個導覽 */}
-                {(() => {
-                  const hasPrev = trialIdx > 0;
-                  // 下一個：已 visited 的下一位，或已決定當前且有下一個未 visited
-                  const nextVisited = trialIdx + 1 < totalSuspects && visitedSuspects.has(trialIdx + 1);
-                  const nextUnlocked = decisions.has(trialIdx) && trialIdx + 1 < totalSuspects && !visitedSuspects.has(trialIdx + 1);
-                  const hasNext = nextVisited || nextUnlocked;
-                  if (!hasPrev && !hasNext) return null;
-                  return (
-                    <div className="flex gap-2 mt-4">
-                      <button
-                        disabled={!hasPrev}
-                        onClick={() => hasPrev && navigateToSuspect(trialIdx - 1)}
-                        className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1 transition-all disabled:opacity-30"
-                        style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}
-                      >
-                        ← 上一位
-                      </button>
-                      <button
-                        disabled={!hasNext}
-                        onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
-                        className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1 transition-all disabled:opacity-30 dt-btn-primary"
-                      >
-                        下一位 →
-                      </button>
-                    </div>
-                  );
-                })()}
+                {allVisited && allDecided && (
+                  <button
+                    onClick={onProceedToReveal}
+                    className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary transition-all hover:scale-[1.01] active:scale-[0.98]"
+                  >
+                    審訊完畢，進行宣判 →
+                  </button>
+                )}
               </div>
-
-              {allVisited && allDecided && (
-                <button
-                  onClick={onProceedToReveal}
-                  className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary transition-all hover:scale-[1.01] active:scale-[0.98]"
-                >
-                  審訊完畢，進行宣判 →
-                </button>
-              )}
             </div>
           );
         })()}
