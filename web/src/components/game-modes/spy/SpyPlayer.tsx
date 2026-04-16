@@ -86,33 +86,43 @@ function pickLine(lines: string[], seed: number) {
   return lines[seed % lines.length];
 }
 
-function buildOptionSegs(optionText: string, error?: OptionError) {
-  // 切成 2-3 字的小塊，讓錯誤片段無法靠長度辨認
+function chunkText(text: string): string[] {
   const tokens: string[] = [];
   let i = 0;
-  while (i < optionText.length) {
-    if (/[，。？！、；：「」『』（）【】]/.test(optionText[i])) {
-      tokens.push(optionText[i]);
+  while (i < text.length) {
+    if (/[，。？！、；：「」『』（）【】]/.test(text[i])) {
+      tokens.push(text[i]);
       i += 1;
     } else {
-      const remaining = optionText.length - i;
+      const remaining = text.length - i;
       const chunkSize = remaining >= 3 ? 3 : remaining;
-      tokens.push(optionText.slice(i, i + chunkSize));
+      tokens.push(text.slice(i, i + chunkSize));
       i += chunkSize;
     }
   }
+  return tokens;
+}
 
-  // 標記每個 token 是否完全落在 error 範圍內
-  const segs: { text: string; isError: boolean }[] = [];
-  let pos = 0;
-  for (const token of tokens) {
-    const end = pos + token.length;
-    const isError = error
-      ? pos >= error.startIndex && end <= error.startIndex + error.length
-      : false;
-    segs.push({ text: token, isError });
-    pos = end;
+function buildOptionSegs(optionText: string, error?: OptionError) {
+  if (!error) {
+    return chunkText(optionText).map(t => ({ text: t, isError: false }));
   }
+
+  const { startIndex, length } = error;
+  const endIndex = startIndex + length;
+  const segs: { text: string; isError: boolean }[] = [];
+
+  // 前段：切碎
+  if (startIndex > 0) {
+    chunkText(optionText.slice(0, startIndex)).forEach(t => segs.push({ text: t, isError: false }));
+  }
+  // 錯誤段：整塊保留，一個 span
+  segs.push({ text: optionText.slice(startIndex, endIndex), isError: true });
+  // 後段：切碎
+  if (endIndex < optionText.length) {
+    chunkText(optionText.slice(endIndex)).forEach(t => segs.push({ text: t, isError: false }));
+  }
+
   return segs;
 }
 
