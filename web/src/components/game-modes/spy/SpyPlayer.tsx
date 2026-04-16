@@ -599,203 +599,156 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           const hasNext = nextVisited || nextUnlocked;
 
           return (
-            <div className="relative h-full -mx-4 -mb-4 flex flex-col">
+            <div className="relative h-full -mx-4 -mb-4 overflow-hidden">
 
-              {/* 角色立繪 — 絕對定位做背景，永遠在同一位置 */}
-              <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none" style={{ top: '25%' }}>
+              {/* 角色立繪 — 居中，頂端對齊題幹下方，下半身漸層消失 */}
+              <div className="absolute left-0 right-0 flex justify-center pointer-events-none"
+                style={{ top: '8%', bottom: '30%' }}>
                 <img
                   src={SUSPECT_AVATARS[trialIdx]}
-                  alt={`嫌犯 ${LETTERS[trialIdx]}`}
-                  className="h-[80%] object-contain object-top transition-all duration-300"
+                  alt=""
+                  className="h-full object-contain object-top transition-all duration-300"
                   style={{
-                    filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
-                    opacity: 0.45,
-                    maskImage: 'linear-gradient(to bottom, black 50%, transparent 90%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 90%)',
+                    filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.2))',
+                    maskImage: 'linear-gradient(to bottom, black 55%, transparent 95%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 55%, transparent 95%)',
                   }}
                 />
               </div>
 
-              {/* 內容層 — z-20，疊在角色上方 */}
-              <div className="relative z-20 flex flex-col h-full">
-
-                {/* ① 案情摘要 */}
-                <div className="shrink-0 px-4 pt-2 pb-1">
-                  <details className="mb-1">
-                    <summary className="text-[11px] text-dt-accent cursor-pointer font-medium">
-                      📋 案情摘要（臥底 {totalSpies} 名）
-                    </summary>
-                    <div className="mt-1 text-xs text-dt-text-secondary leading-relaxed p-2 rounded-lg"
-                      style={{ background: 'color-mix(in srgb, var(--dt-card) 90%, transparent)', backdropFilter: 'blur(4px)' }}>
-                      {question.mainStem}
-                    </div>
-                  </details>
+              {/* ① 題幹 — 固定展開，頂部 */}
+              <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-2">
+                <div className="text-xs text-dt-text-secondary leading-relaxed p-2.5 rounded-lg"
+                  style={{
+                    background: 'color-mix(in srgb, var(--dt-card) 92%, transparent)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid var(--dt-border)',
+                  }}>
+                  <span className="text-dt-accent font-bold mr-1">臥底 {totalSpies} 名</span>
+                  {question.mainStem}
                 </div>
+              </div>
 
-                {/* ② 供詞對話框 */}
-                <div className="shrink-0 px-4 mb-2">
-                  <div className="rounded-xl p-4"
-                    style={{
-                      background: 'color-mix(in srgb, var(--dt-card) 95%, transparent)',
-                      border: '2px solid var(--dt-border)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                      backdropFilter: 'blur(8px)',
-                    }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-xs font-bold" style={{ color: 'var(--dt-accent)' }}>
-                        嫌犯 {LETTERS[trialIdx]} 的供詞
+              {/* ② 反應台詞 — 角色手部位置（距底部 48%），固定高度 */}
+              <div className="absolute left-4 right-4 z-20 h-10 flex items-center" style={{ bottom: '48%' }}>
+                {suspectReactions.has(trialIdx) && (() => {
+                  const reaction = suspectReactions.get(trialIdx)!;
+                  const m = reaction.mood;
+                  const anim = m === 'angry' ? 'moodShake 0.4s ease'
+                    : m === 'plead' ? 'moodTremble 0.3s ease 2'
+                    : m === 'smug' ? 'moodBounce 0.4s ease'
+                    : 'none';
+                  const borderColor = m === 'angry' ? 'var(--dt-error)'
+                    : m === 'smug' ? '#c8a84e'
+                    : m === 'grateful' ? 'var(--dt-success)'
+                    : 'var(--dt-border)';
+                  const textColor = m === 'angry' ? 'var(--dt-error)'
+                    : m === 'cold' ? 'var(--dt-text-muted)'
+                    : m === 'smug' ? '#c8a84e'
+                    : 'var(--dt-text-secondary)';
+                  const fontStyle = (m === 'cold' || m === 'smug') ? 'italic' as const : 'normal' as const;
+                  const fontWeight = m === 'angry' ? 700 : 400;
+                  const clipPath = m === 'angry'
+                    ? 'polygon(0% 4%, 3% 0%, 6% 5%, 10% 1%, 14% 4%, 18% 0%, 22% 3%, 26% 0%, 30% 4%, 34% 1%, 38% 3%, 42% 0%, 46% 4%, 50% 0%, 54% 3%, 58% 1%, 62% 4%, 66% 0%, 70% 3%, 74% 1%, 78% 4%, 82% 0%, 86% 3%, 90% 1%, 94% 4%, 97% 0%, 100% 4%, 100% 96%, 97% 100%, 94% 96%, 90% 99%, 86% 97%, 82% 100%, 78% 96%, 74% 99%, 70% 97%, 66% 100%, 62% 96%, 58% 99%, 54% 97%, 50% 100%, 46% 96%, 42% 100%, 38% 97%, 34% 99%, 30% 96%, 26% 100%, 22% 97%, 18% 100%, 14% 96%, 10% 99%, 6% 95%, 3% 100%, 0% 96%)'
+                    : 'none';
+                  return (
+                    <div className="w-full" style={{ animation: anim }}>
+                      <div className="text-xs px-3 py-1.5 rounded-xl"
+                        style={{
+                          background: 'color-mix(in srgb, var(--dt-card) 92%, transparent)',
+                          border: `${m === 'angry' ? '2px' : '1px'} solid ${borderColor}`,
+                          color: textColor, fontStyle, fontWeight, clipPath,
+                          backdropFilter: 'blur(8px)',
+                        }}>
+                        「{reaction.text}」
                       </div>
-                      <div className="text-[10px] text-dt-text-muted">
-                        {mark ? `🔍 已標記「${mark.text.slice(0, 6)}…」` : '點選可標記'}
-                      </div>
                     </div>
-                    <p className="text-base leading-loose select-none">
-                      「{segs.map((seg, si) => {
-                        const isMarked = mark?.text === seg.text;
-                        return (
-                          <span
-                            key={si}
-                            onClick={() => onMark(seg.text, seg.isError)}
-                            className="cursor-pointer transition-colors"
-                            style={{
-                              borderBottom: isMarked
-                                ? '2px solid var(--dt-scan)'
-                                : '2px solid transparent',
-                              color: isMarked ? 'var(--dt-scan)' : undefined,
-                            }}
-                          >
-                            {seg.text}
-                          </span>
-                        );
-                      })}」
-                    </p>
-                  </div>
-                </div>
+                  );
+                })()}
+              </div>
 
-                {/* ③ 中間留白（角色透出的位置）+ 嫌犯名牌 */}
-                <div className="flex-1 relative" style={{ minHeight: '60px' }}>
-                  <div className="absolute top-2 left-4">
-                    <div className="px-3 py-1 rounded-lg text-xs font-bold"
-                      style={{
-                        background: 'color-mix(in srgb, var(--dt-accent) 85%, transparent)',
-                        color: 'white',
-                        backdropFilter: 'blur(8px)',
-                      }}>
-                      嫌犯 {LETTERS[trialIdx]}
+              {/* ③ 下方面板：證詞 + 按鈕 + 導覽 — 底部固定，漸層背景 */}
+              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-4 pt-6"
+                style={{ background: 'linear-gradient(to top, var(--dt-bg) 70%, transparent)' }}>
+
+                {/* 證詞 — 蓋住膝蓋大腿 */}
+                <div className="rounded-xl p-3 mb-3"
+                  style={{
+                    background: 'color-mix(in srgb, var(--dt-card) 95%, transparent)',
+                    border: '2px solid var(--dt-border)',
+                    backdropFilter: 'blur(8px)',
+                  }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-xs font-bold" style={{ color: 'var(--dt-accent)' }}>
+                      嫌犯 {LETTERS[trialIdx]} 的供詞
+                    </div>
+                    <div className="text-[10px] text-dt-text-muted">
+                      {mark ? `🔍「${mark.text.slice(0, 6)}…」` : '點選可標記'}
                     </div>
                   </div>
-                </div>
-
-                {/* ④ 反應台詞（固定高度預留，永遠佔位） */}
-                <div className="shrink-0 px-4" style={{ minHeight: '48px' }}>
-                  {suspectReactions.has(trialIdx) && (() => {
-                    const reaction = suspectReactions.get(trialIdx)!;
-                    const m = reaction.mood;
-                    const anim = m === 'angry' ? 'moodShake 0.4s ease'
-                      : m === 'plead' ? 'moodTremble 0.3s ease 2'
-                      : m === 'smug' ? 'moodBounce 0.4s ease'
-                      : 'none';
-                    const borderColor = m === 'angry' ? 'var(--dt-error)'
-                      : m === 'smug' ? '#c8a84e'
-                      : m === 'grateful' ? 'var(--dt-success)'
-                      : 'var(--dt-border)';
-                    const textColor = m === 'angry' ? 'var(--dt-error)'
-                      : m === 'cold' ? 'var(--dt-text-muted)'
-                      : m === 'smug' ? '#c8a84e'
-                      : 'var(--dt-text-secondary)';
-                    const fontStyle = (m === 'cold' || m === 'smug') ? 'italic' as const : 'normal' as const;
-                    const fontWeight = m === 'angry' ? 700 : 400;
-                    const textShadow = m === 'angry' ? '1px 1px 0 rgba(0,0,0,0.15)' : 'none';
-                    const clipPath = m === 'angry'
-                      ? 'polygon(0% 4%, 3% 0%, 6% 5%, 10% 1%, 14% 4%, 18% 0%, 22% 3%, 26% 0%, 30% 4%, 34% 1%, 38% 3%, 42% 0%, 46% 4%, 50% 0%, 54% 3%, 58% 1%, 62% 4%, 66% 0%, 70% 3%, 74% 1%, 78% 4%, 82% 0%, 86% 3%, 90% 1%, 94% 4%, 97% 0%, 100% 4%, 100% 96%, 97% 100%, 94% 96%, 90% 99%, 86% 97%, 82% 100%, 78% 96%, 74% 99%, 70% 97%, 66% 100%, 62% 96%, 58% 99%, 54% 97%, 50% 100%, 46% 96%, 42% 100%, 38% 97%, 34% 99%, 30% 96%, 26% 100%, 22% 97%, 18% 100%, 14% 96%, 10% 99%, 6% 95%, 3% 100%, 0% 96%)'
-                      : 'none';
-                    return (
-                      <div style={{ animation: anim }}>
-                        <div className="text-sm px-4 py-2.5 rounded-xl"
+                  <p className="text-sm leading-relaxed select-none">
+                    「{segs.map((seg, si) => {
+                      const isMarked = mark?.text === seg.text;
+                      return (
+                        <span key={si}
+                          onClick={() => onMark(seg.text, seg.isError)}
+                          className="cursor-pointer transition-colors"
                           style={{
-                            background: m === 'angry'
-                              ? 'color-mix(in srgb, var(--dt-error) 92%, var(--dt-card))'
-                              : m === 'smug'
-                                ? 'color-mix(in srgb, #c8a84e 8%, var(--dt-card))'
-                                : 'color-mix(in srgb, var(--dt-card) 92%, transparent)',
-                            border: `${m === 'angry' ? '2px' : '1px'} solid ${borderColor}`,
-                            color: textColor,
-                            fontStyle,
-                            fontWeight,
-                            textShadow,
-                            clipPath,
-                            backdropFilter: 'blur(8px)',
-                            padding: m === 'angry' ? '10px 14px' : undefined,
+                            borderBottom: isMarked ? '2px solid var(--dt-scan)' : '2px solid transparent',
+                            color: isMarked ? 'var(--dt-scan)' : undefined,
                           }}>
-                          「{reaction.text}」
-                        </div>
-                      </div>
-                    );
-                  })()}
+                          {seg.text}
+                        </span>
+                      );
+                    })}」
+                  </p>
                 </div>
 
-                {/* ⑤ 底部操作區（固定） */}
-                <div className="shrink-0 px-4 pt-2 pb-4">
-                {/* 釋放/關押按鈕 */}
+                {/* 釋放/關押 */}
                 <div className="flex gap-3 mb-2">
-                  <button
-                    onClick={() => onDecide('release')}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  <button onClick={() => onDecide('release')}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
                     style={{
                       background: currentDecision === 'release'
                         ? 'color-mix(in srgb, var(--dt-success) 22%, var(--dt-card))'
                         : 'color-mix(in srgb, var(--dt-success) 10%, var(--dt-card))',
-                      border: `2px solid var(--dt-success)`,
-                      color: 'var(--dt-success)',
+                      border: '2px solid var(--dt-success)', color: 'var(--dt-success)',
                       fontWeight: currentDecision === 'release' ? 900 : undefined,
-                    }}
-                  >
+                    }}>
                     ✓ 釋放{currentDecision === 'release' ? ' ●' : ''}
                   </button>
-                  <button
-                    onClick={() => onDecide('detain')}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  <button onClick={() => onDecide('detain')}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
                     style={{
                       background: currentDecision === 'detain'
                         ? 'color-mix(in srgb, var(--dt-error) 22%, var(--dt-card))'
                         : 'color-mix(in srgb, var(--dt-error) 10%, var(--dt-card))',
-                      border: `2px solid var(--dt-error)`,
-                      color: 'var(--dt-error)',
+                      border: '2px solid var(--dt-error)', color: 'var(--dt-error)',
                       fontWeight: currentDecision === 'detain' ? 900 : undefined,
-                    }}
-                  >
+                    }}>
                     ✕ 關押{currentDecision === 'detain' ? ' ●' : ''}
                   </button>
                 </div>
 
-                {/* 導覽列 — 永遠佔位，避免跳動 */}
+                {/* 導覽列 */}
                 <div className="flex gap-2">
-                  <button
-                    disabled={!hasPrev}
-                    onClick={() => hasPrev && navigateToSuspect(trialIdx - 1)}
+                  <button disabled={!hasPrev} onClick={() => hasPrev && navigateToSuspect(trialIdx - 1)}
                     className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-0"
-                    style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}
-                  >
+                    style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}>
                     ← 上一位
                   </button>
                   {allVisited && allDecided ? (
-                    <button
-                      onClick={onProceedToReveal}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold dt-btn-primary transition-all hover:scale-[1.01] active:scale-[0.98]"
-                    >
+                    <button onClick={onProceedToReveal}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold dt-btn-primary transition-all active:scale-[0.98]">
                       進行宣判 →
                     </button>
                   ) : (
-                    <button
-                      disabled={!hasNext}
-                      onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
-                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-30 dt-btn-primary"
-                    >
+                    <button disabled={!hasNext} onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
+                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-30 dt-btn-primary">
                       下一位 →
                     </button>
                   )}
                 </div>
-              </div>
               </div>
             </div>
           );
