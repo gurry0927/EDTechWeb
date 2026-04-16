@@ -654,16 +654,16 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </div>
 
               {/* ③ 角色立繪（flex-1 撐滿剩餘空間）+ 反應台詞壓住手部 */}
-              <div className="relative flex-1 flex items-end justify-center overflow-hidden" style={{ minHeight: '160px' }}>
-                {/* 角色圖 — mask-image 下半身漸層消失 */}
+              <div className="relative flex-1 flex items-start justify-center overflow-hidden" style={{ minHeight: '160px' }}>
+                {/* 角色圖 — 頭部對齊上方，mask-image 下半身漸層消失 */}
                 <img
                   src={SUSPECT_AVATARS[trialIdx]}
                   alt={`嫌犯 ${LETTERS[trialIdx]}`}
-                  className="h-[110%] object-contain relative z-10 transition-all duration-300"
+                  className="h-full object-contain object-top relative z-10 transition-all duration-300"
                   style={{
                     filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
-                    maskImage: 'linear-gradient(to bottom, black 50%, transparent 95%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 95%)',
+                    maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
                   }}
                 />
                 {/* 嫌犯名牌 */}
@@ -764,17 +764,16 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   </button>
                 </div>
 
-                {/* 上一位 / 下一位 + 宣判 */}
+                {/* 導覽列 — 永遠佔位，避免跳動 */}
                 <div className="flex gap-2">
-                  {hasPrev && (
-                    <button
-                      onClick={() => navigateToSuspect(trialIdx - 1)}
-                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all"
-                      style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}
-                    >
-                      ← 上一位
-                    </button>
-                  )}
+                  <button
+                    disabled={!hasPrev}
+                    onClick={() => hasPrev && navigateToSuspect(trialIdx - 1)}
+                    className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-0"
+                    style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}
+                  >
+                    ← 上一位
+                  </button>
                   {allVisited && allDecided ? (
                     <button
                       onClick={onProceedToReveal}
@@ -782,14 +781,15 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     >
                       進行宣判 →
                     </button>
-                  ) : hasNext ? (
+                  ) : (
                     <button
-                      onClick={() => navigateToSuspect(trialIdx + 1)}
-                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all dt-btn-primary"
+                      disabled={!hasNext}
+                      onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
+                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-30 dt-btn-primary"
                     >
                       下一位 →
                     </button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             </div>
