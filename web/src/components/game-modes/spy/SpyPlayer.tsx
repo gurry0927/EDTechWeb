@@ -223,16 +223,10 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
   const allVisited = visitedSuspects.size === totalSuspects;
 
-  // 可以導覽到的條件：已看過，或是下一個未看過且當前已有決定
+  // 已加入 visited 的嫌犯才可以導覽（防止跳過未審訊的嫌犯）
   const canNavigateTo = useCallback((idx: number) => {
-    if (visitedSuspects.has(idx)) return true;
-    // 找下一個未看過的
-    let nextUnvisited = -1;
-    for (let i = 0; i < totalSuspects; i++) {
-      if (!visitedSuspects.has(i)) { nextUnvisited = i; break; }
-    }
-    return idx === nextUnvisited && decisions.has(trialIdx);
-  }, [visitedSuspects, totalSuspects, decisions, trialIdx]);
+    return visitedSuspects.has(idx);
+  }, [visitedSuspects]);
 
   const navigateToSuspect = useCallback((idx: number) => {
     setTrialIdx(idx);
@@ -251,15 +245,12 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         : pickLine(RELEASE_LINES, seed);
       setSuspectReactions(prev => new Map(prev).set(trialIdx, reaction));
 
-      // 把下一個未看過的嫌犯加入 visited，讓導覽點解鎖（但不自動跳）
-      for (let i = 0; i < totalSuspects; i++) {
-        if (!visitedSuspects.has(i)) {
-          setVisitedSuspects(prev => new Set(prev).add(i));
-          break;
-        }
+      // 解鎖下一位嫌犯（順序推進，不跳過）
+      if (trialIdx + 1 < totalSuspects) {
+        setVisitedSuspects(prev => new Set(prev).add(trialIdx + 1));
       }
     }
-  }, [decisions, trialIdx, totalSuspects, visitedSuspects]);
+  }, [decisions, trialIdx, totalSuspects]);
 
   // 標記可疑片段（點同一段取消，點別段替換）
   const onMark = useCallback((text: string, isCorrect: boolean) => {
@@ -521,7 +512,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   >
                     <div
                       className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
-                        isCurrent ? 'scale-110' : visited ? '' : 'opacity-30'
+                        isCurrent ? 'scale-110' : visited ? '' : 'opacity-50'
                       }`}
                       style={{
                         background: isCurrent
@@ -596,9 +587,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           const segs = buildOptionSegs(question.options[trialIdx], error);
           const currentDecision = decisions.get(trialIdx);
           const hasPrev = trialIdx > 0;
-          const nextVisited = trialIdx + 1 < totalSuspects && visitedSuspects.has(trialIdx + 1);
-          const nextUnlocked = decisions.has(trialIdx) && trialIdx + 1 < totalSuspects && !visitedSuspects.has(trialIdx + 1);
-          const hasNext = nextVisited || nextUnlocked;
+          const hasNext = trialIdx + 1 < totalSuspects && visitedSuspects.has(trialIdx + 1);
 
           return (
             <div className="relative h-full -mx-4 -mb-4 overflow-hidden">
