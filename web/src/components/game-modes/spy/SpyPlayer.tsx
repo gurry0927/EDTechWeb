@@ -605,7 +605,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
               {/* 角色立繪 — 居中，頂端對齊題幹下方，下半身漸層消失 */}
               <div className="absolute left-0 right-0 flex justify-center pointer-events-none"
-                style={{ top: '2%', bottom: '32%' }}>
+                style={{ top: '10%', bottom: '38%' }}>
                 <img
                   src={SUSPECT_AVATARS[trialIdx]}
                   alt=""
@@ -632,7 +632,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </div>
 
               {/* ② 反應台詞 — 角色手部位置（距底部 48%），固定高度 */}
-              <div className="absolute left-4 right-4 z-20 h-10 flex items-center" style={{ bottom: '38%' }}>
+              <div className="absolute left-4 right-4 z-20 h-10 flex items-center" style={{ bottom: '42%' }}>
                 {suspectReactions.has(trialIdx) && (() => {
                   const reaction = suspectReactions.get(trialIdx)!;
                   const m = reaction.mood;
@@ -670,7 +670,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               </div>
 
               {/* ③ 下方面板：證詞 + 按鈕 + 導覽 — 底部固定，漸層背景 */}
-              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pt-6"
+              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pt-4"
                 style={{
                   background: 'linear-gradient(to top, var(--dt-bg) 70%, transparent)',
                   paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
