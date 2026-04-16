@@ -604,16 +604,15 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
             <div className="relative h-full -mx-4 -mb-4 overflow-hidden">
 
               {/* 角色立繪 — 居中，頂端對齊題幹下方，下半身漸層消失 */}
-              <div className="absolute left-0 right-0 flex justify-center pointer-events-none"
-                style={{ top: '10%', bottom: '38%' }}>
+              <div className="absolute inset-0 flex justify-center pointer-events-none">
                 <img
                   src={SUSPECT_AVATARS[trialIdx]}
                   alt=""
                   className="h-full object-contain object-top transition-all duration-300"
                   style={{
                     filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.2))',
-                    maskImage: 'linear-gradient(to bottom, black 55%, transparent 95%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 55%, transparent 95%)',
+                    maskImage: 'linear-gradient(to bottom, black 45%, transparent 75%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 45%, transparent 75%)',
                   }}
                 />
               </div>
