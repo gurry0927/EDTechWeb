@@ -169,7 +169,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
   // ── Trial ──
   const [trialIdx, setTrialIdx] = useState(0);
-  const [visitedSuspects, setVisitedSuspects] = useState<Set<number>>(new Set([0]));
   const [decisions, setDecisions] = useState<Map<number, 'detain' | 'release'>>(new Map());
   const [suspectMarks, setSuspectMarks] = useState<Map<number, SuspectMark | null>>(new Map());
   const [suspectReactions, setSuspectReactions] = useState<Map<number, ReactionLine>>(new Map());
@@ -221,19 +220,13 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
     return true;
   }, [decisions, totalSuspects]);
 
-  const allVisited = visitedSuspects.size === totalSuspects;
-
-  // 已加入 visited 的嫌犯才可以導覽（防止跳過未審訊的嫌犯）
-  const canNavigateTo = useCallback((idx: number) => {
-    return visitedSuspects.has(idx);
-  }, [visitedSuspects]);
+  const undecidedCount = totalSuspects - decisions.size;
 
   const navigateToSuspect = useCallback((idx: number) => {
     setTrialIdx(idx);
-    setVisitedSuspects(prev => new Set(prev).add(idx));
   }, []);
 
-  // 決定關押或釋放；顯示台詞後留在原嫌犯，讓學生自己點導覽點前進
+  // 決定關押或釋放；第一次決定時記錄台詞
   const onDecide = useCallback((decision: 'detain' | 'release') => {
     const isFirstDecision = !decisions.has(trialIdx);
     setDecisions(prev => new Map(prev).set(trialIdx, decision));
@@ -244,13 +237,8 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         ? pickLine(DETAIN_LINES, seed)
         : pickLine(RELEASE_LINES, seed);
       setSuspectReactions(prev => new Map(prev).set(trialIdx, reaction));
-
-      // 解鎖下一位嫌犯（順序推進，不跳過）
-      if (trialIdx + 1 < totalSuspects) {
-        setVisitedSuspects(prev => new Set(prev).add(trialIdx + 1));
-      }
     }
-  }, [decisions, trialIdx, totalSuspects]);
+  }, [decisions, trialIdx]);
 
   // 標記可疑片段（點同一段取消，點別段替換）
   const onMark = useCallback((text: string, isCorrect: boolean) => {
@@ -494,25 +482,22 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       <div className="px-4 pb-2">
         {phase === 'trial' ? (
           <>
-            {/* 審訊導覽點 */}
+            {/* 審訊導覽點 — 全部可點，未決定的 pulse 提示 */}
             <div className="flex gap-3 justify-center mb-1" style={{ minHeight: '48px' }}>
               {question.options.map((_, i) => {
-                const visited = visitedSuspects.has(i);
                 const isCurrent = i === trialIdx;
                 const decided = decisions.has(i);
-                const canNav = canNavigateTo(i);
                 const decisionMade = decisions.get(i);
                 return (
                   <button
                     key={i}
-                    disabled={!canNav}
-                    onClick={() => canNav && navigateToSuspect(i)}
-                    className={`flex flex-col items-center gap-0.5 transition-all ${canNav ? 'cursor-pointer' : 'cursor-default'}`}
+                    onClick={() => navigateToSuspect(i)}
+                    className="flex flex-col items-center gap-0.5 transition-all cursor-pointer"
                     style={{ minHeight: '48px' }}
                   >
                     <div
                       className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
-                        isCurrent ? 'scale-110' : visited ? '' : 'opacity-50'
+                        isCurrent ? 'scale-110' : !decided ? 'animate-pulse' : ''
                       }`}
                       style={{
                         background: isCurrent
@@ -527,7 +512,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                     >
                       {LETTERS[i]}
                     </div>
-                    {/* 永遠預留文字空間，避免出現關押/釋放時推擠 */}
                     <div className="text-[9px] font-medium" style={{
                       color: decided
                         ? (decisionMade === 'detain' ? 'var(--dt-error)' : 'var(--dt-success)')
@@ -540,7 +524,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               })}
             </div>
             <div className="text-[10px] text-dt-text-muted text-right">
-              {allVisited && allDecided ? '所有人審訊完畢，可以宣判' : `已看 ${visitedSuspects.size}/${totalSuspects}`}
+              {allDecided ? '所有人審訊完畢，可以宣判' : `還有 ${undecidedCount} 人未決定`}
             </div>
           </>
         ) : (
@@ -587,7 +571,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           const segs = buildOptionSegs(question.options[trialIdx], error);
           const currentDecision = decisions.get(trialIdx);
           const hasPrev = trialIdx > 0;
-          const hasNext = trialIdx + 1 < totalSuspects && visitedSuspects.has(trialIdx + 1);
+          const hasNext = trialIdx + 1 < totalSuspects;
 
           return (
             <div className="relative h-full -mx-4 -mb-4 overflow-hidden">
@@ -724,25 +708,30 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   </button>
                 </div>
 
-                {/* 導覽列 */}
-                <div className="flex gap-2">
+                {/* 導覽列 — 上一位/下一位永遠顯示 */}
+                <div className="flex gap-2 mb-1.5">
                   <button disabled={!hasPrev} onClick={() => hasPrev && navigateToSuspect(trialIdx - 1)}
                     className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-0"
                     style={{ border: '1px solid var(--dt-border)', color: 'var(--dt-text-secondary)' }}>
                     ← 上一位
                   </button>
-                  {allVisited && allDecided ? (
-                    <button onClick={onProceedToReveal}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold dt-btn-primary transition-all active:scale-[0.98]">
-                      進行宣判 →
-                    </button>
-                  ) : (
-                    <button disabled={!hasNext} onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
-                      className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-30 dt-btn-primary">
-                      下一位 →
-                    </button>
-                  )}
+                  <button disabled={!hasNext} onClick={() => hasNext && navigateToSuspect(trialIdx + 1)}
+                    className="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center transition-all disabled:opacity-30 dt-btn-primary">
+                    下一位 →
+                  </button>
                 </div>
+
+                {/* 宣判按鈕 — 獨立一行，未全決定時 disabled */}
+                <button
+                  disabled={!allDecided}
+                  onClick={onProceedToReveal}
+                  className="w-full py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98] disabled:opacity-40"
+                  style={{
+                    background: allDecided ? 'var(--dt-accent)' : 'var(--dt-border)',
+                    color: allDecided ? 'white' : 'var(--dt-text-muted)',
+                  }}>
+                  {allDecided ? '進行宣判 →' : `還有 ${undecidedCount} 人未決定`}
+                </button>
               </div>
             </div>
           );
