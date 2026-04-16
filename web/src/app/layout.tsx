@@ -23,6 +23,7 @@ const wenkai = LXGW_WenKai_TC({
 
 export const viewport: Viewport = {
   themeColor: "#c2553a",
+  viewportFit: 'cover',
 };
 
 export const metadata: Metadata = {
