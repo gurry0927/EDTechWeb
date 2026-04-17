@@ -72,7 +72,8 @@ export default function Home() {
         style={{ background: '#0a0806', transform: 'scaleX(0)', transformOrigin: 'left' }}
       />
 
-      <div className="relative z-10 flex-1 max-w-md mx-auto w-full pb-20 flex flex-col gap-4 overflow-hidden">
+      <div className="relative z-10 flex-1 max-w-md mx-auto w-full flex flex-col gap-4 overflow-hidden"
+        style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}>
         {activeTab === 'home' && (
           <>
             <ThemeHero ref={heroRef} themeId={theme} onThemeSwitch={cycleTheme} />
