@@ -134,6 +134,15 @@ function buildOptionSegs(optionText: string, error?: OptionError) {
   return segs;
 }
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 interface SuspectMark {
   text: string;
   isCorrect: boolean;
@@ -152,8 +161,23 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   const avatar = entry?.avatar.detective ?? '🕵️';
   const isImageAvatar = avatar.startsWith('/');
 
-  const errors = question.optionErrors ?? [];
-  const correctIdx = question.answer.charCodeAt(0) - 65;
+  const totalSuspects = question.options.length;
+
+  // 嫌犯順序隨機（每局不同，retry 時 gameKey 變 → 重新 mount → 重新洗牌）
+  const [suspectOrder] = useState(() =>
+    shuffleArray(Array.from({ length: totalSuspects }, (_, i) => i))
+  );
+
+  // 用 suspectOrder 重新映射 options / errors / answer
+  const options = useMemo(() => suspectOrder.map(i => question.options[i]), [suspectOrder, question.options]);
+  const errors = useMemo(() =>
+    (question.optionErrors ?? []).map(e => ({
+      ...e,
+      optionIndex: suspectOrder.indexOf(e.optionIndex),
+    })),
+    [suspectOrder, question.optionErrors]
+  );
+  const correctIdx = suspectOrder.indexOf(question.answer.charCodeAt(0) - 65);
 
   const errorByOption = useMemo(() => {
     const map = new Map<number, OptionError>();
@@ -162,7 +186,6 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
   }, [errors]);
 
   const totalSpies = errors.length;
-  const totalSuspects = question.options.length;
 
   // ── Phases ──
   const [phase, setPhase] = useState<Phase>('briefing');
@@ -273,9 +296,15 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
       if (decision === 'detain' && isSpy && error?.quiz) {
         const mark = suspectMarks.get(idx);
         const markedCorrectly = mark?.isCorrect ?? false;
+        // Shuffle quiz choices so correct answer isn't always at the same position
+        const choiceOrder = shuffleArray(error.quiz.choices.map((_, ci) => ci));
         items.push({
           suspectIdx: idx,
-          quiz: error.quiz,
+          quiz: {
+            prompt: error.quiz.prompt,
+            choices: choiceOrder.map(ci => error.quiz!.choices[ci]),
+            answerIndex: choiceOrder.indexOf(error.quiz.answerIndex),
+          },
           markedCorrectly,
           markedText: mark?.text,
         });
@@ -484,7 +513,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           <>
             {/* 審訊導覽點 — 全部可點，未決定的 pulse 提示 */}
             <div className="flex gap-3 justify-center mb-1" style={{ minHeight: '48px' }}>
-              {question.options.map((_, i) => {
+              {options.map((_, i) => {
                 const isCurrent = i === trialIdx;
                 const decided = decisions.has(i);
                 const decisionMade = decisions.get(i);
@@ -530,7 +559,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         ) : (
           <>
             <div className="flex gap-1">
-              {question.options.map((_, i) => {
+              {options.map((_, i) => {
                 const isSpy = errorByOption.has(i);
                 const decision = decisions.get(i);
                 const isFlipped = phase === 'reveal' && flippedCards.has(i);
@@ -568,7 +597,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
         {phase === 'trial' && (() => {
           const error = errorByOption.get(trialIdx);
           const mark = suspectMarks.get(trialIdx);
-          const segs = buildOptionSegs(question.options[trialIdx], error);
+          const segs = buildOptionSegs(options[trialIdx], error);
           const currentDecision = decisions.get(trialIdx);
           const hasPrev = trialIdx > 0;
           const hasNext = trialIdx + 1 < totalSuspects;
@@ -744,7 +773,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
               {allFlipped ? '審判結束。' : '點擊每位嫌犯的卡片，揭曉你的判斷是否正確。'}
             </DetectiveBubble>
 
-            {question.options.map((opt, i) => {
+            {options.map((opt, i) => {
               const flipped = flippedCards.has(i);
               const decision = decisions.get(i);
               const isSpy = errorByOption.has(i);
@@ -877,7 +906,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 {rating.label}
               </h2>
               <p className="text-sm text-dt-text-muted mt-1">
-                正確答案：({question.answer}) {question.options[correctIdx]}
+                正確答案：({LETTERS[correctIdx]}) {options[correctIdx]}
               </p>
               <div className="flex justify-center flex-wrap gap-3 mt-2 text-xs text-dt-text-muted">
                 <span>關押正確 {score.correct}/{totalSpies}</span>
@@ -896,7 +925,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
             <div className="case-file rounded-xl p-4">
               <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--dt-accent)' }}>審訊紀錄</h3>
               <div className="space-y-3">
-                {question.options.map((_, i) => {
+                {options.map((_, i) => {
                   const isSpy = errorByOption.has(i);
                   const error = errorByOption.get(i);
                   const decision = decisions.get(i);
@@ -1001,7 +1030,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 border: '1px solid var(--dt-border)',
               }}>
                 <p className="text-base leading-loose select-none">
-                  {buildOptionSegs(question.options[currentRedemptionIdx], currentRedemptionError).map((seg, si) => (
+                  {buildOptionSegs(options[currentRedemptionIdx], currentRedemptionError).map((seg, si) => (
                     <span
                       key={si}
                       onClick={() => !redemptionTransitioning && onRedemptionCircle(seg.isError)}
