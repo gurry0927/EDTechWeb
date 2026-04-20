@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { SpyGamePage } from '@/components/game-modes/spy/SpyGamePage';
 import { getInitialTheme } from '@/components/question-detective/theme-utils';
 import { DEFAULT_THEME } from '@/config/themes';
-import { fetchQuestionDetail } from '@/data/detective-questions/api';
+import { fetchQuestionDetail } from '@/data/questions/api';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
 
 export default function Page() {

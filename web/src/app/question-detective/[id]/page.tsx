@@ -6,9 +6,9 @@ import { useParams } from 'next/navigation';
 import { DetectiveGamePage } from '@/components/question-detective/DetectiveGamePage';
 import { getInitialTheme } from '@/components/question-detective/theme-utils';
 import { DEFAULT_THEME } from '@/config/themes';
-import { fetchQuestionDetail } from '@/data/detective-questions/api';
+import { fetchQuestionDetail } from '@/data/questions/api';
 import type { DetectiveQuestion } from '@/components/question-detective/types';
-import tutorialData from '@/data/detective-questions/tutorial.json';
+import tutorialData from '@/data/questions/tutorial.json';
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
