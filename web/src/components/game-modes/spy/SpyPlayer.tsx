@@ -153,6 +153,7 @@ interface QuizItem {
   quiz: NonNullable<OptionError['quiz']>;
   markedCorrectly: boolean;
   markedText?: string;
+  errorWhy: string;
 }
 
 export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Props) {
@@ -307,6 +308,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
           },
           markedCorrectly,
           markedText: mark?.text,
+          errorWhy: error.why,
         });
       }
     });
@@ -832,7 +834,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
             {allFlipped && (
               <button onClick={onRevealContinue}
                 className="w-full py-3 rounded-xl text-sm font-bold dt-btn-primary mt-2 transition-all hover:scale-[1.01] active:scale-[0.98]">
-                繼續審訊 →
+                進入結案確認 →
               </button>
             )}
           </div>
@@ -890,9 +892,19 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 </div>
 
                 {quizAnswered && (
-                  <button onClick={onQuizNext} className="mt-3 w-full py-2 rounded-lg text-sm font-medium dt-btn-primary">
-                    {quizStep + 1 < quizItems.length ? '下一題' : '查看結果'}
-                  </button>
+                  <>
+                    <div className="mt-3 ml-10 text-xs leading-relaxed p-2.5 rounded-lg"
+                      style={{
+                        background: 'color-mix(in srgb, var(--dt-scan) 8%, var(--dt-card))',
+                        border: '1px solid color-mix(in srgb, var(--dt-scan) 30%, transparent)',
+                        color: 'var(--dt-text-secondary)',
+                      }}>
+                      💡 {item.errorWhy}
+                    </div>
+                    <button onClick={onQuizNext} className="mt-3 w-full py-2 rounded-lg text-sm font-medium dt-btn-primary">
+                      {quizStep + 1 < quizItems.length ? '下一題' : '查看結果'}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
