@@ -620,10 +620,11 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                 />
               </div>
 
-              {/* ① 題幹 — 頂部固定 */}
+              {/* ① 題幹 — 頂部固定，限高可滾 */}
               <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-2">
-                <div className="text-xs text-dt-text-secondary leading-relaxed p-2.5 rounded-lg"
+                <div className="text-xs text-dt-text-secondary leading-relaxed p-2.5 rounded-lg overflow-y-auto"
                   style={{
+                    maxHeight: '15vh',
                     background: 'color-mix(in srgb, var(--dt-card) 92%, transparent)',
                     backdropFilter: 'blur(8px)',
                     border: '1px solid var(--dt-border)',
@@ -678,9 +679,10 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                   })()}
                 </div>
 
-                {/* 證詞 */}
-                <div className="rounded-xl p-3 mb-1.5"
+                {/* 證詞 — 限高可滾 */}
+                <div className="rounded-xl p-3 mb-1.5 overflow-y-auto"
                   style={{
+                    maxHeight: '20vh',
                     background: 'color-mix(in srgb, var(--dt-card) 95%, transparent)',
                     border: '2px solid var(--dt-border)',
                     backdropFilter: 'blur(8px)',
