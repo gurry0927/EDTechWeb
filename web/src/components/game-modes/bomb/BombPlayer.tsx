@@ -23,9 +23,10 @@ interface Props {
 const LETTERS = ['A', 'B', 'C', 'D'];
 
 function calcTimeLimit(q: DetectiveQuestion): number {
-  const totalChars = q.mainStem.length + q.options.reduce((s, o) => s + o.length, 0);
+  const totalChars = q.mainStem.length + (q.figure?.length ?? 0) + q.options.reduce((s, o) => s + o.length, 0);
   const readTime = Math.ceil(totalChars / BOMB.charsPerSec);
-  return Math.min(BOMB.maxTime, Math.max(BOMB.minTime, readTime + BOMB.thinkingBuffer));
+  const figureBonus = q.figureImage ? 5 : 0; // 有圖多 5 秒看圖
+  return Math.min(BOMB.maxTime, Math.max(BOMB.minTime, readTime + BOMB.thinkingBuffer + figureBonus));
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -44,6 +45,7 @@ export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props
   const [timeLeft, setTimeLeft] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [stats, setStats] = useState({ correct: 0, wrong: 0, timeout: 0, totalTime: 0 });
+  const [wrongLog, setWrongLog] = useState<{ question: DetectiveQuestion; picked: string; correct: string; type: 'wrong' | 'timeout' }[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const startTimeRef = useRef(0);
 
@@ -94,6 +96,16 @@ export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase]);
 
+  // 超時記錄錯題
+  useEffect(() => {
+    if (phase === 'result-timeout' && q) {
+      setWrongLog(prev => {
+        if (prev.length > 0 && prev[prev.length - 1].question.id === q.id && prev[prev.length - 1].type === 'timeout') return prev;
+        return [...prev, { question: q, picked: '—', correct: q.options[correctIdx], type: 'timeout' }];
+      });
+    }
+  }, [phase, q, correctIdx]);
+
   // Game over check
   useEffect(() => {
     if (lives <= 0 && (phase === 'result-wrong' || phase === 'result-timeout')) {
@@ -115,9 +127,15 @@ export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props
     } else {
       setLives(l => Math.max(0, l - 1));
       setStats(s => ({ ...s, wrong: s.wrong + 1, totalTime: s.totalTime + elapsed }));
+      setWrongLog(prev => [...prev, {
+        question: q!,
+        picked: shuffledOptions[shuffledIdx],
+        correct: shuffledOptions[shuffledCorrectIdx],
+        type: 'wrong',
+      }]);
       setPhase('result-wrong');
     }
-  }, [phase, selected, shuffledCorrectIdx]);
+  }, [phase, selected, shuffledCorrectIdx, shuffledOptions, q]);
 
   const nextQuestion = useCallback(() => {
     if (isLastQuestion || (mode === 'endless' && qIdx >= questions.length - 1)) {
@@ -198,6 +216,10 @@ export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props
             <div className="case-file rounded-xl p-4">
               <div className="text-xs text-dt-text-muted mb-1">{q.source}</div>
               <p className="text-sm leading-relaxed">{q.mainStem}</p>
+              {q.figure && <p className="text-sm leading-relaxed mt-2 text-dt-text-secondary">{q.figure}</p>}
+              {q.figureImage && (
+                <img src={q.figureImage} alt="附圖" className="mt-2 rounded-lg max-h-40 w-auto mx-auto" />
+              )}
             </div>
             {/* 選項 */}
             <div className="space-y-2">
@@ -303,8 +325,35 @@ export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props
               </div>
             </div>
 
+            {/* 錯題檢視 */}
+            {wrongLog.length > 0 && (
+              <div className="case-file rounded-xl p-4 space-y-3">
+                <h3 className="text-sm font-bold" style={{ color: 'var(--dt-error)' }}>
+                  錯題檢視 ({wrongLog.length} 題)
+                </h3>
+                {wrongLog.map((entry, i) => (
+                  <div key={i} className="text-sm border-t pt-2" style={{ borderColor: 'var(--dt-border)' }}>
+                    <div className="text-xs text-dt-text-muted mb-1">{entry.question.source}</div>
+                    <p className="text-xs leading-relaxed mb-1.5">{entry.question.mainStem}</p>
+                    {entry.type === 'timeout' ? (
+                      <div className="text-xs" style={{ color: 'var(--dt-error)' }}>
+                        ⏱ 超時未作答
+                      </div>
+                    ) : (
+                      <div className="text-xs" style={{ color: 'var(--dt-error)' }}>
+                        ✕ 你選：{entry.picked}
+                      </div>
+                    )}
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--dt-success)' }}>
+                      ✓ 正確：{entry.correct}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-3">
-              <button onClick={() => { setQIdx(0); setLives(BOMB.maxLives); setStats({ correct: 0, wrong: 0, timeout: 0, totalTime: 0 }); }}
+              <button onClick={() => { setQIdx(0); setLives(BOMB.maxLives); setStats({ correct: 0, wrong: 0, timeout: 0, totalTime: 0 }); setWrongLog([]); }}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium dt-btn-primary">
                 再來一次
               </button>
