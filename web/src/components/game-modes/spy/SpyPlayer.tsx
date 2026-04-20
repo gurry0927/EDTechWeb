@@ -622,7 +622,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
 
               {/* ① 題幹 — 頂部固定，限高可滾 */}
               <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-2">
-                <div className="text-xs text-dt-text-secondary leading-relaxed p-2.5 rounded-lg overflow-y-auto"
+                <div className="text-sm text-dt-text-secondary leading-relaxed p-2.5 rounded-lg overflow-y-auto"
                   style={{
                     maxHeight: '15vh',
                     background: 'color-mix(in srgb, var(--dt-card) 92%, transparent)',
