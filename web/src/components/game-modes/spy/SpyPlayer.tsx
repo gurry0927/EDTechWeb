@@ -858,7 +858,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                       color: 'var(--dt-scan)',
                       border: '1px solid color-mix(in srgb, var(--dt-scan) 40%, transparent)',
                     }}>
-                    你標出了「{item.markedText}」，說說看這裡哪裡有問題：
+                    你標出了「{item.markedText}」，確認一下你的判斷：
                   </div>
                 ) : (
                   <div className="text-[11px] px-2.5 py-1.5 rounded-lg mb-3 ml-10"
@@ -867,7 +867,7 @@ export function SpyPlayer({ question, onBack, onRetry, theme = 'classic' }: Prop
                       color: 'var(--dt-text-muted)',
                       border: '1px solid color-mix(in srgb, var(--dt-error) 25%, transparent)',
                     }}>
-                    你關押了嫌犯 {LETTERS[item.suspectIdx]}，但沒有標出理由。說說看供詞哪裡有問題：
+                    你關押了嫌犯 {LETTERS[item.suspectIdx]}，但沒有標出理由。來確認一下你的判斷：
                   </div>
                 )}
 
