@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BombPlayer } from '@/components/game-modes/bomb/BombPlayer';
 import { fetchQuestionDetail } from '@/data/questions/api';
-import type { DetectiveQuestion } from '@/components/question-detective/types';
+import type { DetectiveQuestion } from '@/components/game-modes/detective/types';
 
 export default function BombPlayPage() {
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function BombPlayPage() {
       <div data-dt-theme={theme} className="h-[100dvh] detective-paper text-dt-text flex items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-dt-text-muted mb-4">找不到題目，請回大廳重新選擇</p>
-          <button onClick={() => router.push('/question-bomb')}
+          <button onClick={() => router.push('/bomb')}
             className="px-4 py-2 rounded-lg text-sm dt-btn-primary">
             返回大廳
           </button>
@@ -67,7 +67,7 @@ export default function BombPlayPage() {
         questions={questions}
         mode={mode}
         theme={theme}
-        onBack={() => router.push(`/question-bomb?theme=${theme}`)}
+        onBack={() => router.push(`/bomb?theme=${theme}`)}
       />
     </div>
   );

@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { DetectiveGamePage } from '@/components/question-detective/DetectiveGamePage';
-import { getInitialTheme } from '@/components/question-detective/theme-utils';
+import { DetectiveGamePage } from '@/components/game-modes/detective/DetectiveGamePage';
+import { getInitialTheme } from '@/components/game-modes/detective/theme-utils';
 import { DEFAULT_THEME } from '@/config/themes';
 import { fetchQuestionDetail } from '@/data/questions/api';
-import type { DetectiveQuestion } from '@/components/question-detective/types';
+import type { DetectiveQuestion } from '@/components/game-modes/detective/types';
 import tutorialData from '@/data/questions/tutorial.json';
 
 export default function Page() {
@@ -47,7 +47,7 @@ export default function Page() {
     return (
       <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col items-center justify-center gap-3" data-dt-theme={theme} suppressHydrationWarning>
         <div className="text-dt-text-secondary text-sm">找不到這份案件</div>
-        <Link href={`/question-detective?theme=${theme}`} className="text-dt-scan text-sm hover:underline">返回檔案室</Link>
+        <Link href={`/detective?theme=${theme}`} className="text-dt-scan text-sm hover:underline">返回檔案室</Link>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import type { DetectiveQuestion, OptionError } from '@/components/question-detective/types';
+import type { DetectiveQuestion, OptionError } from '@/components/game-modes/detective/types';
 import { THEME_REGISTRY } from '@/config/themes';
 
 const SPY = {

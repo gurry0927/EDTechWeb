@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
+import { getInitialTheme, type ThemeId } from '@/components/game-modes/detective/theme-utils';
 import { THEME_LIST } from '@/config/themes';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/questions/api';
 
@@ -102,7 +102,7 @@ export default function SpyListPage() {
             {questions.map(q => (
               <Link
                 key={q.id}
-                href={`/question-spy/${q.id}?theme=${theme}`}
+                href={`/spy/${q.id}?theme=${theme}`}
                 prefetch
                 className="block w-full text-left rounded-lg p-4 case-file hover:shadow-md transition-all group"
               >

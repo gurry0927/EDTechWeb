@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SpyPlayer } from './SpyPlayer';
-import type { DetectiveQuestion } from '@/components/question-detective/types';
-import { getInitialTheme } from '@/components/question-detective/theme-utils';
+import type { DetectiveQuestion } from '@/components/game-modes/detective/types';
+import { getInitialTheme } from '@/components/game-modes/detective/theme-utils';
 import { DEFAULT_THEME } from '@/config/themes';
 
 /** 記錄上次遊玩
@@ -36,7 +36,7 @@ export function SpyGamePage({ question }: { question: DetectiveQuestion }) {
       <SpyPlayer
         key={gameKey}
         question={question}
-        onBack={() => router.push(`/question-spy?theme=${theme}`)}
+        onBack={() => router.push(`/spy?theme=${theme}`)}
         onRetry={() => setGameKey(k => k + 1)}
         theme={theme}
       />

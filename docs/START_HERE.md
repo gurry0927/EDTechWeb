@@ -18,7 +18,9 @@ EDTechWeb/
 │   │   ├── app/                      ─── 路由 ───
 │   │   │   ├── page.tsx              首頁（遊戲入口，手遊風格）
 │   │   │   ├── [subject]/            科目詳情頁
-│   │   │   ├── question-detective/   偵探模式列表 + 遊戲
+│   │   │   ├── detective/            偵探模式列表 + 遊戲
+│   │   │   ├── spy/                  臥底模式列表 + 遊戲
+│   │   │   ├── bomb/                 拆彈模式大廳 + 遊戲
 │   │   │   ├── taiwan-map/           台灣互動地圖
 │   │   │   ├── civics-local-gov/     公民地方政府
 │   │   │   └── layout.tsx            根佈局（凍結）
@@ -31,11 +33,11 @@ EDTechWeb/
 │   │   │
 │   │   ├── components/               ─── 元件 ───
 │   │   │   ├── home/                 首頁元件（ThemeHero, BottomNav...）
-│   │   │   ├── question-detective/   偵探遊戲引擎
-│   │   │   ├── game-modes/           其他遊戲模式（規劃中）
-│   │   │   │   ├── spy/             臥底模式
-│   │   │   │   ├── bomb/            拆彈模式
-│   │   │   │   └── decrypt/         解密模式
+│   │   │   ├── game-modes/           所有遊戲模式元件
+│   │   │   │   ├── detective/        偵探模式引擎
+│   │   │   │   ├── spy/              臥底模式
+│   │   │   │   ├── bomb/             拆彈模式
+│   │   │   │   └── decrypt/          解密模式（規劃中）
 │   │   │   ├── collection/           收集冊（規劃中）
 │   │   │   ├── account/              帳號系統（規劃中）
 │   │   │   ├── stats/                統計排行（規劃中）

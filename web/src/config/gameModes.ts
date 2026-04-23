@@ -14,8 +14,8 @@ export interface GameMode {
 }
 
 export const GAME_MODES: GameMode[] = [
-  { id: 'detective', label: '偵探', icon: '🔍', href: '/question-detective', locked: false },
-  { id: 'spy',       label: '臥底', icon: '🎭', href: '/question-spy', locked: false },
-  { id: 'bomb',      label: '拆彈', icon: '💣', href: '/question-bomb', locked: false },
+  { id: 'detective', label: '偵探', icon: '🔍', href: '/detective', locked: false },
+  { id: 'spy',       label: '臥底', icon: '🎭', href: '/spy', locked: false },
+  { id: 'bomb',      label: '拆彈', icon: '💣', href: '/bomb', locked: false },
   { id: 'decrypt',   label: '解密', icon: '🧩', locked: true },
 ];

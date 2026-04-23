@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import type { DetectiveQuestion } from '@/components/question-detective/types';
+import type { DetectiveQuestion } from '@/components/game-modes/detective/types';
 
 const BOMB = {
   maxLives: 5,

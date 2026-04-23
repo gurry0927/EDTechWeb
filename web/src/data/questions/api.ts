@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { DetectiveQuestion } from '@/components/question-detective/types';
+import type { DetectiveQuestion } from '@/components/game-modes/detective/types';
 
 // ── Cache helpers ──
 const CACHE_PREFIX = 'dt-cache-';

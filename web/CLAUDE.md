@@ -7,7 +7,7 @@
 ## 專案概要
 
 兩條產品線：
-1. **問題偵探**（主力）— 遊戲引擎在 `src/components/question-detective/`，參數集中在 `detective-config.ts`
+1. **問題偵探**（主力）— 遊戲引擎在 `src/components/game-modes/detective/`，參數集中在 `detective-config.ts`
 2. **互動地圖**（成熟）— 核心在 `src/components/taiwan-map/`（凍結），擴充靠 `src/lessons/`
 
 資料庫：Supabase（`src/lib/supabase.ts`），題目存 JSONB，兩階段載入（反爬蟲）。

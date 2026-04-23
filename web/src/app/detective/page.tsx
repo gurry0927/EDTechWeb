@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
+import { getInitialTheme, type ThemeId } from '@/components/game-modes/detective/theme-utils';
 import { THEME_LIST } from '@/config/themes';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/questions/api';
 
@@ -63,7 +63,7 @@ export default function QuestionDetectivePage() {
             {/* Theme switcher + Tutorial */}
             <div className="flex gap-1 items-center">
               <Link
-                href={`/question-detective/tutorial?theme=${theme}`}
+                href={`/detective/tutorial?theme=${theme}`}
                 className="text-xs px-2 py-1 rounded-full border border-dt-scan/30 text-dt-scan hover:bg-dt-scan/10 transition-all"
                 title="教學關卡"
               >🎓 教學</Link>
@@ -152,7 +152,7 @@ export default function QuestionDetectivePage() {
               {/* Question cards */}
               <div className="space-y-2">
                 {groupQuestions.map(q => (
-                  <Link key={q.id} href={`/question-detective/${q.id}?theme=${theme}`} prefetch
+                  <Link key={q.id} href={`/detective/${q.id}?theme=${theme}`} prefetch
                     className="block w-full text-left rounded-lg p-4 case-file hover:shadow-md transition-all group">
                     <div className="flex items-start gap-3">
                       {/* Case number badge */}

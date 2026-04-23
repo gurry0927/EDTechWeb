@@ -1,4 +1,4 @@
-// src/components/question-detective/types.ts
+// src/components/game-modes/detective/types.ts
 // 「題目偵探」核心資料結構
 
 // ─────────────────────────────────────────────────────────────────────────────

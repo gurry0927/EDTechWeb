@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getInitialTheme, type ThemeId } from '@/components/question-detective/theme-utils';
+import { getInitialTheme, type ThemeId } from '@/components/game-modes/detective/theme-utils';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/questions/api';
 
 type GameLength = 5 | 10 | 0; // 0 = 無盡
@@ -40,7 +40,7 @@ export default function BombLobbyPage() {
     if (ids.length === 0) return;
     // 把題目 ID 列表存到 sessionStorage，遊戲頁讀取
     sessionStorage.setItem('bomb-queue', JSON.stringify({ ids, mode: length === 0 ? 'endless' : 'fixed', theme }));
-    router.push(`/question-bomb/play`);
+    router.push(`/bomb/play`);
   }, [filtered, theme, router]);
 
   return (

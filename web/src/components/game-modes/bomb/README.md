@@ -9,5 +9,5 @@
 ## TODO
 - [ ] Player 元件（含倒數計時器）
 - [ ] 計時 config（難度分級）
-- [ ] 路由 `/question-bomb/[id]`
+- [x] 路由 `/bomb/play`
 - [ ] 註冊到 gameModes.ts（解鎖）

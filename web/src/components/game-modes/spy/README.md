@@ -8,5 +8,5 @@
 ## TODO
 - [ ] Player 元件
 - [ ] 題目結構定義（可複用 DetectiveQuestion 的 options）
-- [ ] 路由 `/question-spy/[id]`
+- [x] 路由 `/spy/[id]`
 - [ ] 註冊到 gameModes.ts（解鎖）
