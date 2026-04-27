@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { DetectiveQuestion } from '@/components/game-modes/detective/types';
+import { shuffleArray } from '@/lib/shuffle';
 
 const BOMB = {
   maxLives: 5,
@@ -25,17 +26,8 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 function calcTimeLimit(q: DetectiveQuestion): number {
   const totalChars = q.mainStem.length + (q.figure?.length ?? 0) + q.options.reduce((s, o) => s + o.length, 0);
   const readTime = Math.ceil(totalChars / BOMB.charsPerSec);
-  const figureBonus = q.figureImage ? 5 : 0; // 有圖多 5 秒看圖
+  const figureBonus = q.figureImage ? 5 : 0;
   return Math.min(BOMB.maxTime, Math.max(BOMB.minTime, readTime + BOMB.thinkingBuffer + figureBonus));
-}
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
 }
 
 export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props) {
@@ -75,12 +67,10 @@ export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props
     return () => clearTimeout(t);
   }, [qIdx, q, timeLimit]);
 
-  // 倒計時
+  // 倒計時（先清再建，防疊加）
   useEffect(() => {
-    if (phase !== 'defuse') {
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = undefined; }
+    if (phase !== 'defuse') return;
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -353,7 +343,7 @@ export function BombPlayer({ questions, mode, onBack, theme = 'classic' }: Props
             )}
 
             <div className="flex gap-3">
-              <button onClick={() => { setQIdx(0); setLives(BOMB.maxLives); setStats({ correct: 0, wrong: 0, timeout: 0, totalTime: 0 }); setWrongLog([]); }}
+              <button onClick={() => { setPhase('countdown'); setQIdx(0); setLives(BOMB.maxLives); setStats({ correct: 0, wrong: 0, timeout: 0, totalTime: 0 }); setWrongLog([]); }}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium dt-btn-primary">
                 再來一次
               </button>

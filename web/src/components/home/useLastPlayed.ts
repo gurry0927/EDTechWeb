@@ -8,7 +8,7 @@ export interface LastPlayed {
   questionId: string;
   questionTitle: string;
   theme: string;
-  mode?: 'detective' | 'spy';
+  mode?: 'detective' | 'spy' | 'bomb';
   timestamp: number;
 }
 

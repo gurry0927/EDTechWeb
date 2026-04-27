@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { DetectiveQuestion, OptionError } from '@/components/game-modes/detective/types';
 import { THEME_REGISTRY } from '@/config/themes';
+import { shuffleArray } from '@/lib/shuffle';
 
 const SPY = {
   maxLives: 5,
@@ -134,14 +135,7 @@ function buildOptionSegs(optionText: string, error?: OptionError) {
   return segs;
 }
 
-function shuffleArray<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
+
 
 interface SuspectMark {
   text: string;

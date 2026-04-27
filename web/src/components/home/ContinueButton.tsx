@@ -11,12 +11,15 @@ export function ContinueButton({ themeId, onNavigate }: Props) {
   const { lastPlayed } = useLastPlayed();
 
   const href = lastPlayed
-    ? lastPlayed.mode === 'spy'
-      ? `/spy/${lastPlayed.questionId}?theme=${themeId}`
-      : `/detective/${lastPlayed.questionId}?theme=${themeId}`
+    ? lastPlayed.mode === 'bomb'
+      ? `/bomb?theme=${themeId}`
+      : lastPlayed.mode === 'spy'
+        ? `/spy/${lastPlayed.questionId}?theme=${themeId}`
+        : `/detective/${lastPlayed.questionId}?theme=${themeId}`
     : `/detective?theme=${themeId}`;
 
-  const label = lastPlayed ? (lastPlayed.mode === 'spy' ? '繼續臥底' : '繼續調查') : '開始第一案';
+  const modeLabels: Record<string, string> = { spy: '繼續臥底', bomb: '繼續拆彈', detective: '繼續調查' };
+  const label = lastPlayed ? (modeLabels[lastPlayed.mode ?? 'detective'] ?? '繼續調查') : '開始第一案';
   const subtitle = lastPlayed ? lastPlayed.questionTitle : '從檔案室挑選案件';
 
   return (

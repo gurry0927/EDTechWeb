@@ -4,17 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getInitialTheme, type ThemeId } from '@/components/game-modes/detective/theme-utils';
 import { fetchPublicQuestions, type PublicQuestion } from '@/data/questions/api';
+import { shuffleArray } from '@/lib/shuffle';
 
 type GameLength = 5 | 10 | 0; // 0 = 無盡
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
 
 export default function BombLobbyPage() {
   const router = useRouter();
