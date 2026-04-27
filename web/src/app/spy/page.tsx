@@ -30,6 +30,17 @@ export default function SpyListPage() {
     [allQuestions]
   );
 
+  // 按科目分組
+  const grouped = useMemo(() => {
+    const map = new Map<string, typeof questions>();
+    questions.forEach(q => {
+      const key = q.subject;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(q);
+    });
+    return Array.from(map.entries());
+  }, [questions]);
+
   return (
     <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col" data-dt-theme={theme}>
       <header className="shrink-0 case-file px-5 py-4">
@@ -75,7 +86,7 @@ export default function SpyListPage() {
             <p className="text-dt-text-muted text-xs mt-1">題目正在準備中，敬請期待</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-6">
             {/* 新手引導 */}
             {!tipDone && (
               <div className="relative case-file rounded-lg p-5 border-l-4 border-dt-scan mb-4">
@@ -99,7 +110,23 @@ export default function SpyListPage() {
                 <p className="text-xs text-dt-text-muted italic">選一份案卷開始吧！此提示只顯示一次。</p>
               </div>
             )}
-            {questions.map(q => (
+            {grouped.map(([subject, groupQuestions]) => (
+              <div key={subject}>
+                {/* 科目標題 */}
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-sm font-extrabold text-dt-accent tracking-wider px-2 py-0.5 rounded bg-dt-bg/70"
+                    style={{ fontFamily: '"Noto Serif TC", Georgia, serif' }}>
+                    {subject}
+                  </span>
+                  <div className="flex-1 h-px bg-dt-accent/25" />
+                  <span className="text-xs font-medium text-dt-text bg-dt-bg/70 px-1.5 py-0.5 rounded">
+                    {groupQuestions.length} 題
+                  </span>
+                </div>
+
+                {/* 題目卡片 */}
+                <div className="space-y-2">
+                  {groupQuestions.map(q => (
               <Link
                 key={q.id}
                 href={`/spy/${q.id}?theme=${theme}`}
@@ -128,6 +155,9 @@ export default function SpyListPage() {
                   </svg>
                 </div>
               </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
