@@ -122,11 +122,40 @@ solution       結案報告 + 成就 + 切入演出
 三套皮膚（classic/cyber/guofeng），CSS 變數 + 台詞覆寫。
 詳見 [question-detective/THEME_SYSTEM.md](question-detective/THEME_SYSTEM.md)
 
-### admin 工具
+### admin 工具（視覺化編輯器）
 ```bash
 cd tools/question-admin && npm install && npm run dev
 # localhost:5173
 ```
+
+### 批次上傳題目到 Supabase
+```bash
+cd tools/question-admin
+
+# 上傳所有 JSON
+node batch-upload.mjs
+
+# 只上傳特定檔案（支援 * 通配）
+node batch-upload.mjs "114-nature-*"
+```
+
+**工作流程：**
+1. 把題目 JSON 放到 `web/src/data/questions/`（檔名格式：`{年份}-{科目}-{題號}.json`）
+2. 執行 `node batch-upload.mjs` 一鍵上傳到 Supabase
+3. 使用 `ON CONFLICT DO UPDATE`，重複執行不會出錯，會覆蓋舊資料
+4. 上傳後前端自動看到新題目（有 10 分鐘 cache，清 localStorage 可立即刷新）
+
+**前提：** `tools/question-admin/.env` 需要有正確的 Supabase 連線設定（不進 git）：
+```
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_xxx
+```
+
+**題目 JSON 必要欄位：** `id`、`source`、`subject`（其餘放在 `data` JSONB）
+
+**臥底模式額外欄位：** `optionErrors`（含 `startIndex`、`length`、`why`、`quiz`）
+
+**題目適配規則：** 詳見 `docs/game-design.md`
 
 ## 互動地圖（成熟模組）
 
@@ -174,8 +203,8 @@ created_at, updated_at     -- 自動維護
 | 功能 | 依賴 | 佔位資料夾 |
 |------|------|-----------|
 | iOS 陀螺儀無感授權橫幅 | 無 | `components/home/` |
-| 臥底模式 | 無 | `components/game-modes/spy/` |
-| 拆彈模式 | 無 | `components/game-modes/bomb/` |
+| ~~臥底模式~~ | ~~已上線~~ | `components/game-modes/spy/` |
+| ~~拆彈模式~~ | ~~已上線~~ | `components/game-modes/bomb/` |
 | 解密模式 | 無 | `components/game-modes/decrypt/` |
 | 收集冊 | 帳號系統（先用 localStorage） | `components/collection/` |
 | 帳號系統 | Supabase Auth | `components/account/` |
