@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import type { DetectiveQuestion, KnowledgeFragment } from '@/components/game-modes/detective/types';
 import { ASSEMBLY_BRIEFINGS, ASSEMBLY_THEME_LABELS } from '@/config/assemblyThemes';
 
-type Phase = 'mission' | 'assembly' | 'result-correct' | 'result-wrong';
+type Phase = 'mission' | 'collection' | 'assembly' | 'result-correct' | 'result-wrong';
 
 interface Props {
   question: DetectiveQuestion;
@@ -27,15 +27,40 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
     [question.id]
   );
 
+  // 給 collection phase 用的標籤雲樣式（隨機尺寸/旋轉，依 fragment.id 穩定）
+  const cloudStyles = useMemo(() => {
+    const map: Record<string, { fontSize: string; rotate: string }> = {};
+    config.knowledgePool.forEach((f, i) => {
+      // 用 id+index 做偽隨機，每次 render 一致
+      const seed = (i * 73 + f.id.length * 17) % 100;
+      const sizeRem = 0.85 + (seed % 7) * 0.1; // 0.85 ~ 1.45 rem
+      const rot = ((seed % 13) - 6) * 0.6;     // -3.6° ~ +3.6°
+      map[f.id] = { fontSize: `${sizeRem.toFixed(2)}rem`, rotate: `${rot.toFixed(1)}deg` };
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.id]);
+
   const [phase, setPhase] = useState<Phase>('mission');
+  const [collected, setCollected] = useState<Set<string>>(new Set());
   const [slots, setSlots] = useState<(KnowledgeFragment | null)[]>(Array(slotCount).fill(null));
   const [selected, setSelected] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [showHint, setShowHint] = useState(false);
 
   const placedIds = new Set(slots.filter(Boolean).map(f => f!.id));
-  const availablePool = shuffledPool.filter(f => !placedIds.has(f.id));
+  // 組裝階段只看篩選後留下來的碎片
+  const collectedPool = shuffledPool.filter(f => collected.has(f.id));
+  const availablePool = collectedPool.filter(f => !placedIds.has(f.id));
   const allFilled = slots.every(Boolean);
+
+  function toggleCollect(id: string) {
+    setCollected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   function handleFragmentClick(fragment: KnowledgeFragment) {
     if (selected === fragment.id) { setSelected(null); return; }
@@ -65,7 +90,8 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
   function handleRetry() {
     setSlots(Array(slotCount).fill(null));
     setSelected(null);
-    setPhase('assembly');
+    setCollected(new Set());
+    setPhase('collection');
   }
 
   const correctChain = config.knowledgePool
@@ -111,10 +137,96 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
           </div>
 
           <button
-            onClick={() => setPhase('assembly')}
+            onClick={() => setPhase('collection')}
             className="w-full py-3 rounded-lg text-sm font-bold tracking-widest dt-btn-primary transition-all hover:scale-[1.01] active:scale-[0.98]"
           >
-            ▶ 開始推演
+            ▶ 開始收集
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Collection phase（標籤雲篩選）──
+  if (phase === 'collection') {
+    const collectionPrompt: Record<string, string> = {
+      classic: '從散落的線索中，挑出與本案相關的部分',
+      cyber:   '掃描資料流，標記出有用的訊號（過濾雜訊）',
+      guofeng: '天機散落字裡行間，揀出與此局相應的徵兆',
+    };
+    const prompt = collectionPrompt[themeId] ?? collectionPrompt.classic;
+
+    return (
+      <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col">
+        <div className="flex-1 px-5 py-6 max-w-lg mx-auto w-full flex flex-col gap-5">
+          <div className="flex items-center justify-between">
+            <button onClick={() => setPhase('mission')} className="text-dt-text-muted hover:text-dt-text text-sm">
+              ← 任務說明
+            </button>
+            <span className="text-xs text-dt-text-muted uppercase tracking-widest">
+              {themeLabel} · 收集
+            </span>
+          </div>
+
+          {/* 提示 */}
+          <div className="case-file rounded-lg p-3">
+            <p className="text-sm leading-relaxed">{prompt}</p>
+            <p className="text-xs text-dt-text-muted mt-1">點擊有用的知識碎片，多選不影響。</p>
+          </div>
+
+          {/* 題幹（精簡） */}
+          <div className="rounded p-3" style={{ border: '1px solid var(--dt-border)' }}>
+            <div className="text-xs text-dt-text-muted mb-1 tracking-widest">案情</div>
+            <p className="text-xs text-dt-text-secondary leading-relaxed line-clamp-4">{question.mainStem}</p>
+          </div>
+
+          {/* 標籤雲 */}
+          <div className="rounded-lg p-4 flex-1"
+            style={{
+              background: 'color-mix(in srgb, var(--dt-card) 60%, transparent)',
+              border: '1px dashed var(--dt-border)',
+            }}>
+            <div className="flex flex-wrap gap-2 items-center justify-center">
+              {shuffledPool.map(fragment => {
+                const isOn = collected.has(fragment.id);
+                const style = cloudStyles[fragment.id];
+                return (
+                  <button
+                    key={fragment.id}
+                    onClick={() => toggleCollect(fragment.id)}
+                    className="px-3 py-1.5 rounded-full transition-all hover:scale-105 active:scale-95"
+                    style={{
+                      fontSize: style?.fontSize,
+                      transform: `rotate(${style?.rotate ?? '0deg'})`,
+                      border: isOn ? '2px solid var(--dt-accent)' : '1px solid var(--dt-border)',
+                      background: isOn
+                        ? 'color-mix(in srgb, var(--dt-accent) 15%, var(--dt-card))'
+                        : 'var(--dt-card)',
+                      color: isOn ? 'var(--dt-accent)' : 'var(--dt-text-secondary)',
+                      fontWeight: isOn ? 700 : 400,
+                    }}>
+                    {fragment.text}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 計數 */}
+          <div className="text-xs text-dt-text-muted text-center">
+            已收集 {collected.size} 個碎片
+            {collected.size < slotCount && (
+              <span className="ml-2 text-dt-text-muted">（推演鏈需要 {slotCount} 個位置）</span>
+            )}
+          </div>
+
+          {/* 確認 */}
+          <button
+            onClick={() => setPhase('assembly')}
+            disabled={collected.size === 0}
+            className="w-full py-3 rounded-lg text-sm font-bold tracking-widest dt-btn-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.98]"
+          >
+            ▶ 進入組裝
           </button>
         </div>
       </div>
@@ -127,8 +239,9 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
       <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col">
         <div className="flex-1 px-5 py-6 max-w-lg mx-auto w-full flex flex-col gap-5">
           <div className="flex items-center justify-between">
-            <button onClick={() => setPhase('mission')} className="text-dt-text-muted hover:text-dt-text text-sm">
-              ← 任務說明
+            <button onClick={() => { setSlots(Array(slotCount).fill(null)); setSelected(null); setPhase('collection'); }}
+              className="text-dt-text-muted hover:text-dt-text text-sm">
+              ← 重新收集
             </button>
             <span className="text-xs text-dt-text-muted uppercase tracking-widest">
               {themeLabel} · 組裝
