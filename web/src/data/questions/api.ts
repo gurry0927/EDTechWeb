@@ -2,8 +2,10 @@ import { supabase } from '@/lib/supabase';
 import type { DetectiveQuestion } from '@/components/game-modes/detective/types';
 
 // ── Cache helpers ──
-const CACHE_PREFIX = 'dt-cache-';
-const CACHE_LIST_KEY = 'dt-cache-list';
+// 版本號：API schema 改變時遞增，舊 cache 會自動失效
+const CACHE_VERSION = 'v2-assembly';
+const CACHE_PREFIX = `dt-cache-${CACHE_VERSION}-`;
+const CACHE_LIST_KEY = `dt-cache-${CACHE_VERSION}-list`;
 const CACHE_TTL = 10 * 60 * 1000; // 10 分鐘
 
 interface CacheEntry<T> { data: T; ts: number }
