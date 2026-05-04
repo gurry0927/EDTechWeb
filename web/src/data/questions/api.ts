@@ -32,6 +32,8 @@ export type PublicQuestion = Pick<DetectiveQuestion,
   hasClues?: boolean;
   /** 是否支援臥底模式（有 optionErrors 才為 true） */
   hasOptionErrors?: boolean;
+  /** 是否支援組裝模式（有 assemblyMode 才為 true） */
+  hasAssembly?: boolean;
 };
 
 export async function fetchPublicQuestions(): Promise<PublicQuestion[]> {

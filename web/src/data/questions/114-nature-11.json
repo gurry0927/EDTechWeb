@@ -1,0 +1,77 @@
+{
+  "id": "114-nature-11",
+  "source": "114年會考-自然-第11題",
+  "subject": "自然",
+  "difficulty": 1,
+  "tags": ["濃度", "ppm", "溶液"],
+  "subSubject": "理化",
+  "gradeLevel": "二上",
+
+  "mainStem": "某電玩公司為了防止兒童誤吞遊戲主機的遊戲卡，因而在遊戲卡塗上苯甲地那銨。苯甲地那銨是非常苦的物質，其濃度只要達到______，也就是每1000 g的溶液中含有30 mg的苯甲地那銨，便會苦到讓人難以忍受。上述空格最適合填入下列何者？",
+  "options": [
+    "30%",
+    "30 mg",
+    "30 ppm",
+    "30 g/cm³"
+  ],
+  "answer": "C",
+  "spyMode": "findCorrect",
+
+  "clues": [],
+  "questions": [],
+  "concept": {
+    "unit": "濃度表示法",
+    "brief": "ppm 是百萬分之一（parts per million）。1 ppm = 1 mg/kg = 1 mg/1000 g。題目說每 1000 g 含 30 mg，即 30 mg/1000 g = 30 ppm。"
+  },
+  "solution": {
+    "steps": [
+      "每 1000 g 含 30 mg → 30/1000000 = 百萬分之三十",
+      "ppm = mg/kg = mg/1000g",
+      "30 mg ÷ 1000 g = 30 ppm"
+    ],
+    "commonMistakes": [
+      "誤選 30%（30% 代表每 100 g 含 30 g，差了一萬倍）",
+      "誤選 30 mg（mg 是質量單位，不是濃度單位）",
+      "混淆 ppm 和百分比的換算"
+    ]
+  },
+
+  "optionErrors": [
+    {
+      "optionIndex": 0,
+      "text": "30%",
+      "startIndex": 0,
+      "length": 3,
+      "why": "30% 代表每 100 g 溶液含 30 g 的溶質，但題目是每 1000 g 含 30 mg，差了一百萬倍。",
+      "quiz": {
+        "prompt": "為什麼「30%」不正確？",
+        "choices": ["30% 表示每 100 g 含 30 g，但實際只有 30 mg/1000 g，量級完全不同", "因為百分比不能用在液體上", "因為 30% 太小了不夠苦"],
+        "answerIndex": 0
+      }
+    },
+    {
+      "optionIndex": 1,
+      "text": "30 mg",
+      "startIndex": 0,
+      "length": 5,
+      "why": "mg 是質量單位，不是濃度單位。濃度需要表達「溶質佔溶液的比例」，不能只寫質量。",
+      "quiz": {
+        "prompt": "為什麼「30 mg」不適合填入空格？",
+        "choices": ["mg 是質量單位，不是濃度單位，無法表達溶質佔溶液的比例", "因為 30 mg 太少了", "因為 mg 只能用在固體不能用在液體"],
+        "answerIndex": 0
+      }
+    },
+    {
+      "optionIndex": 3,
+      "text": "30 g/cm³",
+      "startIndex": 0,
+      "length": 9,
+      "why": "g/cm³ 是密度單位，表示每立方公分的質量。濃度和密度是不同的物理量。",
+      "quiz": {
+        "prompt": "為什麼「30 g/cm³」不正確？",
+        "choices": ["g/cm³ 是密度單位，不是濃度單位，兩者描述不同物理量", "因為數值太大不合理", "因為 cm³ 不能用在溶液上"],
+        "answerIndex": 0
+      }
+    }
+  ]
+}
