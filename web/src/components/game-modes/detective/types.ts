@@ -222,6 +222,8 @@ export interface AssemblyModeConfig {
   knowledgePool: KnowledgeFragment[]
   /** chain / matching 用：正確項數量（干擾項數量 = slotCount - 1） */
   slotCount?: number
+  /** chain 用：每個 slot 的角色標籤（例：觀察/推論/背景/結論）。不填則顯示數字 */
+  slotLabels?: string[]
   hint?: string
 }
 

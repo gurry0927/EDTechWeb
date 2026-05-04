@@ -256,35 +256,47 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
 
           {/* slots */}
           <div>
-            <div className="text-xs text-dt-text-muted mb-2 tracking-widest">推演鏈 — 依序組裝</div>
+            <div className="text-xs text-dt-text-muted mb-2 tracking-widest">推演鏈 — 把碎片放入對應角色</div>
             <div className="space-y-2">
-              {slots.map((fragment, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSlotClick(i)}
-                  className="w-full rounded-lg p-3 text-left text-sm transition-all min-h-[52px] flex items-center gap-3"
-                  style={{
-                    border: fragment
-                      ? '2px solid var(--dt-accent)'
-                      : selected
-                        ? '2px dashed var(--dt-accent)'
-                        : '1px solid var(--dt-border)',
-                    background: fragment
-                      ? 'color-mix(in srgb, var(--dt-accent) 10%, var(--dt-card))'
-                      : selected
-                        ? 'color-mix(in srgb, var(--dt-accent) 5%, var(--dt-card))'
-                        : 'var(--dt-card)',
-                    color: fragment ? 'var(--dt-text)' : 'var(--dt-text-muted)',
-                  }}
-                >
-                  <span className="text-xs shrink-0 w-4" style={{ color: 'var(--dt-text-muted)' }}>{i + 1}.</span>
-                  {fragment
-                    ? <span>{fragment.keyword ?? fragment.text}</span>
-                    : <span className="text-xs italic">{selected ? '點擊放置' : '空'}</span>
-                  }
-                  {fragment && <span className="ml-auto text-xs" style={{ color: 'var(--dt-text-muted)' }}>✕</span>}
-                </button>
-              ))}
+              {slots.map((fragment, i) => {
+                const slotLabel = config.slotLabels?.[i];
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleSlotClick(i)}
+                    className="w-full rounded-lg p-3 text-left text-sm transition-all min-h-[52px] flex items-center gap-3"
+                    style={{
+                      border: fragment
+                        ? '2px solid var(--dt-accent)'
+                        : selected
+                          ? '2px dashed var(--dt-accent)'
+                          : '1px solid var(--dt-border)',
+                      background: fragment
+                        ? 'color-mix(in srgb, var(--dt-accent) 10%, var(--dt-card))'
+                        : selected
+                          ? 'color-mix(in srgb, var(--dt-accent) 5%, var(--dt-card))'
+                          : 'var(--dt-card)',
+                      color: fragment ? 'var(--dt-text)' : 'var(--dt-text-muted)',
+                    }}
+                  >
+                    {/* 角色標籤（label）或數字 */}
+                    <span className="text-xs shrink-0 px-2 py-0.5 rounded font-bold tracking-wider"
+                      style={{
+                        background: 'color-mix(in srgb, var(--dt-accent) 12%, var(--dt-card))',
+                        color: 'var(--dt-accent)',
+                        minWidth: slotLabel ? '4em' : '2em',
+                        textAlign: 'center',
+                      }}>
+                      {slotLabel ?? `${i + 1}.`}
+                    </span>
+                    {fragment
+                      ? <span>{fragment.keyword ?? fragment.text}</span>
+                      : <span className="text-xs italic">{selected ? '點擊放置' : '空'}</span>
+                    }
+                    {fragment && <span className="ml-auto text-xs" style={{ color: 'var(--dt-text-muted)' }}>✕</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -379,6 +391,7 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
             {slots.map((fragment, i) => {
               const correct = fragment?.slot === i + 1;
               const ok = isCorrect || correct;
+              const slotLabel = config.slotLabels?.[i];
               return (
                 <div key={i} className="rounded-lg p-3 text-sm flex gap-3 items-start"
                   style={{
@@ -388,7 +401,15 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
                       : 'color-mix(in srgb, var(--dt-error) 10%, var(--dt-card))',
                     color: 'var(--dt-text)',
                   }}>
-                  <span className="text-xs shrink-0 w-4 mt-0.5" style={{ color: 'var(--dt-text-muted)' }}>{i + 1}.</span>
+                  <span className="text-xs shrink-0 px-2 py-0.5 rounded font-bold tracking-wider mt-0.5"
+                    style={{
+                      background: 'color-mix(in srgb, var(--dt-accent) 12%, transparent)',
+                      color: 'var(--dt-accent)',
+                      minWidth: slotLabel ? '4em' : '2em',
+                      textAlign: 'center',
+                    }}>
+                    {slotLabel ?? `${i + 1}.`}
+                  </span>
                   <span>{fragment?.text}</span>
                   <span className="ml-auto shrink-0" style={{ color: ok ? 'var(--dt-success)' : 'var(--dt-error)' }}>
                     {ok ? '✓' : '✕'}
@@ -404,16 +425,27 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
           <div>
             <div className="text-xs text-dt-text-muted mb-2 tracking-widest">正確推演鏈</div>
             <div className="space-y-2">
-              {correctChain.map((fragment, i) => (
-                <div key={fragment.id} className="rounded-lg p-3 text-sm flex gap-3"
-                  style={{
-                    border: '1px solid var(--dt-success)',
-                    background: 'color-mix(in srgb, var(--dt-success) 8%, var(--dt-card))',
-                  }}>
-                  <span className="text-xs shrink-0 w-4 mt-0.5" style={{ color: 'var(--dt-text-muted)' }}>{i + 1}.</span>
-                  <span>{fragment.text}</span>
-                </div>
-              ))}
+              {correctChain.map((fragment, i) => {
+                const slotLabel = config.slotLabels?.[i];
+                return (
+                  <div key={fragment.id} className="rounded-lg p-3 text-sm flex gap-3"
+                    style={{
+                      border: '1px solid var(--dt-success)',
+                      background: 'color-mix(in srgb, var(--dt-success) 8%, var(--dt-card))',
+                    }}>
+                    <span className="text-xs shrink-0 px-2 py-0.5 rounded font-bold tracking-wider mt-0.5"
+                      style={{
+                        background: 'color-mix(in srgb, var(--dt-success) 15%, transparent)',
+                        color: 'var(--dt-success)',
+                        minWidth: slotLabel ? '4em' : '2em',
+                        textAlign: 'center',
+                      }}>
+                      {slotLabel ?? `${i + 1}.`}
+                    </span>
+                    <span>{fragment.text}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -123,6 +123,7 @@
   "assemblyMode": {
     "assemblyType": "chain",
     "slotCount": 4,
+    "slotLabels": ["觀察", "推論", "背景", "結論"],
     "hint": "從觀察題目線索開始，一步步推到地理位置。",
     "knowledgePool": [
       { "id": "k1", "keyword": "糖汁糖塊", "text": "觀察：題目描述「倒入糖汁、承接糖蜜、取出糖塊」", "relevant": true, "slot": 1 },
