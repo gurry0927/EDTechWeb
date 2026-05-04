@@ -120,6 +120,18 @@
       "丁（東部）：清領時期台灣東部開發較晚，並非當時糖業與貿易的核心區域。"
     ]
   },
+  "assemblyMode": {
+    "assemblyType": "chain",
+    "slotCount": 3,
+    "hint": "先判斷工具用途，再定位時代，最後對應產業地圖。",
+    "knowledgePool": [
+      { "id": "k1", "text": "圖中流程：倒入糖汁、承接糖蜜、取出糖塊 → 製糖器具", "relevant": true, "slot": 1 },
+      { "id": "k2", "text": "十八至十九世紀為清朝統治台灣時期（清領時期）", "relevant": true, "slot": 2 },
+      { "id": "k3", "text": "甘蔗需熱帶氣候與平坦耕地，糖業集中於嘉南平原（西南部）", "relevant": true, "slot": 3 },
+      { "id": "d1", "text": "清代台灣北部以茶業為主要出口產業", "relevant": false },
+      { "id": "d2", "text": "台灣中部平原以稻米種植為主", "relevant": false }
+    ]
+  },
   "stemTokens": [
     "圖(八)是",
     "博物館展覽",

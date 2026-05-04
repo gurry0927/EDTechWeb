@@ -196,6 +196,30 @@ export interface DetectiveQuestion {
    *  不填則由 optionErrors 數量自動判斷
    */
   spyMode?: 'findCorrect' | 'findWrong';
+
+  /** 組裝模式設定（選填，有填才能跑組裝模式） */
+  assemblyMode?: AssemblyModeConfig;
+}
+
+// ── 組裝模式用 ──
+
+export type AssemblyType = 'chain' | 'parallel' | 'elimination' | 'matching' | 'conditional'
+
+export interface KnowledgeFragment {
+  id: string
+  text: string
+  relevant: boolean
+  slot?: number      // chain 專用：正確位置（1-based）
+  matchKey?: string  // matching 專用：配對對象 id
+  branch?: string    // conditional 專用：所屬分支
+}
+
+export interface AssemblyModeConfig {
+  assemblyType: AssemblyType
+  knowledgePool: KnowledgeFragment[]
+  /** chain / matching 用：正確項數量（干擾項數量 = slotCount - 1） */
+  slotCount?: number
+  hint?: string
 }
 
 /** 臥底模式 — 選項中的錯誤標記 */
