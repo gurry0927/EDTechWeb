@@ -224,6 +224,8 @@ export interface AssemblyModeConfig {
   slotCount?: number
   /** chain 用：每個 slot 的角色標籤（例：觀察/推論/背景/結論）。不填則顯示數字 */
   slotLabels?: string[]
+  /** chain 用：每個 slot 的白話提示（例：從題目直接看到的資訊）。對應 slotLabels */
+  slotHints?: string[]
   hint?: string
 }
 

@@ -174,11 +174,22 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
             <p className="text-xs text-dt-text-muted mt-1">點擊有用的知識碎片，多選不影響。</p>
           </div>
 
-          {/* 題幹（精簡） */}
-          <div className="rounded p-3" style={{ border: '1px solid var(--dt-border)' }}>
-            <div className="text-xs text-dt-text-muted mb-1 tracking-widest">案情</div>
-            <p className="text-xs text-dt-text-secondary leading-relaxed line-clamp-4">{question.mainStem}</p>
-          </div>
+          {/* 題幹 + 副圖（保留可滾） */}
+          <details className="rounded p-3" style={{ border: '1px solid var(--dt-border)' }} open>
+            <summary className="text-xs text-dt-text-muted tracking-widest cursor-pointer">案情</summary>
+            <div className="mt-2 space-y-2">
+              <p className="text-xs text-dt-text-secondary leading-relaxed">{question.mainStem}</p>
+              {question.figure && (
+                <p className="text-xs text-dt-text-secondary rounded p-2 leading-relaxed"
+                  style={{ background: 'color-mix(in srgb, var(--dt-accent) 5%, var(--dt-card))' }}>
+                  📌 {question.figure}
+                </p>
+              )}
+              {question.figureImage && (
+                <img src={question.figureImage} alt="附圖" className="rounded max-h-32 w-auto mx-auto" />
+              )}
+            </div>
+          </details>
 
           {/* 標籤雲 */}
           <div className="rounded-lg p-4 flex-1"
@@ -248,11 +259,22 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
             </span>
           </div>
 
-          {/* target compact */}
-          <div className="rounded p-3" style={{ border: '1px solid var(--dt-border)' }}>
-            <div className="text-xs text-dt-text-muted mb-1 tracking-widest">案情</div>
-            <p className="text-xs text-dt-text-secondary leading-relaxed line-clamp-3">{question.mainStem}</p>
-          </div>
+          {/* target — 預設收合，需要時展開查看 */}
+          <details className="rounded p-3" style={{ border: '1px solid var(--dt-border)' }}>
+            <summary className="text-xs text-dt-text-muted tracking-widest cursor-pointer">📋 案情（點擊展開）</summary>
+            <div className="mt-2 space-y-2">
+              <p className="text-xs text-dt-text-secondary leading-relaxed">{question.mainStem}</p>
+              {question.figure && (
+                <p className="text-xs text-dt-text-secondary rounded p-2 leading-relaxed"
+                  style={{ background: 'color-mix(in srgb, var(--dt-accent) 5%, var(--dt-card))' }}>
+                  📌 {question.figure}
+                </p>
+              )}
+              {question.figureImage && (
+                <img src={question.figureImage} alt="附圖" className="rounded max-h-32 w-auto mx-auto" />
+              )}
+            </div>
+          </details>
 
           {/* slots */}
           <div>
@@ -260,11 +282,12 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
             <div className="space-y-2">
               {slots.map((fragment, i) => {
                 const slotLabel = config.slotLabels?.[i];
+                const slotHint = config.slotHints?.[i];
                 return (
                   <button
                     key={i}
                     onClick={() => handleSlotClick(i)}
-                    className="w-full rounded-lg p-3 text-left text-sm transition-all min-h-[52px] flex items-center gap-3"
+                    className="w-full rounded-lg p-3 text-left text-sm transition-all min-h-[60px]"
                     style={{
                       border: fragment
                         ? '2px solid var(--dt-accent)'
@@ -279,21 +302,29 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
                       color: fragment ? 'var(--dt-text)' : 'var(--dt-text-muted)',
                     }}
                   >
-                    {/* 角色標籤（label）或數字 */}
-                    <span className="text-xs shrink-0 px-2 py-0.5 rounded font-bold tracking-wider"
-                      style={{
-                        background: 'color-mix(in srgb, var(--dt-accent) 12%, var(--dt-card))',
-                        color: 'var(--dt-accent)',
-                        minWidth: slotLabel ? '4em' : '2em',
-                        textAlign: 'center',
-                      }}>
-                      {slotLabel ?? `${i + 1}.`}
-                    </span>
-                    {fragment
-                      ? <span>{fragment.keyword ?? fragment.text}</span>
-                      : <span className="text-xs italic">{selected ? '點擊放置' : '空'}</span>
-                    }
-                    {fragment && <span className="ml-auto text-xs" style={{ color: 'var(--dt-text-muted)' }}>✕</span>}
+                    <div className="flex items-center gap-3">
+                      {/* 角色標籤 */}
+                      <span className="text-xs shrink-0 px-2 py-0.5 rounded font-bold tracking-wider"
+                        style={{
+                          background: 'color-mix(in srgb, var(--dt-accent) 12%, var(--dt-card))',
+                          color: 'var(--dt-accent)',
+                          minWidth: slotLabel ? '4em' : '2em',
+                          textAlign: 'center',
+                        }}>
+                        {slotLabel ?? `${i + 1}.`}
+                      </span>
+                      {fragment
+                        ? <span>{fragment.keyword ?? fragment.text}</span>
+                        : <span className="text-xs italic">{selected ? '點擊放置' : '空'}</span>
+                      }
+                      {fragment && <span className="ml-auto text-xs" style={{ color: 'var(--dt-text-muted)' }}>✕</span>}
+                    </div>
+                    {/* 角色提示 — slot 為空時顯示，引導學生該放什麼 */}
+                    {!fragment && slotHint && (
+                      <div className="text-[11px] mt-1 ml-[5em] leading-relaxed" style={{ color: 'var(--dt-text-muted)' }}>
+                        {slotHint}
+                      </div>
+                    )}
                   </button>
                 );
               })}
