@@ -205,7 +205,7 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
                       color: isOn ? 'var(--dt-accent)' : 'var(--dt-text-secondary)',
                       fontWeight: isOn ? 700 : 400,
                     }}>
-                    {fragment.text}
+                    {fragment.keyword ?? fragment.text}
                   </button>
                 );
               })}
@@ -279,7 +279,7 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
                 >
                   <span className="text-xs shrink-0 w-4" style={{ color: 'var(--dt-text-muted)' }}>{i + 1}.</span>
                   {fragment
-                    ? <span>{fragment.text}</span>
+                    ? <span>{fragment.keyword ?? fragment.text}</span>
                     : <span className="text-xs italic">{selected ? '點擊放置' : '空'}</span>
                   }
                   {fragment && <span className="ml-auto text-xs" style={{ color: 'var(--dt-text-muted)' }}>✕</span>}
@@ -305,7 +305,7 @@ export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props)
                     color: 'var(--dt-text)',
                   }}
                 >
-                  {fragment.text}
+                  {fragment.keyword ?? fragment.text}
                 </button>
               ))}
               {availablePool.length === 0 && (

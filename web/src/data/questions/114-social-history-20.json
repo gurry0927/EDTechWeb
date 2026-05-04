@@ -125,11 +125,15 @@
     "slotCount": 3,
     "hint": "先判斷工具用途，再定位時代，最後對應產業地圖。",
     "knowledgePool": [
-      { "id": "k1", "text": "圖中流程：倒入糖汁、承接糖蜜、取出糖塊 → 製糖器具", "relevant": true, "slot": 1 },
-      { "id": "k2", "text": "十八至十九世紀為清朝統治台灣時期（清領時期）", "relevant": true, "slot": 2 },
-      { "id": "k3", "text": "甘蔗需熱帶氣候與平坦耕地，糖業集中於嘉南平原（西南部）", "relevant": true, "slot": 3 },
-      { "id": "d1", "text": "清代台灣北部以茶業為主要出口產業", "relevant": false },
-      { "id": "d2", "text": "台灣中部平原以稻米種植為主", "relevant": false }
+      { "id": "k1", "keyword": "製糖器具", "text": "圖中流程：倒入糖汁、承接糖蜜、取出糖塊 → 這是製糖器具", "relevant": true, "slot": 1 },
+      { "id": "k2", "keyword": "清領時期", "text": "十八至十九世紀，台灣由清朝統治，稱為清領時期", "relevant": true, "slot": 2 },
+      { "id": "k3", "keyword": "嘉南平原", "text": "甘蔗需要熱帶氣候與平坦耕地，糖業集中在嘉南平原（西南部）", "relevant": true, "slot": 3 },
+      { "id": "d1", "keyword": "北部茶業", "text": "清代台灣北部以茶業為主要出口產業", "relevant": false },
+      { "id": "d2", "keyword": "中部稻米", "text": "台灣中部平原以稻米種植為主", "relevant": false },
+      { "id": "d3", "keyword": "鹿皮貿易", "text": "荷蘭時期台灣的主要出口品是鹿皮，但與本題無關", "relevant": false },
+      { "id": "d4", "keyword": "樟腦", "text": "清末日治時期樟腦成為重要產業，但不在本題時間範圍", "relevant": false },
+      { "id": "d5", "keyword": "明鄭時期", "text": "明鄭時期是十七世紀，與本題十八至十九世紀不符", "relevant": false },
+      { "id": "d6", "keyword": "東部開發", "text": "清領時期台灣東部開發較晚，並非當時的產業核心", "relevant": false }
     ]
   },
   "stemTokens": [

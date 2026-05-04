@@ -207,6 +207,9 @@ export type AssemblyType = 'chain' | 'parallel' | 'elimination' | 'matching' | '
 
 export interface KnowledgeFragment {
   id: string
+  /** 短關鍵字（2-8 字）— 標籤雲與 slot 顯示用。新題目應填這個 */
+  keyword?: string
+  /** 詳細敘述（完整句子）— 結果頁、提示用。可以是 text 的完整版 */
   text: string
   relevant: boolean
   slot?: number      // chain 專用：正確位置（1-based）
