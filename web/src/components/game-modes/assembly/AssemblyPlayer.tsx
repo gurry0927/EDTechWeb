@@ -2,22 +2,23 @@
 
 import { useState, useMemo } from 'react';
 import type { DetectiveQuestion, KnowledgeFragment } from '@/components/game-modes/detective/types';
-import { ASSEMBLY_THEMES, type AssemblyThemeId } from '@/config/assemblyThemes';
+import { ASSEMBLY_BRIEFINGS, ASSEMBLY_THEME_LABELS } from '@/config/assemblyThemes';
 
 type Phase = 'mission' | 'assembly' | 'result-correct' | 'result-wrong';
 
 interface Props {
   question: DetectiveQuestion;
-  themeId?: AssemblyThemeId;
+  themeId?: string;
   onBack: () => void;
 }
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
-export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) {
+export function AssemblyPlayer({ question, themeId = 'classic', onBack }: Props) {
   const config = question.assemblyMode!;
-  const theme = ASSEMBLY_THEMES[themeId];
-  const briefing = theme.briefings[config.assemblyType];
+  const briefingSet = ASSEMBLY_BRIEFINGS[themeId] ?? ASSEMBLY_BRIEFINGS.classic;
+  const briefing = briefingSet.briefings[config.assemblyType];
+  const themeLabel = ASSEMBLY_THEME_LABELS[themeId] ?? '推理';
   const slotCount = config.slotCount ?? config.knowledgePool.filter(f => f.relevant).length;
 
   const shuffledPool = useMemo(
@@ -44,7 +45,6 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
   function handleSlotClick(slotIdx: number) {
     const current = slots[slotIdx];
     if (current) {
-      // remove from slot
       setSlots(prev => prev.map((f, i) => i === slotIdx ? null : f));
       setSelected(null);
       return;
@@ -75,38 +75,35 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
   // ── Mission phase ──
   if (phase === 'mission') {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-black text-green-400 font-mono">
+      <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col">
         <div className="flex-1 px-5 py-6 max-w-lg mx-auto w-full flex flex-col gap-6">
-
-          {/* header */}
           <div className="flex items-center justify-between">
-            <button onClick={onBack} className="text-green-600 hover:text-green-400 text-sm">
-              ← 返回
-            </button>
-            <span className="text-xs text-green-700 uppercase tracking-widest">
-              {theme.label} // ASSEMBLY
+            <button onClick={onBack} className="text-dt-text-muted hover:text-dt-text text-sm">← 返回</button>
+            <span className="text-xs text-dt-text-muted uppercase tracking-widest">
+              {themeLabel} · 組裝
             </span>
           </div>
 
           {/* briefing */}
-          <div className="border border-green-800 rounded-lg p-4 bg-green-950/30">
-            <div className="text-xs text-green-600 mb-2 tracking-widest">// MISSION BRIEF</div>
-            <p className="text-sm leading-relaxed text-green-300">{briefing}</p>
+          <div className="case-file rounded-lg p-4">
+            <div className="text-xs text-dt-text-muted mb-2 tracking-widest">任務簡報</div>
+            <p className="text-sm leading-relaxed">{briefing}</p>
           </div>
 
           {/* target */}
-          <div className="border border-green-700 rounded-lg p-4 space-y-3">
-            <div className="text-xs text-green-600 tracking-widest">// TARGET</div>
-            <p className="text-sm text-green-200 leading-relaxed">{question.mainStem}</p>
+          <div className="case-file rounded-lg p-4 space-y-3">
+            <div className="text-xs text-dt-text-muted tracking-widest">案情</div>
+            <p className="text-sm leading-relaxed">{question.mainStem}</p>
             {question.figure && (
-              <p className="text-xs text-green-400 bg-green-950/50 rounded p-2 leading-relaxed">
+              <p className="text-xs text-dt-text-secondary rounded p-2 leading-relaxed"
+                style={{ background: 'color-mix(in srgb, var(--dt-accent) 5%, var(--dt-card))' }}>
                 {question.figure}
               </p>
             )}
             <div className="space-y-1 pt-1">
               {question.options.map((opt, i) => (
-                <div key={i} className="text-xs text-green-600 flex gap-2">
-                  <span className="text-green-700">({LETTERS[i]})</span>
+                <div key={i} className="text-xs text-dt-text-secondary flex gap-2">
+                  <span className="text-dt-text-muted">({LETTERS[i]})</span>
                   <span>{opt}</span>
                 </div>
               ))}
@@ -115,7 +112,7 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
 
           <button
             onClick={() => setPhase('assembly')}
-            className="w-full py-3 rounded-lg border border-green-500 text-green-400 text-sm font-bold tracking-widest hover:bg-green-900/30 transition-colors"
+            className="w-full py-3 rounded-lg text-sm font-bold tracking-widest dt-btn-primary transition-all hover:scale-[1.01] active:scale-[0.98]"
           >
             ▶ 開始推演
           </button>
@@ -127,49 +124,52 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
   // ── Assembly phase ──
   if (phase === 'assembly') {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-black text-green-400 font-mono">
+      <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col">
         <div className="flex-1 px-5 py-6 max-w-lg mx-auto w-full flex flex-col gap-5">
-
-          {/* header */}
           <div className="flex items-center justify-between">
-            <button onClick={() => setPhase('mission')} className="text-green-600 hover:text-green-400 text-sm">
+            <button onClick={() => setPhase('mission')} className="text-dt-text-muted hover:text-dt-text text-sm">
               ← 任務說明
             </button>
-            <span className="text-xs text-green-700 uppercase tracking-widest">
-              {theme.label} // ASSEMBLY
+            <span className="text-xs text-dt-text-muted uppercase tracking-widest">
+              {themeLabel} · 組裝
             </span>
           </div>
 
           {/* target compact */}
-          <div className="border border-green-900 rounded p-3">
-            <div className="text-xs text-green-700 mb-1 tracking-widest">// TARGET</div>
-            <p className="text-xs text-green-500 leading-relaxed line-clamp-3">{question.mainStem}</p>
+          <div className="rounded p-3" style={{ border: '1px solid var(--dt-border)' }}>
+            <div className="text-xs text-dt-text-muted mb-1 tracking-widest">案情</div>
+            <p className="text-xs text-dt-text-secondary leading-relaxed line-clamp-3">{question.mainStem}</p>
           </div>
 
           {/* slots */}
           <div>
-            <div className="text-xs text-green-600 mb-2 tracking-widest">// 推演鏈 — 依序組裝</div>
+            <div className="text-xs text-dt-text-muted mb-2 tracking-widest">推演鏈 — 依序組裝</div>
             <div className="space-y-2">
               {slots.map((fragment, i) => (
                 <button
                   key={i}
                   onClick={() => handleSlotClick(i)}
-                  className={`w-full rounded-lg border p-3 text-left text-sm transition-all min-h-[52px] flex items-center gap-3 ${
-                    fragment
-                      ? 'border-green-500 bg-green-900/20 text-green-200'
+                  className="w-full rounded-lg p-3 text-left text-sm transition-all min-h-[52px] flex items-center gap-3"
+                  style={{
+                    border: fragment
+                      ? '2px solid var(--dt-accent)'
                       : selected
-                      ? 'border-green-600 border-dashed bg-green-950/40 text-green-700 hover:bg-green-900/30'
-                      : 'border-green-900 bg-transparent text-green-800'
-                  }`}
+                        ? '2px dashed var(--dt-accent)'
+                        : '1px solid var(--dt-border)',
+                    background: fragment
+                      ? 'color-mix(in srgb, var(--dt-accent) 10%, var(--dt-card))'
+                      : selected
+                        ? 'color-mix(in srgb, var(--dt-accent) 5%, var(--dt-card))'
+                        : 'var(--dt-card)',
+                    color: fragment ? 'var(--dt-text)' : 'var(--dt-text-muted)',
+                  }}
                 >
-                  <span className="text-xs text-green-700 shrink-0 w-4">{i + 1}.</span>
+                  <span className="text-xs shrink-0 w-4" style={{ color: 'var(--dt-text-muted)' }}>{i + 1}.</span>
                   {fragment
                     ? <span>{fragment.text}</span>
                     : <span className="text-xs italic">{selected ? '點擊放置' : '空'}</span>
                   }
-                  {fragment && (
-                    <span className="ml-auto text-xs text-green-700">✕</span>
-                  )}
+                  {fragment && <span className="ml-auto text-xs" style={{ color: 'var(--dt-text-muted)' }}>✕</span>}
                 </button>
               ))}
             </div>
@@ -177,23 +177,26 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
 
           {/* knowledge pool */}
           <div>
-            <div className="text-xs text-green-600 mb-2 tracking-widest">// 知識庫</div>
+            <div className="text-xs text-dt-text-muted mb-2 tracking-widest">知識庫</div>
             <div className="space-y-2">
               {availablePool.map(fragment => (
                 <button
                   key={fragment.id}
                   onClick={() => handleFragmentClick(fragment)}
-                  className={`w-full rounded-lg border p-3 text-left text-sm transition-all ${
-                    selected === fragment.id
-                      ? 'border-green-400 bg-green-800/40 text-green-100'
-                      : 'border-green-800 bg-green-950/20 text-green-300 hover:border-green-600'
-                  }`}
+                  className="w-full rounded-lg p-3 text-left text-sm transition-all"
+                  style={{
+                    border: selected === fragment.id ? '2px solid var(--dt-accent)' : '1px solid var(--dt-border)',
+                    background: selected === fragment.id
+                      ? 'color-mix(in srgb, var(--dt-accent) 15%, var(--dt-card))'
+                      : 'var(--dt-card)',
+                    color: 'var(--dt-text)',
+                  }}
                 >
                   {fragment.text}
                 </button>
               ))}
               {availablePool.length === 0 && (
-                <div className="text-xs text-green-800 text-center py-2">所有碎片已放置</div>
+                <div className="text-xs text-dt-text-muted text-center py-2">所有碎片已放置</div>
               )}
             </div>
           </div>
@@ -202,13 +205,18 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
           {config.hint && (
             <div>
               {showHint ? (
-                <div className="border border-yellow-800 rounded p-3 bg-yellow-950/20 text-xs text-yellow-400">
-                  {config.hint}
+                <div className="rounded p-3 text-xs"
+                  style={{
+                    background: 'color-mix(in srgb, var(--dt-scan) 10%, var(--dt-card))',
+                    border: '1px solid var(--dt-scan)',
+                    color: 'var(--dt-scan)',
+                  }}>
+                  💡 {config.hint}
                 </div>
               ) : (
                 <button
                   onClick={() => setShowHint(true)}
-                  className="text-xs text-green-700 hover:text-green-500"
+                  className="text-xs text-dt-text-muted hover:text-dt-text-secondary"
                 >
                   ? 顯示提示
                 </button>
@@ -216,11 +224,10 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
             </div>
           )}
 
-          {/* confirm */}
           <button
             onClick={handleConfirm}
             disabled={!allFilled}
-            className="w-full py-3 rounded-lg border text-sm font-bold tracking-widest transition-colors disabled:border-green-900 disabled:text-green-900 border-green-400 text-green-400 hover:bg-green-900/30"
+            className="w-full py-3 rounded-lg text-sm font-bold tracking-widest dt-btn-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.98]"
           >
             ▶ 確認推演
           </button>
@@ -233,53 +240,46 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
   const isCorrect = phase === 'result-correct';
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-black text-green-400 font-mono">
+    <div className="min-h-[100dvh] detective-paper text-dt-text flex flex-col">
       <div className="flex-1 px-5 py-6 max-w-lg mx-auto w-full flex flex-col gap-5">
-
-        {/* header */}
         <div className="flex items-center justify-between">
-          <button onClick={onBack} className="text-green-600 hover:text-green-400 text-sm">
-            ← 返回
-          </button>
-          <span className="text-xs text-green-700 uppercase tracking-widest">
-            {theme.label} // RESULT
+          <button onClick={onBack} className="text-dt-text-muted hover:text-dt-text text-sm">← 返回</button>
+          <span className="text-xs text-dt-text-muted uppercase tracking-widest">
+            {themeLabel} · 結果
           </span>
         </div>
 
         {/* verdict */}
-        <div className={`border rounded-lg p-4 ${
-          isCorrect
-            ? 'border-green-500 bg-green-900/20'
-            : 'border-red-700 bg-red-950/20'
-        }`}>
-          <div className={`text-lg font-bold mb-1 ${isCorrect ? 'text-green-300' : 'text-red-400'}`}>
-            {isCorrect ? '▶ 推演成功 — 任務完成' : '✕ 推演錯誤 — 重新分析'}
+        <div className="case-file rounded-lg p-4"
+          style={{ border: `2px solid ${isCorrect ? 'var(--dt-success)' : 'var(--dt-error)'}` }}>
+          <div className="text-lg font-bold mb-1"
+            style={{ color: isCorrect ? 'var(--dt-success)' : 'var(--dt-error)' }}>
+            {isCorrect ? '✓ 推演成功' : '✕ 推演錯誤'}
           </div>
-          <div className="text-xs text-green-700">
-            {attempts} 次嘗試
-          </div>
+          <div className="text-xs text-dt-text-muted">{attempts} 次嘗試</div>
         </div>
 
         {/* player's answer */}
         <div>
-          <div className="text-xs text-green-600 mb-2 tracking-widest">// 你的推演</div>
+          <div className="text-xs text-dt-text-muted mb-2 tracking-widest">你的推演</div>
           <div className="space-y-2">
             {slots.map((fragment, i) => {
               const correct = fragment?.slot === i + 1;
+              const ok = isCorrect || correct;
               return (
-                <div
-                  key={i}
-                  className={`rounded-lg border p-3 text-sm flex gap-3 items-start ${
-                    isCorrect
-                      ? 'border-green-600 bg-green-900/20 text-green-200'
-                      : correct
-                      ? 'border-green-600 bg-green-900/20 text-green-200'
-                      : 'border-red-700 bg-red-950/20 text-red-300'
-                  }`}
-                >
-                  <span className="text-xs shrink-0 w-4 mt-0.5">{i + 1}.</span>
+                <div key={i} className="rounded-lg p-3 text-sm flex gap-3 items-start"
+                  style={{
+                    border: `1px solid ${ok ? 'var(--dt-success)' : 'var(--dt-error)'}`,
+                    background: ok
+                      ? 'color-mix(in srgb, var(--dt-success) 10%, var(--dt-card))'
+                      : 'color-mix(in srgb, var(--dt-error) 10%, var(--dt-card))',
+                    color: 'var(--dt-text)',
+                  }}>
+                  <span className="text-xs shrink-0 w-4 mt-0.5" style={{ color: 'var(--dt-text-muted)' }}>{i + 1}.</span>
                   <span>{fragment?.text}</span>
-                  <span className="ml-auto shrink-0">{isCorrect || correct ? '✓' : '✕'}</span>
+                  <span className="ml-auto shrink-0" style={{ color: ok ? 'var(--dt-success)' : 'var(--dt-error)' }}>
+                    {ok ? '✓' : '✕'}
+                  </span>
                 </div>
               );
             })}
@@ -289,11 +289,15 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
         {/* correct chain (shown on wrong) */}
         {!isCorrect && (
           <div>
-            <div className="text-xs text-green-600 mb-2 tracking-widest">// 正確推演鏈</div>
+            <div className="text-xs text-dt-text-muted mb-2 tracking-widest">正確推演鏈</div>
             <div className="space-y-2">
               {correctChain.map((fragment, i) => (
-                <div key={fragment.id} className="rounded-lg border border-green-700 p-3 text-sm text-green-200 flex gap-3">
-                  <span className="text-xs text-green-700 shrink-0 w-4 mt-0.5">{i + 1}.</span>
+                <div key={fragment.id} className="rounded-lg p-3 text-sm flex gap-3"
+                  style={{
+                    border: '1px solid var(--dt-success)',
+                    background: 'color-mix(in srgb, var(--dt-success) 8%, var(--dt-card))',
+                  }}>
+                  <span className="text-xs shrink-0 w-4 mt-0.5" style={{ color: 'var(--dt-text-muted)' }}>{i + 1}.</span>
                   <span>{fragment.text}</span>
                 </div>
               ))}
@@ -303,9 +307,9 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
 
         {/* answer */}
         {isCorrect && (
-          <div className="border border-green-800 rounded-lg p-3">
-            <div className="text-xs text-green-700 mb-1 tracking-widest">// 正確答案</div>
-            <div className="text-sm text-green-300">
+          <div className="case-file rounded-lg p-3">
+            <div className="text-xs text-dt-text-muted mb-1 tracking-widest">正確答案</div>
+            <div className="text-sm">
               ({question.answer}) {question.options[question.answer.charCodeAt(0) - 65]}
             </div>
           </div>
@@ -314,18 +318,20 @@ export function AssemblyPlayer({ question, themeId = 'hacker', onBack }: Props) 
         {/* actions */}
         <div className="flex gap-3">
           {!isCorrect && (
-            <button
-              onClick={handleRetry}
-              className="flex-1 py-3 rounded-lg border border-yellow-700 text-yellow-500 text-sm font-bold tracking-widest hover:bg-yellow-950/30 transition-colors"
-            >
+            <button onClick={handleRetry}
+              className="flex-1 py-3 rounded-lg text-sm font-bold tracking-widest transition-colors"
+              style={{
+                border: '1px solid var(--dt-scan)',
+                color: 'var(--dt-scan)',
+                background: 'color-mix(in srgb, var(--dt-scan) 8%, var(--dt-card))',
+              }}>
               ↩ 重新推演
             </button>
           )}
-          <button
-            onClick={onBack}
-            className="flex-1 py-3 rounded-lg border border-green-700 text-green-500 text-sm font-bold tracking-widest hover:bg-green-900/30 transition-colors"
-          >
-            ← 返回
+          <button onClick={onBack}
+            className="flex-1 py-3 rounded-lg text-sm font-medium border"
+            style={{ borderColor: 'var(--dt-border)', color: 'var(--dt-text-secondary)' }}>
+            ← 返回列表
           </button>
         </div>
       </div>
